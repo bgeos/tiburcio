@@ -55,6 +55,7 @@ Known limits, carried forward:
 
 ## Phase 2: Database, auth, authorization 🟡
 - [x] P2-01 local Supabase stack (2026-10-26).
+- [x] P2-03 identity and tenancy tables with RLS (2026-10-26).
 Accept: unauthenticated users blocked, org isolation proved by tests, role
 permissions tested, no secrets in client or Git. Backlog P2-*.
 

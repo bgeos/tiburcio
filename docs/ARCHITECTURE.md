@@ -121,9 +121,10 @@ Rules:
 | UI | Hide actions the user can't perform (convenience only) |
 
 - Invite-only sign-up initially. The admin client (secret key) is used only to send invitations.
-- Helper SQL functions `is_org_member(org_id)`, `has_org_role(org_id, roles[])`
-  and `can_access_project(project_id)` are used by policies. They are
-  `security definer` with a fixed `search_path` to avoid RLS recursion.
+- Helper SQL functions `private.is_org_member(org_id)`, `private.has_org_role(org_id, roles[])`
+  and (Phase 3) `private.can_access_project(project_id)` are used by policies. They live in
+  the `private` schema, which the Data API doesn't expose, and are `security definer` with an
+  empty `search_path` to avoid RLS recursion and search-path hijacking.
 - Storage buckets are private. Object paths start with `org_id/project_id/`,
   and storage policies call the same helpers.
 - Exports (CSV) go through Route Handlers that use the user-scoped client, so they get

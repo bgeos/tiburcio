@@ -1,7 +1,9 @@
 # Data model
 
-Status: **design** (Phase 0). No migrations exist yet. Tables are created
-phase by phase through `supabase/migrations/`, and this document is updated in the same change.
+Status: Phase 2 identity/tenancy tables are **implemented**
+(`supabase/migrations/20261026154738_identity_and_tenancy.sql`); later sections are design.
+Tables are created phase by phase through `supabase/migrations/`, and this document is
+updated in the same change.
 
 ## Conventions
 
@@ -66,16 +68,32 @@ organizations ─┬─ organization_members ── profiles (1:1 auth.users)
 | default_currency | char(3) | e.g. `BRL` |
 | timezone | text | default for new members |
 
-Created only through the SQL function `create_organization(name, slug)`, which
-inserts the org and makes the caller `admin` in one transaction.
+Created only through `public.create_organization(name, slug, admin_user_id)`, which
+inserts the org and its first `admin` in one transaction. It is **operator-only**
+(executable by `service_role` only, D-021). The `slug` is the URL segment (D-016):
+lowercase letters, digits and single hyphens, 2–50 characters, not a reserved route name.
+Admins can change `name`, `default_currency` and `timezone`; the slug is operator-only.
 
 ### `organization_members`
 `(organization_id, user_id)` unique, plus `role text check (role in ('admin','production_manager','member','external'))`,
 `invited_by`, `joined_at`. An org must always keep at least one admin (enforced by trigger).
 
 ### `invitations`
-`organization_id`, `email`, `role`, `token_hash`, `expires_at`, `accepted_at`,
-`invited_by`. Readable only by org admins and production managers.
+`organization_id`, `email` (lowercase), `role`, `token_hash` (SHA-256 hex; the token is never
+stored), `expires_at` (default 7 days), `invited_by` (= the caller), `accepted_at`,
+`accepted_by`, `revoked_at`. At most one open invitation per email per org.
+Readable by org admins and production managers. Admins invite any role; production
+managers invite `member`/`external` only. Revoking sets `revoked_at` (it can't be undone).
+Accepting is a `security definer` function added with P2-08.
+
+### Privileges and helpers (implemented)
+- `anon` has no access to these tables. `authenticated` can update only specific columns
+  (column grants), so keys such as `organization_id` or `user_id` can never be changed.
+- Members are added only by accepting an invitation (P2-08) or by `create_organization`.
+  Admins change roles and remove members; anyone can leave. Externals see only their own
+  membership row and only their own profile.
+- Policy helpers `private.is_org_member`, `private.has_org_role`, `private.can_see_profile`
+  live in the `private` schema (not exposed by the Data API).
 
 ## Phase 3: projects and tasks
 

@@ -23,7 +23,7 @@ Status: ⬜ todo · 🟡 doing · ✅ done. IDs are stable; append rather than r
 | --- | --- | --- | --- |
 | P2-01 | Add Supabase CLI (dev dep), `supabase init`, local stack docs | `npx supabase start` works; README updated | ✅ 2026-10-26: CLI 2.120.0 (pinned dev dep), `npm run db:*` scripts, local auth hardened in `config.toml`, placeholder `seed.sql`, README section |
 | P2-02 | `@supabase/ssr` clients (server/browser/admin) + `src/proxy.ts` session refresh | Admin client is `server-only`; no secret in client bundle (verified by grep of `.next/static`) | ⬜ |
-| P2-03 | Migration: `profiles`, `organizations`, `organization_members`, `invitations` + RLS + helper functions | RLS enabled on all; `create_organization` fn; last-admin guard | ⬜ |
+| P2-03 | Migration: `profiles`, `organizations`, `organization_members`, `invitations` + RLS + helper functions | RLS enabled on all; `create_organization` fn; last-admin guard | ✅ 2026-10-26: checked by hand (rolled-back SQL: cross-org reads/writes, role limits, last admin, anon); `supabase db lint` clean. Automated tests: P2-04/05 |
 | P2-04 | RLS test harness (SQL tests against local Supabase) | Script `npm run test:db`; runs in a clean DB | ⬜ |
 | P2-05 | RLS tests: org isolation and roles | User in org A cannot select/insert/update/delete org B rows; external/member limits proved | ⬜ |
 | P2-06 | Auth flows: login, logout, auth callback, DAL `getCurrentUser` | Protected routes redirect; session read is behind Suspense | ⬜ |

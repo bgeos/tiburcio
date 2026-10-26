@@ -8,6 +8,8 @@ const PASSWORD = "E2e-local-only-123";
 export const E2E_USER = { email: "e2e.admin@example.test", password: PASSWORD, fullName: "Ellis Example" };
 /** Signed in, but in no organization. */
 export const E2E_NO_ORG_USER = { email: "e2e.noorg@example.test", password: PASSWORD, fullName: "Noa Example" };
+/** Member (view-only) of E2E_ORG. */
+export const E2E_MEMBER = { email: "e2e.member@example.test", password: PASSWORD, fullName: "Mia Example" };
 /** Has an account, no organization; only the invitation tests use (and change) it. */
 export const E2E_INVITEE = { email: "e2e.invitee@example.test", password: PASSWORD, fullName: "Ivy Example" };
 /** Admin of another organization, to prove organizations can't see each other. */
@@ -65,6 +67,20 @@ async function ensureUser(user: { email: string; password: string; fullName: str
   return saved.id;
 }
 
+/** Make `userId` a member of the organization with `role` (insert or update). */
+async function ensureMember(orgSlug: string, userId: string, role: string): Promise<void> {
+  await admin()("/rest/v1/organization_members?on_conflict=organization_id,user_id", {
+    method: "POST",
+    headers: { prefer: "resolution=merge-duplicates" },
+    body: JSON.stringify({ organization_id: await orgId(orgSlug), user_id: userId, role }),
+  });
+}
+
+/** Remove every project of the E2E organization (subprojects, tasks… cascade). */
+export async function resetE2eProjects(): Promise<void> {
+  await admin()(`/rest/v1/projects?organization_id=eq.${await orgId(E2E_ORG.slug)}`, { method: "DELETE" });
+}
+
 /** Create the organization if missing, and make sure `adminId` is its admin. */
 async function ensureOrg(org: { slug: string; name: string }, adminId: string): Promise<void> {
   const call = admin();
@@ -106,13 +122,16 @@ export async function resetE2eInvitations(): Promise<void> {
 
 /** Everything the E2E tests rely on. Idempotent: safe to run before every test run. */
 export async function ensureE2eFixtures(): Promise<void> {
-  const [adminId, , , outsiderId] = await Promise.all([
+  const [adminId, , , outsiderId, memberId] = await Promise.all([
     ensureUser(E2E_USER),
     ensureUser(E2E_NO_ORG_USER),
     ensureUser(E2E_INVITEE),
     ensureUser(E2E_OUTSIDER),
+    ensureUser(E2E_MEMBER),
   ]);
   await ensureOrg(E2E_ORG, adminId);
   await ensureOrg(E2E_OTHER_ORG, outsiderId);
+  await ensureMember(E2E_ORG.slug, memberId, "member");
   await resetE2eInvitations();
+  await resetE2eProjects();
 }

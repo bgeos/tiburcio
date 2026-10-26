@@ -37,6 +37,7 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -81,6 +82,8 @@
 
   /* Brand: deep green (white text ≥ 4.5:1) */
   --primary: oklch(0.5 0.12 162);
+  /* Hover moves away from the text colour, so contrast goes up, never down (WCAG 1.4.3). */
+  --primary-hover: oklch(0.44 0.12 162);
   --primary-foreground: oklch(0.99 0 0);
   --secondary: oklch(0.95 0.02 165);
   --secondary-foreground: oklch(0.3 0.06 165);
@@ -134,6 +137,7 @@
   --popover-foreground: oklch(0.95 0.005 230);
 
   --primary: oklch(0.72 0.14 162);
+  --primary-hover: oklch(0.78 0.14 162);
   --primary-foreground: oklch(0.18 0.03 165);
   --secondary: oklch(0.28 0.025 170);
   --secondary-foreground: oklch(0.92 0.03 165);

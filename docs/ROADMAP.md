@@ -59,6 +59,7 @@ Known limits, carried forward:
 - [x] P2-04/05 database tests: org isolation and role limits, `npm run test:db` (2026-10-26).
 - [x] P2-02/06 Supabase clients, proxy session refresh, sign in/out (2026-10-26).
 - [x] P2-07 organization URLs `/[org]/…`, switcher, no-organization page, `org:create` (2026-10-26).
+- [x] P2-08 invitations: invite, email/link, accept, revoke (2026-10-26).
 Accept: unauthenticated users blocked, org isolation proved by tests, role
 permissions tested, no secrets in client or Git. Backlog P2-*.
 

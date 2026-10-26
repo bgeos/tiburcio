@@ -84,7 +84,14 @@ stored), `expires_at` (default 7 days), `invited_by` (= the caller), `accepted_a
 `accepted_by`, `revoked_at`. At most one open invitation per email per org.
 Readable by org admins and production managers. Admins invite any role; production
 managers invite `member`/`external` only. Revoking sets `revoked_at` (it can't be undone).
-Accepting is a `security definer` function added with P2-08.
+Accepting goes through `public.accept_invitation(token)` (`security definer`): it hashes the
+token, locks the row, and refuses unknown, revoked, used or expired invitations and any
+caller whose email differs from the invited one; then it adds the membership (an existing
+member keeps their role) and marks the invitation accepted. `public.invitation_preview(token)`
+returns the organization, role, email and status for the accept page. Both need a signed-in caller.
+
+`profiles.email` (P2-08) mirrors `auth.users.email` (trigger on insert and email change) so
+co-members can see each other's email on the Team page; it is not user-editable.
 
 ### Privileges and helpers (implemented)
 - `anon` has no access to these tables. `authenticated` can update only specific columns

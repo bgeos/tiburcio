@@ -57,7 +57,7 @@ into `SUPABASE_SECRET_KEY`. The local keys only work against your own machine.
 | --- | --- |
 | http://127.0.0.1:54321 | Supabase API |
 | http://127.0.0.1:54323 | Studio (database browser) |
-| http://127.0.0.1:54324 | Mailpit: catches all auth emails sent locally |
+| http://127.0.0.1:54324 | Mailpit: catches all auth emails sent locally (invitations land here, not in real inboxes) |
 
 `npm run db:reset` rebuilds the database from `supabase/migrations/` and
 `supabase/seed.sql`. `npm run db:stop` stops the containers (data is kept).

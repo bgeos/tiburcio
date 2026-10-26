@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { getMyMemberships } from "@/lib/dal/organizations";
-import { DEFAULT_SECTION, isSection, orgHref } from "@/lib/navigation";
+import { getMyMemberships, homePath } from "@/lib/dal/organizations";
 
 /**
  * `/` picks the organization: the first one (by name) the person belongs to.
@@ -27,6 +26,5 @@ async function PickOrganization({
   searchParams: PageProps<"/">["searchParams"];
 }): Promise<React.ReactNode> {
   const [memberships, { section }] = await Promise.all([getMyMemberships(), searchParams]);
-  if (memberships.length === 0) redirect("/no-organization");
-  redirect(orgHref(memberships[0].slug, isSection(section) ? section : DEFAULT_SECTION));
+  redirect(homePath(memberships, section));
 }

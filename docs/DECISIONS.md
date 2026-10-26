@@ -155,6 +155,18 @@ sees an "ask for an invitation" screen, never an empty app.
   link lists and header title render inside `<Suspense>` with plain-link fallbacks.
 - `npm run org:create` is the operator command for new organizations (D-021).
 
+## D-024 · 2026-10-26 · How invitations work (P2-08)
+- Admins invite any role; production managers invite members and externals (same rule in
+  RLS and in the Server Action). One open invitation per email per organization; it lasts 7 days.
+- The token (32 random bytes) appears only in the link. The database stores its SHA-256.
+- New people: `auth.admin.inviteUserByEmail` (the only use of the secret key) creates the
+  account and sends the email (template `supabase/templates/invite.html`). Its link signs them in
+  through `/auth/confirm`, then `/accept-invite`, where they choose a password and join.
+- People who already have an account can't be emailed by Supabase Auth, so the inviter gets a
+  link to share. Proper transactional email (Resend/Postmark, Q4) can replace this later.
+- `accept_invitation` only accepts the invited email address, so a forwarded link is useless.
+- After sign-in, people go straight to their organization (no extra hop via `/`).
+
 ---
 
 # Open questions (non-blocking)

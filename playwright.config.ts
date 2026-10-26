@@ -40,6 +40,8 @@ export default defineConfig({
     command: `npm run build && npm run start -- -p ${PORT}`,
     url: `${BASE_URL}/login`,
     reuseExistingServer: !process.env.CI,
+    // Links in invitation emails must point at this test server, not the dev server.
+    env: { NEXT_PUBLIC_SITE_URL: BASE_URL },
     timeout: 300_000,
   },
 });

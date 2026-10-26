@@ -8,8 +8,10 @@ const PASSWORD = "E2e-local-only-123";
 export const E2E_USER = { email: "e2e.admin@example.test", password: PASSWORD, fullName: "Ellis Example" };
 /** Signed in, but in no organization. */
 export const E2E_NO_ORG_USER = { email: "e2e.noorg@example.test", password: PASSWORD, fullName: "Noa Example" };
+/** Has an account, no organization; only the invitation tests use (and change) it. */
+export const E2E_INVITEE = { email: "e2e.invitee@example.test", password: PASSWORD, fullName: "Ivy Example" };
 /** Admin of another organization, to prove organizations can't see each other. */
-const E2E_OUTSIDER = { email: "e2e.outsider@example.test", password: PASSWORD, fullName: "Otto Example" };
+export const E2E_OUTSIDER = { email: "e2e.outsider@example.test", password: PASSWORD, fullName: "Otto Example" };
 
 export const E2E_ORG = { slug: "e2e-org", name: "E2E Test Org" };
 export const E2E_OTHER_ORG = { slug: "e2e-other-org", name: "E2E Other Org" };
@@ -81,13 +83,36 @@ async function ensureOrg(org: { slug: string; name: string }, adminId: string): 
   });
 }
 
+async function orgId(slug: string): Promise<string> {
+  const [org] = await admin()<{ id: string }[]>(`/rest/v1/organizations?select=id&slug=eq.${slug}`);
+  if (!org) throw new Error(`No organization ${slug}`);
+  return org.id;
+}
+
+/** Undo what invitation tests change: their invitations, and stray memberships. */
+export async function resetE2eInvitations(): Promise<void> {
+  const call = admin();
+  const id = await orgId(E2E_ORG.slug);
+  await call(`/rest/v1/invitations?organization_id=eq.${id}`, { method: "DELETE" });
+  const { users } = await call<{ users: { id: string; email: string }[] }>("/auth/v1/admin/users?per_page=200");
+  for (const user of users) {
+    if ([E2E_NO_ORG_USER.email, E2E_INVITEE.email, E2E_OUTSIDER.email].includes(user.email)) {
+      await call(`/rest/v1/organization_members?organization_id=eq.${id}&user_id=eq.${user.id}`, { method: "DELETE" });
+    }
+    // People created by "invite a new person" tests.
+    if (user.email.startsWith("e2e.new.")) await call(`/auth/v1/admin/users/${user.id}`, { method: "DELETE" });
+  }
+}
+
 /** Everything the E2E tests rely on. Idempotent: safe to run before every test run. */
 export async function ensureE2eFixtures(): Promise<void> {
-  const [adminId, , outsiderId] = await Promise.all([
+  const [adminId, , , outsiderId] = await Promise.all([
     ensureUser(E2E_USER),
     ensureUser(E2E_NO_ORG_USER),
+    ensureUser(E2E_INVITEE),
     ensureUser(E2E_OUTSIDER),
   ]);
   await ensureOrg(E2E_ORG, adminId);
   await ensureOrg(E2E_OTHER_ORG, outsiderId);
+  await resetE2eInvitations();
 }

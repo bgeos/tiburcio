@@ -35,3 +35,20 @@ export const dependencySchema = z
     path: ["predecessorId"],
     message: "A subproject can't wait for itself.",
   });
+
+const wholeDays = (min: number, message: string) =>
+  z.coerce.number(message).int(message).min(min, message).max(3650, "Use at most 3650 days.");
+
+/** Add or update a task. Duration and waiting days are calendar days. */
+export const taskSchema = z.object({
+  name: z.string().trim().min(1, "Enter a task name.").max(200, "Use at most 200 characters."),
+  durationDays: wholeDays(1, "Enter a whole number of days, 1 or more."),
+  delayDays: wholeDays(0, "Enter a whole number of days, 0 or more.").default(0),
+  reason: z.string().trim().max(1000, "Use at most 1000 characters.").default(""),
+});
+
+export const progressSchema = z.coerce
+  .number("Enter a number from 0 to 100.")
+  .int("Enter a whole number from 0 to 100.")
+  .min(0, "Enter a number from 0 to 100.")
+  .max(100, "Enter a number from 0 to 100.");

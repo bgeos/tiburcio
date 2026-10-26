@@ -2,11 +2,11 @@ import "server-only";
 import type { MaterialStatus } from "@/lib/domain/materials";
 import type { ProjectStatus } from "@/lib/domain/projects";
 import type { DateRange, IsoDate } from "@/lib/domain/schedule";
-import type { StatusCategory } from "@/lib/domain/status";
+import type { TaskStatus } from "@/lib/domain/tasks";
 import { createClient } from "@/lib/supabase/server";
 import type { Membership } from "./organizations";
 
-export type TaskStatus = Exclude<StatusCategory, "cancelled">;
+export type { TaskStatus };
 
 export type TaskView = {
   id: string;

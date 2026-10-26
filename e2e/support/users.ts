@@ -86,7 +86,42 @@ export async function createE2eProject(name: string): Promise<string> {
   return row.id;
 }
 
-/** Add tasks to a subproject (looked up by name) until the Cronograma UI exists (P3-15). */
+/** Add subprojects to a project directly; returns their ids by name. */
+export async function addE2eSubprojects(
+  projectId: string,
+  subprojects: { name: string; startDate: string }[],
+): Promise<Record<string, string>> {
+  const orgIdValue = await orgId(E2E_ORG.slug);
+  const rows = await admin()<{ id: string; name: string }[]>("/rest/v1/subprojects", {
+    method: "POST",
+    headers: { prefer: "return=representation" },
+    body: JSON.stringify(
+      subprojects.map((s, i) => ({
+        organization_id: orgIdValue,
+        project_id: projectId,
+        name: s.name,
+        start_date: s.startDate,
+        sort_order: i,
+      })),
+    ),
+  });
+  return Object.fromEntries(rows.map((r) => [r.name, r.id]));
+}
+
+/** "successor starts after predecessor finishes", added directly. */
+export async function linkE2eSubprojects(projectId: string, predecessorId: string, successorId: string): Promise<void> {
+  await admin()("/rest/v1/subproject_dependencies", {
+    method: "POST",
+    body: JSON.stringify({
+      organization_id: await orgId(E2E_ORG.slug),
+      project_id: projectId,
+      predecessor_id: predecessorId,
+      successor_id: successorId,
+    }),
+  });
+}
+
+/** Add tasks to a subproject (looked up by name), bypassing the UI. */
 export async function addE2eTasks(projectId: string, subprojectName: string, durations: number[]): Promise<void> {
   const call = admin();
   const [sub] = await call<{ id: string; organization_id: string }[]>(

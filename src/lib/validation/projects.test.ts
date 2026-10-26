@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { canEditProjects } from "@/lib/domain/projects";
-import { dependencySchema, projectSchema, subprojectSchema } from "./projects";
+import { dependencySchema, progressSchema, projectSchema, subprojectSchema, taskSchema } from "./projects";
 
 describe("projectSchema", () => {
   it("trims and accepts a valid project", () => {
@@ -65,5 +65,32 @@ describe("dependencySchema", () => {
     expect(dependencySchema.safeParse({ successorId: a, predecessorId: a }).error?.issues[0].message).toBe(
       "A subproject can't wait for itself.",
     );
+  });
+});
+
+describe("taskSchema", () => {
+  it("reads numbers from the form", () => {
+    expect(taskSchema.parse({ name: "Prepare bamboo", durationDays: "3", delayDays: "1" })).toEqual({
+      name: "Prepare bamboo",
+      durationDays: 3,
+      delayDays: 1,
+      reason: "",
+    });
+  });
+
+  it.each([
+    [{ name: "X", durationDays: "0" }, "Enter a whole number of days, 1 or more."],
+    [{ name: "X", durationDays: "2.5" }, "Enter a whole number of days, 1 or more."],
+    [{ name: "X", durationDays: "2", delayDays: "-1" }, "Enter a whole number of days, 0 or more."],
+    [{ name: "", durationDays: "2" }, "Enter a task name."],
+  ])("rejects %j", (input, message) => {
+    expect(taskSchema.safeParse(input).error?.issues[0].message).toBe(message);
+  });
+});
+
+describe("progressSchema", () => {
+  it("accepts 0–100", () => {
+    expect(progressSchema.parse("60")).toBe(60);
+    expect(progressSchema.safeParse("101").success).toBe(false);
   });
 });

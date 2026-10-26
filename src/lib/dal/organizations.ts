@@ -12,11 +12,13 @@ export type Membership = {
   name: string;
   slug: string;
   role: OrgRole;
+  /** IANA timezone, e.g. "America/Sao_Paulo": what "today" means for this organization. */
+  timezone: string;
 };
 
 type MembershipRow = {
   role: OrgRole;
-  organizations: { id: string; name: string; slug: string } | null;
+  organizations: { id: string; name: string; slug: string; timezone: string } | null;
 };
 
 /**
@@ -36,7 +38,7 @@ export const getMyMemberships = cache(async (): Promise<Membership[]> => {
 export async function membershipsOf(supabase: SupabaseClient, userId: string): Promise<Membership[]> {
   const { data, error } = await supabase
     .from("organization_members")
-    .select("role, organizations(id, name, slug)")
+    .select("role, organizations(id, name, slug, timezone)")
     .eq("user_id", userId)
     .returns<MembershipRow[]>();
   if (error) throw new Error(`Could not load organizations: ${error.message}`);

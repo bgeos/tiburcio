@@ -174,6 +174,7 @@ async function ProjectContent({ params }: { params: Params }) {
                   return {
                     id: sub.id,
                     label: sub.name,
+                    href: `/${org.slug}/projects/${project.id}/${sub.id}`,
                     sublabel: sub.ownerName ?? undefined,
                     range: s.end ? { start: s.start, end: s.end } : null,
                     baseline: baseline[sub.id] ?? null,
@@ -272,7 +273,14 @@ function SubprojectCard({
       <CardHeader className="grid-cols-[1fr_auto] items-center gap-x-4">
         <ProgressDonut value={rollupProgress(sub.tasks)} label={`${sub.name} progress`} className="col-start-2 row-span-3 row-start-1" />
         <CardTitle>
-          <h3 className="text-base font-semibold">{sub.name}</h3>
+          <h3 className="text-base font-semibold">
+            <OrgLink
+              href={`/projects/${project.id}/${sub.id}`}
+              className="text-primary underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
+            >
+              {sub.name}
+            </OrgLink>
+          </h3>
         </CardTitle>
         <p className="text-sm text-muted-foreground">Owner: {sub.ownerName ?? "—"}</p>
         {notes.length ? (

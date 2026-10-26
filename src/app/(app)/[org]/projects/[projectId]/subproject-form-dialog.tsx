@@ -1,9 +1,10 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { CircleAlert, CircleCheck, OctagonAlert } from "lucide-react";
+import { CircleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { TextField, TextareaField } from "@/components/form/text-field";
+import { PlanPreview } from "@/components/plan-preview";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -118,37 +119,7 @@ function SubprojectForm({ orgSlug, projectId, plan, dependencies, subproject, on
         />
       </FieldGroup>
 
-      {preview ? (
-        <section aria-labelledby="sub-preview" aria-live="polite" className="space-y-2 rounded-lg border bg-muted/40 p-3">
-          <h3 id="sub-preview" className="text-sm font-semibold">
-            Preview
-          </h3>
-          {preview.lines.length ? (
-            <ul className="list-disc space-y-1 pl-5 text-sm">
-              {preview.lines.map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-muted-foreground">No tasks yet, so no other dates change.</p>
-          )}
-          {preview.newOverlaps.map((warning) => (
-            <p key={warning} className="flex gap-2 rounded-md bg-destructive/10 p-2 text-sm text-destructive">
-              <OctagonAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-              <span>
-                <span className="font-medium">Overlap: </span>
-                {warning} It won&apos;t be moved automatically.
-              </span>
-            </p>
-          ))}
-          {preview.resolvedOverlaps.map((note) => (
-            <p key={note} className="flex gap-2 text-sm text-status-done">
-              <CircleCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-              {note}
-            </p>
-          ))}
-        </section>
-      ) : null}
+      {preview ? <PlanPreview change={preview} emptyText="No tasks yet, so no other dates change." /> : null}
 
       {subproject ? (
         <TextareaField

@@ -61,7 +61,13 @@ export function Timeline({
 
   return (
     <div className="space-y-3">
-      <div className="overflow-x-auto">
+      {/* Scrolls sideways on narrow screens: focusable so keyboard users can scroll it too. */}
+      <div
+        className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-ring"
+        tabIndex={0}
+        role="region"
+        aria-label={`${label} (scrolls sideways on small screens)`}
+      >
         <div className="min-w-[560px]">
           <div className="flex text-xs text-muted-foreground" aria-hidden="true">
             <div className="w-40 shrink-0" />

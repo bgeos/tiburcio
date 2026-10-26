@@ -320,7 +320,7 @@ function SubprojectCard({
           </dd>
           <dt className="text-muted-foreground">Materials on site</dt>
           <dd className="tabular-nums">
-            {sub.materialStatuses.filter((m) => m === "on_site").length} of {sub.materialStatuses.length}
+            {sub.materials.filter((m) => m.status === "on_site").length} of {sub.materials.length}
           </dd>
           {startsAfter.length ? (
             <>

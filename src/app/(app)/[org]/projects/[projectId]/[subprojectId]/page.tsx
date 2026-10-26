@@ -21,22 +21,27 @@ import { canEditProjects } from "@/lib/domain/projects";
 import { daysBetween } from "@/lib/domain/schedule";
 import { formatDate, formatRange, pluralDays } from "@/lib/format";
 import { SubprojectFormDialog } from "../subproject-form-dialog";
+import { MaterialsTab } from "./materials-tab";
 import { AddTaskButton, RemoveTaskButton, TaskStatusSelect, UpdateTaskButton, type TaskScope } from "./task-dialogs";
+
+const TABS = ["cronograma", "materials"] as const;
 
 export const metadata: Metadata = { title: "Subproject" };
 
 type Props = PageProps<"/[org]/projects/[projectId]/[subprojectId]">;
 
-export default function SubprojectPage({ params }: Props) {
+export default function SubprojectPage({ params, searchParams }: Props) {
   return (
     <Suspense fallback={<SubprojectSkeleton />}>
-      <SubprojectContent params={params} />
+      <SubprojectContent params={params} searchParams={searchParams} />
     </Suspense>
   );
 }
 
-async function SubprojectContent({ params }: { params: Props["params"] }) {
-  const { org: slug, projectId, subprojectId } = await params;
+async function SubprojectContent({ params, searchParams }: { params: Props["params"]; searchParams: Props["searchParams"] }) {
+  const [{ org: slug, projectId, subprojectId }, { tab }] = await Promise.all([params, searchParams]);
+  // ?tab=materials opens that tab (links from the All materials page).
+  const defaultTab = TABS.find((t) => t === tab) ?? "cronograma";
   const org = await requireMembership(slug);
   const project = await getProjectDetail(org, projectId);
   const sub = project?.subprojects.find((s) => s.id === subprojectId);
@@ -109,12 +114,20 @@ async function SubprojectContent({ params }: { params: Props["params"] }) {
         </section>
       ) : null}
 
-      <Tabs defaultValue="cronograma" className="gap-4">
+      <Tabs defaultValue={defaultTab} className="gap-4">
         <TabsList className="w-full justify-start overflow-x-auto sm:w-fit">
           <TabsTrigger value="cronograma">Cronograma ({sub.tasks.length})</TabsTrigger>
+          <TabsTrigger value="materials">Materials ({sub.materials.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="cronograma">
           <Cronograma project={project} sub={sub} scope={scope} canEdit={canEdit} today={todayIn(org.timezone)} />
+        </TabsContent>
+        <TabsContent value="materials">
+          <MaterialsTab
+            scope={{ orgSlug: org.slug, projectId: project.id, subprojectId: sub.id, subprojectName: sub.name }}
+            materials={sub.materials}
+            canEdit={canEdit}
+          />
         </TabsContent>
       </Tabs>
     </>

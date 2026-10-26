@@ -52,3 +52,8 @@ export const progressSchema = z.coerce
   .int("Enter a whole number from 0 to 100.")
   .min(0, "Enter a number from 0 to 100.")
   .max(100, "Enter a number from 0 to 100.");
+
+/** A subproject material: free text, e.g. "Steel cable, 8 mm" (no units yet, D-019). */
+export const materialSchema = z.object({
+  description: z.string().trim().min(1, "Describe the material.").max(300, "Use at most 300 characters."),
+});

@@ -125,7 +125,8 @@ test("the cronograma is accessible, also at phone width (the table scrolls by ke
   await page.getByRole("link", { name: "Structure", exact: true }).first().click();
   await expect(page.getByRole("region", { name: "Structure cronograma" })).toBeVisible();
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
-  expect(results.violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => v.id)).toEqual([]);
+  const blocking = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+  expect(blocking.map((v) => ({ id: v.id, nodes: v.nodes.slice(0, 3).map((n) => `${n.target.join(" ")}: ${n.failureSummary}`) }))).toEqual([]);
 });
 
 test("a member sees the cronograma but cannot change it", async ({ browser }) => {

@@ -38,8 +38,11 @@ test("a render error shows the error boundary and recovers", async ({ page }) =>
 
 test("slow pages show a loading skeleton, then content", async ({ page }) => {
   await page.goto("/design");
+  // Start watching before the click: the skeleton is on screen for ~1.5 s only, and a
+  // busy test run could otherwise look after it has already gone.
+  const skeletonSeen = page.getByRole("status").filter({ hasText: "Loading…" }).waitFor({ state: "attached" });
   await page.getByRole("link", { name: "Loading" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Loading…" })).toBeAttached();
+  await skeletonSeen;
   await expect(page.getByRole("heading", { level: 1, name: "Loaded" })).toBeVisible({
     timeout: 10_000,
   });

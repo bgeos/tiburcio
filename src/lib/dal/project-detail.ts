@@ -27,8 +27,11 @@ export type SubprojectView = {
   ownerName: string | null;
   /** Not archived, in cronograma order. */
   tasks: TaskView[];
-  materialStatuses: MaterialStatus[];
+  /** Not archived, in list order. */
+  materials: MaterialView[];
 };
+
+export type MaterialView = { id: string; description: string; status: MaterialStatus };
 
 export type ProjectDetail = {
   id: string;
@@ -79,7 +82,13 @@ export async function getProjectDetail(org: Membership, projectId: string): Prom
       .is("archived_at", null)
       .order("sort_order")
       .order("created_at"),
-    supabase.from("subproject_materials").select("subproject_id, status").in("subproject_id", ids).is("archived_at", null),
+    supabase
+      .from("subproject_materials")
+      .select("id, subproject_id, description, status")
+      .in("subproject_id", ids)
+      .is("archived_at", null)
+      .order("sort_order")
+      .order("created_at"),
     supabase.from("crew_members").select("id, name").in("subproject_id", ids),
     supabase.from("subproject_dependencies").select("id, predecessor_id, successor_id").eq("project_id", projectId),
     supabase.from("plan_baselines").select("locked_at, snapshot").eq("project_id", projectId).maybeSingle(),
@@ -115,9 +124,9 @@ export async function getProjectDetail(org: Membership, projectId: string): Prom
           actualStart: t.actual_start,
           actualEnd: t.actual_end,
         })),
-      materialStatuses: (materials.data ?? [])
+      materials: (materials.data ?? [])
         .filter((m) => m.subproject_id === s.id)
-        .map((m) => m.status as MaterialStatus),
+        .map((m) => ({ id: m.id, description: m.description, status: m.status as MaterialStatus })),
     })),
     // Links to archived subprojects are kept in the database but not shown.
     dependencies: (dependencies.data ?? [])

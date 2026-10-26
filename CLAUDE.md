@@ -19,7 +19,8 @@ live in `PROJECT_BLUEPRINT.md`; it is the source of truth for scope.
 ## End of every task
 
 1. Run `npm run check` (lint + typecheck + tests), `npm run build`, and
-   `npm run test:e2e` when UI or routes changed.
+   `npm run test:e2e` when UI or routes changed. Run `npm run test:db` when
+   migrations or policies changed (needs `npm run db:start`).
 2. Fix failures caused by your changes. Never claim a check passed unless it
    was actually run in this session.
 3. Update `docs/ROADMAP.md` / `docs/BACKLOG.md` status, and
@@ -76,6 +77,8 @@ npm test           # Vitest (single run)
 npm run check      # lint + typecheck + test
 npm run build      # production build
 npm run test:e2e   # Playwright + axe (builds, serves on :3100)
+npm run db:start   # local Supabase (Docker)
+npm run test:db    # pgTAP RLS tests against local Supabase
 ```
 
 ## Windows gotchas

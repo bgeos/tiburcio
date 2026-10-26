@@ -77,6 +77,7 @@ into `SUPABASE_SECRET_KEY`. The local keys only work against your own machine.
 | `npm run check` | Lint + typecheck + unit tests |
 | `npm run db:start` / `db:stop` / `db:status` | Start, stop, or show the local Supabase stack |
 | `npm run db:reset` | Recreate the local database from migrations + seed |
+| `npm run test:db` | Database security tests (pgTAP): org isolation and role limits. Needs `db:start` |
 
 First time only, install the test browser: `npx playwright install chromium`.
 

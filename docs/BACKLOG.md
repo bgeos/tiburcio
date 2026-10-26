@@ -21,14 +21,14 @@ Status: ⬜ todo · 🟡 doing · ✅ done. IDs are stable; append rather than r
 
 | ID | Task | Acceptance criteria | Status |
 | --- | --- | --- | --- |
-| P2-01 | Add Supabase CLI (dev dep), `supabase init`, local stack docs | `npx supabase start` works; README updated | ⬜ |
+| P2-01 | Add Supabase CLI (dev dep), `supabase init`, local stack docs | `npx supabase start` works; README updated | ✅ 2026-10-26: CLI 2.120.0 (pinned dev dep), `npm run db:*` scripts, local auth hardened in `config.toml`, placeholder `seed.sql`, README section |
 | P2-02 | `@supabase/ssr` clients (server/browser/admin) + `src/proxy.ts` session refresh | Admin client is `server-only`; no secret in client bundle (verified by grep of `.next/static`) | ⬜ |
 | P2-03 | Migration: `profiles`, `organizations`, `organization_members`, `invitations` + RLS + helper functions | RLS enabled on all; `create_organization` fn; last-admin guard | ⬜ |
 | P2-04 | RLS test harness (SQL tests against local Supabase) | Script `npm run test:db`; runs in a clean DB | ⬜ |
 | P2-05 | RLS tests: org isolation and roles | User in org A cannot select/insert/update/delete org B rows; external/member limits proved | ⬜ |
 | P2-06 | Auth flows: login, logout, auth callback, DAL `getCurrentUser` | Protected routes redirect; session read is behind Suspense | ⬜ |
-| P2-07 | Create-organization flow and org switcher | New user with no org is guided to create one; becomes admin | ⬜ |
-| P2-08 | Invitations: admin invites by email with role; accept page | Invite-only; token expires; accepted user joins with that role | ⬜ |
+| P2-07 | Bootstrap the first organization + admin (operator script; seed locally) and org switcher | No self-service org creation (D-021); a signed-in user with no membership sees a clear "ask for an invitation" screen; users in several orgs can switch | ⬜ |
+| P2-08 | Invitations: admin invites by email with role; accept page | Invite-only (public sign-up disabled, D-021); invite works with sign-up off; token expires; accepted user joins with that role | ⬜ |
 | P2-09 | Seed data (`supabase/seed.sql`): 2 orgs, users per role, labelled demo | Used by RLS and E2E tests; clearly fake names | ⬜ |
 | P2-10 | CI workflow (GitHub Actions): lint, typecheck, unit, build (+ db tests if feasible) | Green on main | ⬜ |
 

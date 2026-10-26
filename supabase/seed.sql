@@ -1,0 +1,3 @@
+-- Local seed data, loaded by `npm run db:reset` after the migrations.
+-- Fictional demo data only: never real names, emails or budgets (D-018).
+-- Organizations, users per role and labelled demo records arrive with P2-09.

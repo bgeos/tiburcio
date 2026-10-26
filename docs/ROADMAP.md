@@ -7,7 +7,7 @@ Full acceptance criteria are in `PROJECT_BLUEPRINT.md` § 6.
 | --- | --- | --- |
 | 0 | Inspect, plan, prepare | ✅ |
 | 1 | App shell and design system | ✅ |
-| 2 | Database, auth, authorization | ⬜ |
+| 2 | Database, auth, authorization | 🟡 |
 | 3 | Project hierarchy and tasks | ⬜ |
 | 4 | Scheduling and dependencies | ⬜ |
 | 5 | Materials and inventory | ⬜ |
@@ -49,11 +49,12 @@ accessibility and responsive behavior checked. Backlog P1-01 … P1-09 all done.
 
 Known limits, carried forward:
 - No auth yet: the shell is publicly viewable and contains no data. Phase 2 adds the session check.
-- Routes have no `/[org]` prefix yet. Phase 2 decides (see D-016).
+- Routes have no `/[org]` prefix yet. Decided: they will (D-016); the move happens in Phase 2.
 - `/design` is public. Review for removal or admin-only access in Phase 9.
 - UI strings are English and not yet externalised (Q1).
 
-## Phase 2: Database, auth, authorization ⬜
+## Phase 2: Database, auth, authorization 🟡
+- [x] P2-01 local Supabase stack (2026-10-26).
 Accept: unauthenticated users blocked, org isolation proved by tests, role
 permissions tested, no secrets in client or Git. Backlog P2-*.
 

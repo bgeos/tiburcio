@@ -25,8 +25,8 @@ materials/stock, budgets and dashboards, all operated from the web UI.
 
 - Node.js 20.9+ (developed on Node 24) and npm. **Use npm only**; don't mix in pnpm or yarn.
 - Git.
-- From Phase 2: Docker Desktop (for the local Supabase stack). The Supabase CLI
-  will be added as a dev dependency and run with `npx supabase`.
+- Docker Desktop, running, for the local Supabase stack. The Supabase CLI is a
+  dev dependency (`npx supabase …` or the `npm run db:*` scripts).
 
 ## Setup
 
@@ -42,6 +42,26 @@ Open http://localhost:3000.
 
 `.env.local` is not needed until Phase 2 (Supabase). Never commit it.
 
+### Local database (Supabase)
+
+```bash
+npm run db:start    # first run downloads the Docker images (several minutes)
+npm run db:status   # prints the local URL and keys
+```
+
+Copy the **API URL** and the **publishable key** from `db:status` into `.env.local`
+(`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`), and the **secret key**
+into `SUPABASE_SECRET_KEY`. The local keys only work against your own machine.
+
+| URL | What |
+| --- | --- |
+| http://127.0.0.1:54321 | Supabase API |
+| http://127.0.0.1:54323 | Studio (database browser) |
+| http://127.0.0.1:54324 | Mailpit: catches all auth emails sent locally |
+
+`npm run db:reset` rebuilds the database from `supabase/migrations/` and
+`supabase/seed.sql`. `npm run db:stop` stops the containers (data is kept).
+
 ## Scripts
 
 | Command | What it does |
@@ -55,6 +75,8 @@ Open http://localhost:3000.
 | `npm run test:watch` | Unit tests in watch mode |
 | `npm run test:e2e` | Browser + accessibility tests (Playwright). Builds the app and serves it on port 3100 |
 | `npm run check` | Lint + typecheck + unit tests |
+| `npm run db:start` / `db:stop` / `db:status` | Start, stop, or show the local Supabase stack |
+| `npm run db:reset` | Recreate the local database from migrations + seed |
 
 First time only, install the test browser: `npx playwright install chromium`.
 

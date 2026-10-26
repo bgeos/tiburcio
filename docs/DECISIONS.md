@@ -72,6 +72,11 @@ Access Layer will call in Phase 2. It is an experimental Next.js flag, so re-che
 `/projects` etc. Phase 2 decides between `/[org]/…` URLs and an active-org cookie. URL
 prefixes make links shareable and unambiguous across orgs. Leaning towards `/[org]/…`.
 
+**Decided (product owner, 2026-10-26): app pages include the organization slug**, e.g.
+`/acme-festivals/projects`. The slug selects the org for the request, and the server still
+checks membership on every request (RLS + DAL); the URL is never trusted for authorization.
+Routes move under `src/app/(app)/[org]/…` with P2-06/P2-07.
+
 ## D-017 · 2026-10-26 · Every data page owns its loading boundary
 Client navigation inside the app shell does not re-show `(app)/loading.tsx`, because it sits
 at the shared layout (Next 16 instant navigation). Pages that read data must have their
@@ -105,6 +110,23 @@ Product owner's answers (refines Phases 3–5; a worked example will follow befo
 - **All materials view:** one table of every material from every subproject (material,
   project, subproject, status), filterable by project, subproject and status. It reads the
   same data the subproject Materials tabs edit; there is no separate materials list to keep in sync.
+
+## D-020 · 2026-10-26 · Local Supabase: pinned CLI, stricter auth defaults
+The Supabase CLI is a dev dependency pinned to an exact version (2.120.0, chosen as the
+newest release older than two weeks); upgrade on purpose. Local auth mirrors what staging
+and production will use: passwords ≥ 8 characters with letters and digits, password
+changes need a recent sign-in, and redirects are allowed only to the dev (3000) and E2E
+(3100) servers. Email confirmation stays off locally for fast testing; it must be on in
+hosted projects. Local keys live in the git-ignored `.env.local`.
+
+## D-021 · 2026-10-26 · Invitation-only accounts
+Product owner's decision. Public sign-up is disabled (`[auth] enable_signup = false`, locally and in
+every hosted project; `[auth.email] enable_signup` must stay `true`, or email *sign-in* is
+disabled too). People join only through an invitation from an org admin or production
+manager, sent with the server-only admin client (P2-08). There is no self-service
+"create organization" page: the first organization and its first admin are created by an
+operator script (locally by `supabase/seed.sql`). A signed-in user without any membership
+sees an "ask for an invitation" screen, never an empty app.
 
 ---
 

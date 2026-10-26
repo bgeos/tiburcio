@@ -40,7 +40,7 @@ src/
     (auth)/accept-invite                    Phase 2
     (app)/layout.tsx                        ✅ app shell: sidebar, header, skip link
     (app)/loading.tsx, error.tsx            ✅ section loading skeleton + error boundary
-    (app)/dashboard | projects | tasks | materials | reports | team | settings   ✅ (no org prefix yet, D-016)
+    (app)/dashboard | projects | tasks | materials | reports | team | settings   ✅ (moving under `[org]/` in Phase 2, D-016)
     (app)/design/…                          ✅ internal component/state reference (demo data)
     auth/callback/route.ts                  Supabase auth code exchange (Phase 2)
   components/

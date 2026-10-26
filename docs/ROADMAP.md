@@ -69,18 +69,20 @@ org isolation and role limits are proved by 54 pgTAP tests; no secret in client 
 Accept: unauthenticated users blocked, org isolation proved by tests, role
 permissions tested, no secrets in client or Git. Backlog P2-*.
 
-## Phase 3: Projects and tasks ⬜
-Product shape agreed in D-019 and confirmed in D-025: the prototype at `/<org>/projects/prototype`
-is the spec (subproject = Cronograma + Materials + Crew + History). Backlog P3-11 … P3-20.
+## Phase 3: Projects and tasks ✅ (2026-10-26)
+Product shape agreed in D-019 and confirmed in D-025: the prototype (removed in P3-20, still in Git history)
+was the spec (subproject = Cronograma + Materials + Crew + History). Backlog P3-11 … P3-20.
 
 - [x] P3-11 … P3-18 (2026-10-26): tables with RLS, Projects page, project page, Cronograma,
   Materials (+ All materials), Crew and owner, History, lock plan, daily check-in.
 - [x] P3-19 (2026-10-26): members see everything read-only (no editing controls, no check-in);
   external collaborators get a clear "no projects" message and direct links are 404s.
-- [ ] P3-20 remove the prototype + end-to-end slice.
+- [x] P3-20 (2026-10-26): prototype removed; end-to-end vertical slice through the UI only.
 
 Accept: Main Stage with 4 subprojects created via UI, each with its own owner and tasks,
 edits persist, parent summaries follow the documented progress rule. Backlog P3-*.
+Met by `e2e/vertical-slice.spec.ts` (UI only, survives a reload, another organization gets a 404)
+plus the pgTAP RLS tests.
 
 ## Phases 4–9 ⬜
 See blueprint § 6. They are broken down into backlog items when the preceding phase is complete.

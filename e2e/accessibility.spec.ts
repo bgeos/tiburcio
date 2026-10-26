@@ -3,8 +3,7 @@ import { expect, test } from "@playwright/test";
 import { orgPath } from "./support/users";
 
 const PAGES = [
-  ...["/dashboard", "/projects", "/projects/prototype", "/projects/prototype/materials", "/tasks",
-    "/materials", "/reports", "/team", "/settings"].map((p) => orgPath(p as `/${string}`)),
+  ...["/dashboard", "/projects", "/tasks", "/materials", "/reports", "/team", "/settings"].map((p) => orgPath(p as `/${string}`)),
   "/design",
   "/no-organization",
   "/does-not-exist",

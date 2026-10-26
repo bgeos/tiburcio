@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { EyeOff, FlaskConical, FolderKanban, Pencil, Plus } from "lucide-react";
+import { EyeOff, FolderKanban, Pencil, Plus } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { OrgLink } from "@/components/org-link";
 import { PageHeader } from "@/components/page-header";
@@ -44,25 +44,16 @@ export default function ProjectsPage({ params, searchParams }: PageProps<"/[org]
 async function HeaderActions({ params }: { params: PageProps<"/[org]/projects">["params"] }) {
   const { org: slug } = await params;
   const org = await requireMembership(slug);
-  return (
-    <>
-      <Button variant="ghost" asChild>
-        <OrgLink href="/projects/prototype">
-          <FlaskConical aria-hidden="true" /> Prototype
-        </OrgLink>
-      </Button>
-      {canEditProjects(org.role) ? (
-        <ProjectFormDialog
-          orgSlug={org.slug}
-          trigger={
-            <Button>
-              <Plus aria-hidden="true" /> New project
-            </Button>
-          }
-        />
-      ) : null}
-    </>
-  );
+  return canEditProjects(org.role) ? (
+    <ProjectFormDialog
+      orgSlug={org.slug}
+      trigger={
+        <Button>
+          <Plus aria-hidden="true" /> New project
+        </Button>
+      }
+    />
+  ) : null;
 }
 
 async function ProjectsContent({

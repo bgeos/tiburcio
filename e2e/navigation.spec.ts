@@ -74,7 +74,7 @@ test.describe("mobile navigation", () => {
   });
 
   test("has no horizontal scroll", async ({ page }) => {
-    for (const path of [orgPath("/dashboard"), orgPath("/projects"), orgPath("/projects/prototype"), orgPath("/projects/prototype/materials"), "/design", "/no-organization"]) {
+    for (const path of [orgPath("/dashboard"), orgPath("/projects"), orgPath("/materials"), "/design", "/no-organization"]) {
       await page.goto(path);
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth,

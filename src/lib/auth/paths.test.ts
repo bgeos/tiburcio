@@ -14,7 +14,7 @@ describe("isPublicPath", () => {
 describe("safeNextPath", () => {
   it("keeps same-site paths with their query", () => {
     expect(safeNextPath("/projects")).toBe("/projects");
-    expect(safeNextPath("/projects/prototype?tab=materials")).toBe("/projects/prototype?tab=materials");
+    expect(safeNextPath("/projects/abc/def?tab=materials")).toBe("/projects/abc/def?tab=materials");
   });
 
   it.each([

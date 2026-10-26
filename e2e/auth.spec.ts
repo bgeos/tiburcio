@@ -5,15 +5,15 @@ import { E2E_USER, orgPath } from "./support/users";
 test.use({ storageState: { cookies: [], origins: [] } });
 
 test("signed-out visitors are sent to the login page, then back where they were going", async ({ page }) => {
-  await page.goto(orgPath("/projects/prototype"));
-  await expect(page).toHaveURL(/\/login\?next=%2Fe2e-org%2Fprojects%2Fprototype$/);
+  await page.goto(orgPath("/materials?status=requested"));
+  await expect(page).toHaveURL(/\/login\?next=%2Fe2e-org%2Fmaterials%3Fstatus%3Drequested$/);
   await expect(page.getByRole("heading", { level: 1, name: "Sign in" })).toBeVisible();
 
   await page.getByLabel("Email").fill(E2E_USER.email);
   await page.getByLabel("Password").fill(E2E_USER.password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/e2e-org\/projects\/prototype$/);
-  await expect(page.getByRole("heading", { level: 1, name: "Main Stage" })).toBeVisible();
+  await expect(page).toHaveURL(/\/e2e-org\/materials\?status=requested$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Materials" })).toBeVisible();
 });
 
 test("a wrong password shows one generic error", async ({ page }) => {

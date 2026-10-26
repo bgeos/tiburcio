@@ -1,6 +1,8 @@
 "use client";
 
-import { LogOut } from "lucide-react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
+import { LogOut, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,6 +21,8 @@ function initials(name: string, email: string): string {
 }
 
 export function AccountMenuButton({ name, email }: { name: string; email: string }) {
+  // The profile page lives inside an organization (it uses the app shell); outside one there's no link.
+  const { org } = useParams<{ org?: string }>();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -39,6 +43,14 @@ export function AccountMenuButton({ name, email }: { name: string; email: string
           <p className="truncate text-xs text-muted-foreground">{email}</p>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {org ? (
+          <DropdownMenuItem asChild>
+            <Link href={`/${org}/profile`}>
+              <UserRound aria-hidden="true" />
+              Your profile
+            </Link>
+          </DropdownMenuItem>
+        ) : null}
         <form action={signOut}>
           <DropdownMenuItem asChild>
             <button type="submit" className="w-full">

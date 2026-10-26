@@ -48,11 +48,14 @@ Status: ⬜ todo · 🟡 doing · ✅ done. IDs are stable; append rather than r
 | P3-18 | History tab + project history, lock plan (baseline, "vs. original"), daily check-in | Every change logged with optional reason | ✅ 2026-10-26: History tab + project "Recent changes" (who, when in org timezone, details with red overlaps, reason); Lock plan (snapshot computed on the server; re-lock replaces it); daily check-in with Previous/Next/Finish links. Fixed: history loaded only after the ids are validated (404, not an error); pgTAP fixture lookups scoped to their test organizations. 4 E2E |
 | P3-19 | Permissions in the UI: members read-only, externals no projects | E2E as member and external; RLS already proves it | ✅ |
 | P3-21 | Overview with real figures (D-026) | Active projects, open/overdue tasks, materials not on site, tasks by status, current projects with progress and red overlaps; "—" when empty | ✅ 2026-10-26: `lib/domain/dashboard.ts` (unit-tested), `lib/dal/dashboard.ts`; E2E in the vertical slice, permissions and navigation specs |
+| P3-22 | Profile page: name, personal theme colour, Light / Dark / Device (D-027) | Saved on the profile, follows the person to any device; previews before saving; no red; axe in every colour, light and dark | ✅ 2026-10-26: migration `profile_preferences` (+6 pgTAP), `lib/domain/appearance.ts`, `/[org]/profile`, account menu link, top bar switch saves too. 4 E2E with their own account + contrast scan of all colours |
+| P3-23 | Subproject colours (D-027) | Auto-assigned from a fixed palette without red, changeable in the subproject dialog; tasks, cards, timeline bars use it; overlaps stay red | ⬜ |
 | P3-20 | Remove the prototype; E2E vertical slice | Create Main Stage + 3 subprojects + tasks by UI, delay a task → red overlap, survives refresh | ✅ 2026-10-26: prototype and its demo data removed (kept in Git history). `e2e/vertical-slice.spec.ts`: project, 4 subprojects, links, tasks, materials, crew and owners all through the UI; a delay previews and shows both red overlaps after a reload; rollup 1 of 9 = 11 %; another organization gets a 404; axe and no horizontal scroll at phone width in light and dark |
 
 ## Phases 4–9
 
 Broken down when Phase 3 is complete. Known early items:
+- P4-01 (next, D-027): task dependencies between any two tasks of the organization, also across projects: `task_dependencies` + cycle trigger + pgTAP, "waits for" in the task dialog with preview, red task overlaps on the cronograma, project page and Overview.
 - P4: `task_dependencies` + cycle trigger + tests, Gantt library evaluation (record in DECISIONS), overdue/blocked indicators.
 - P5: materials, locations, ledger, `post_material_movement` / `reserve_material` with concurrency tests, the "12 plywood sheets for DJ task" scenario.
 - P6: budgets/expenses, Recharts dashboard from real queries, drill-down, CSV export via RLS-scoped route.

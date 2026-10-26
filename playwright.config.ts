@@ -20,9 +20,9 @@ const BASE_URL = `http://localhost:${PORT}`;
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
-  // One local server and database serve every worker: with more than 4, saves in the
+  // One local server and database serve every worker: with more than 3, saves in the
   // multi-step journeys queue for over 10 s. CI keeps Playwright's default (half the cores).
-  workers: process.env.CI ? undefined : 4,
+  workers: process.env.CI ? undefined : 3,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? "github" : "list",

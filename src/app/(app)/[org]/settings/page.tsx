@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { Building2, ListTodo, SlidersHorizontal, UserCog } from "lucide-react";
+import { OrgLink } from "@/components/org-link";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = { title: "Settings" };
 
-const SECTIONS = [
+const SECTIONS: { icon: typeof Building2; title: string; description: string; phase?: string; href?: `/${string}` }[] = [
   {
     icon: Building2,
     title: "Organization",
@@ -15,8 +16,8 @@ const SECTIONS = [
   {
     icon: UserCog,
     title: "Your profile",
-    description: "Name, timezone and language. Theme is available now in the top bar.",
-    phase: "Phase 2",
+    description: "Your name, theme colour and light or dark mode.",
+    href: "/profile",
   },
   {
     icon: ListTodo,
@@ -49,11 +50,19 @@ export default function SettingsPage() {
                     <section.icon aria-hidden="true" className="size-4" />
                   </span>
                   <div className="space-y-1">
-                    <CardTitle className="text-base">{section.title}</CardTitle>
+                    <CardTitle className="text-base">
+                      {section.href ? (
+                        <OrgLink href={section.href} className="text-primary underline-offset-4 hover:underline">
+                          {section.title}
+                        </OrgLink>
+                      ) : (
+                        section.title
+                      )}
+                    </CardTitle>
                     <CardDescription>{section.description}</CardDescription>
-                    <p className="text-xs text-muted-foreground">
-                      Available in {section.phase}
-                    </p>
+                    {section.phase ? (
+                      <p className="text-xs text-muted-foreground">Available in {section.phase}</p>
+                    ) : null}
                   </div>
                 </div>
               </CardHeader>

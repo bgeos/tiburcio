@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { unauthorized } from "next/navigation";
 import { connection } from "next/server";
+import { DEFAULT_ACCENT, THEME_MODES, isAccentColor, type AccentColor, type ThemeMode } from "@/lib/domain/appearance";
 import { createClient } from "@/lib/supabase/server";
 
 /** The narrow view of the signed-in person that pages and components may use. */
@@ -10,6 +11,8 @@ export type CurrentUser = {
   email: string;
   /** Empty until the person sets it. */
   fullName: string;
+  accentColor: AccentColor;
+  themeMode: ThemeMode;
 };
 
 /**
@@ -28,7 +31,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name")
+    .select("full_name, accent_color, theme_mode")
     .eq("id", claims.sub)
     .maybeSingle();
 
@@ -36,6 +39,8 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     id: claims.sub,
     email: typeof claims.email === "string" ? claims.email : "",
     fullName: profile?.full_name ?? "",
+    accentColor: isAccentColor(profile?.accent_color) ? profile.accent_color : DEFAULT_ACCENT,
+    themeMode: (THEME_MODES as readonly string[]).includes(profile?.theme_mode) ? (profile?.theme_mode as ThemeMode) : "system",
   };
 });
 

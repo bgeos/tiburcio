@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getCurrentUser } from "@/lib/dal/auth";
 import { AccountMenuButton } from "./account-menu-button";
+import { PreferencesSync } from "./preferences-sync";
 
 /**
  * Signed-in person's menu. Reads the session, so the layout renders it behind
@@ -21,7 +22,12 @@ export async function AccountMenu() {
       </Button>
     );
   }
-  return <AccountMenuButton name={user.fullName} email={user.email} />;
+  return (
+    <>
+      <PreferencesSync accentColor={user.accentColor} themeMode={user.themeMode} />
+      <AccountMenuButton name={user.fullName} email={user.email} />
+    </>
+  );
 }
 
 export function AccountMenuSkeleton() {

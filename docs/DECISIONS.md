@@ -198,6 +198,23 @@ in planning or active; finished projects are left out. Rules in `lib/domain/dash
 - No tasks / no materials / no projects → "—", never 0. External collaborators see nothing.
 Costs (Phase 6) and stock shortages (Phase 5) are added when those exist.
 
+## D-027 · 2026-10-26 · Colours: personal theme, subproject colours, red only for overlaps
+Product owner's answers:
+1. **Theme colour is per person**, chosen on their profile (`/<org>/profile`): Green (default),
+   Teal, Blue, Violet, Pink, Slate. **No red**: red means overlap. Every choice was checked for
+   text contrast (white on the button colour ≥ 5:1 light, dark text ≥ 7:1 dark) and is
+   scanned by axe in light and dark.
+2. **Light / Dark / Device** is also on the profile; the top bar switch saves there too.
+   Saved on `profiles` (`accent_color`, `theme_mode`), so every device follows. A copy in
+   browser storage only avoids a flash of the default colour before the profile loads.
+   Implementation: brand-tinted tokens in `globals.css` use `--brand-h`; `data-accent` on
+   `<html>` changes it.
+3. **Subprojects get a colour** (auto-assigned, changeable, never red); their tasks, cards
+   and timeline bars use it. Status keeps its own badge colours. (P3-23)
+4. **Task dependencies:** any task can wait for any other task, also in another project,
+   next to the existing subproject links. Overlaps show in red and nothing moves by itself,
+   with a preview before saving (D-019). This is the first Phase 4 item (P4-01).
+
 ---
 
 # Open questions (non-blocking)

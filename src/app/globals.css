@@ -71,9 +71,13 @@
 :root {
   --radius: 0.75rem;
 
+  /* Theme colour (D-027): brand-tinted tokens use this hue; [data-accent] on <html> changes it. */
+  --brand-h: 162;
+  --brand-c: 1;
+
   /* Surfaces: tinted canvas behind white cards */
-  --canvas: oklch(0.972 0.008 175);
-  --background: oklch(0.972 0.008 175);
+  --canvas: oklch(0.972 calc(0.008 * var(--brand-c)) var(--brand-h));
+  --background: oklch(0.972 calc(0.008 * var(--brand-c)) var(--brand-h));
   --foreground: oklch(0.22 0.025 255);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.22 0.025 255);
@@ -81,20 +85,20 @@
   --popover-foreground: oklch(0.22 0.025 255);
 
   /* Brand: deep green (white text ≥ 4.5:1) */
-  --primary: oklch(0.5 0.12 162);
+  --primary: oklch(0.5 calc(0.12 * var(--brand-c)) var(--brand-h));
   /* Hover moves away from the text colour, so contrast goes up, never down (WCAG 1.4.3). */
-  --primary-hover: oklch(0.44 0.12 162);
+  --primary-hover: oklch(0.44 calc(0.12 * var(--brand-c)) var(--brand-h));
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.95 0.02 165);
-  --secondary-foreground: oklch(0.3 0.06 165);
+  --secondary: oklch(0.95 calc(0.02 * var(--brand-c)) var(--brand-h));
+  --secondary-foreground: oklch(0.3 calc(0.06 * var(--brand-c)) var(--brand-h));
   --muted: oklch(0.955 0.006 200);
   --muted-foreground: oklch(0.47 0.02 255);
-  --accent: oklch(0.95 0.025 165);
-  --accent-foreground: oklch(0.3 0.07 165);
+  --accent: oklch(0.95 calc(0.025 * var(--brand-c)) var(--brand-h));
+  --accent-foreground: oklch(0.3 calc(0.07 * var(--brand-c)) var(--brand-h));
   --destructive: oklch(0.5 0.2 27);
   --border: oklch(0.91 0.01 230);
   --input: oklch(0.88 0.012 230);
-  --ring: oklch(0.6 0.12 162);
+  --ring: oklch(0.6 calc(0.12 * var(--brand-c)) var(--brand-h));
 
   /* Categorical chart palette (Phase 6) */
   --chart-1: oklch(0.72 0.15 155);
@@ -119,13 +123,26 @@
 
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.3 0.025 255);
-  --sidebar-primary: oklch(0.5 0.12 162);
+  --sidebar-primary: oklch(0.5 calc(0.12 * var(--brand-c)) var(--brand-h));
   --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.95 0.03 165);
-  --sidebar-accent-foreground: oklch(0.3 0.08 165);
+  --sidebar-accent: oklch(0.95 calc(0.03 * var(--brand-c)) var(--brand-h));
+  --sidebar-accent-foreground: oklch(0.3 calc(0.08 * var(--brand-c)) var(--brand-h));
   --sidebar-border: oklch(0.92 0.01 230);
-  --sidebar-ring: oklch(0.6 0.12 162);
+  --sidebar-ring: oklch(0.6 calc(0.12 * var(--brand-c)) var(--brand-h));
 }
+
+/* Each rule sets both values so swatches (any element with data-accent) show their own colour. */
+[data-accent="green"] { --brand-h: 162; --brand-c: 1; }
+[data-accent="teal"] { --brand-h: 195; --brand-c: 1; }
+[data-accent="blue"] { --brand-h: 250; --brand-c: 1; }
+[data-accent="violet"] { --brand-h: 300; --brand-c: 1; }
+[data-accent="pink"] { --brand-h: 345; --brand-c: 1; }
+/* Slate: the same lightness steps with little colour. */
+[data-accent="slate"] { --brand-h: 255; --brand-c: 0.3; }
+
+/* A theme colour sample: the same step as --primary, in its own data-accent hue. */
+.accent-swatch { background-color: oklch(0.5 calc(0.12 * var(--brand-c)) var(--brand-h)); }
+.dark .accent-swatch { background-color: oklch(0.72 calc(0.14 * var(--brand-c)) var(--brand-h)); }
 
 .dark {
   --canvas: oklch(0.17 0.012 230);
@@ -136,19 +153,19 @@
   --popover: oklch(0.235 0.014 230);
   --popover-foreground: oklch(0.95 0.005 230);
 
-  --primary: oklch(0.72 0.14 162);
-  --primary-hover: oklch(0.78 0.14 162);
-  --primary-foreground: oklch(0.18 0.03 165);
-  --secondary: oklch(0.28 0.025 170);
-  --secondary-foreground: oklch(0.92 0.03 165);
+  --primary: oklch(0.72 calc(0.14 * var(--brand-c)) var(--brand-h));
+  --primary-hover: oklch(0.78 calc(0.14 * var(--brand-c)) var(--brand-h));
+  --primary-foreground: oklch(0.18 calc(0.03 * var(--brand-c)) var(--brand-h));
+  --secondary: oklch(0.28 calc(0.025 * var(--brand-c)) var(--brand-h));
+  --secondary-foreground: oklch(0.92 calc(0.03 * var(--brand-c)) var(--brand-h));
   --muted: oklch(0.26 0.012 230);
   --muted-foreground: oklch(0.72 0.015 230);
-  --accent: oklch(0.29 0.03 170);
-  --accent-foreground: oklch(0.93 0.03 165);
+  --accent: oklch(0.29 calc(0.03 * var(--brand-c)) var(--brand-h));
+  --accent-foreground: oklch(0.93 calc(0.03 * var(--brand-c)) var(--brand-h));
   --destructive: oklch(0.7 0.18 25);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 16%);
-  --ring: oklch(0.65 0.12 162);
+  --ring: oklch(0.65 calc(0.12 * var(--brand-c)) var(--brand-h));
 
   --chart-1: oklch(0.72 0.15 155);
   --chart-2: oklch(0.72 0.12 230);
@@ -172,12 +189,12 @@
 
   --sidebar: oklch(0.2 0.013 230);
   --sidebar-foreground: oklch(0.9 0.008 230);
-  --sidebar-primary: oklch(0.72 0.14 162);
-  --sidebar-primary-foreground: oklch(0.18 0.03 165);
-  --sidebar-accent: oklch(0.28 0.03 170);
-  --sidebar-accent-foreground: oklch(0.94 0.03 165);
+  --sidebar-primary: oklch(0.72 calc(0.14 * var(--brand-c)) var(--brand-h));
+  --sidebar-primary-foreground: oklch(0.18 calc(0.03 * var(--brand-c)) var(--brand-h));
+  --sidebar-accent: oklch(0.28 calc(0.03 * var(--brand-c)) var(--brand-h));
+  --sidebar-accent-foreground: oklch(0.94 calc(0.03 * var(--brand-c)) var(--brand-h));
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.65 0.12 162);
+  --sidebar-ring: oklch(0.65 calc(0.12 * var(--brand-c)) var(--brand-h));
 }
 
 @layer base {

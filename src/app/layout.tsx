@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { ACCENT_COLORS, ACCENT_STORAGE_KEY } from "@/lib/domain/appearance";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -28,6 +29,11 @@ export const viewport: Viewport = {
   ],
 };
 
+// Runs before the first paint so the page appears in the person's theme colour (D-027).
+// Their profile is the source of truth; PreferencesSync updates this copy after sign-in.
+// Green (index 0) is the default and needs no attribute.
+const ACCENT_SCRIPT = `try{var a=localStorage.getItem(${JSON.stringify(ACCENT_STORAGE_KEY)});if(${JSON.stringify(ACCENT_COLORS)}.indexOf(a)>0)document.documentElement.dataset.accent=a}catch(e){}`;
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     // suppressHydrationWarning: next-themes sets the theme class before hydration.
@@ -36,6 +42,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: ACCENT_SCRIPT }} />
+      </head>
       <body className="min-h-full">
         <Providers>{children}</Providers>
       </body>

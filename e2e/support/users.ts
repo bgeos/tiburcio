@@ -12,6 +12,8 @@ export const E2E_NO_ORG_USER = { email: "e2e.noorg@example.test", password: PASS
 export const E2E_MEMBER = { email: "e2e.member@example.test", password: PASSWORD, fullName: "Mia Example" };
 /** External collaborator of E2E_ORG: sees no projects (D-025). */
 export const E2E_EXTERNAL = { email: "e2e.external@example.test", password: PASSWORD, fullName: "Xan Example" };
+/** Member of E2E_ORG whose appearance the profile tests change (nobody else's theme moves). */
+export const E2E_PROFILE = { email: "e2e.profile@example.test", password: PASSWORD, fullName: "Pat Example" };
 /** Has an account, no organization; only the invitation tests use (and change) it. */
 export const E2E_INVITEE = { email: "e2e.invitee@example.test", password: PASSWORD, fullName: "Ivy Example" };
 /** Admin of another organization, to prove organizations can't see each other. */
@@ -201,18 +203,33 @@ export async function resetE2eInvitations(): Promise<void> {
 
 /** Everything the E2E tests rely on. Idempotent: safe to run before every test run. */
 export async function ensureE2eFixtures(): Promise<void> {
-  const [adminId, , , outsiderId, memberId, externalId] = await Promise.all([
+  const [adminId, , , outsiderId, memberId, externalId, profileId] = await Promise.all([
     ensureUser(E2E_USER),
     ensureUser(E2E_NO_ORG_USER),
     ensureUser(E2E_INVITEE),
     ensureUser(E2E_OUTSIDER),
     ensureUser(E2E_MEMBER),
     ensureUser(E2E_EXTERNAL),
+    ensureUser(E2E_PROFILE),
   ]);
   await ensureOrg(E2E_ORG, adminId);
   await ensureOrg(E2E_OTHER_ORG, outsiderId);
   await ensureMember(E2E_ORG.slug, memberId, "member");
   await ensureMember(E2E_ORG.slug, externalId, "external");
+  await ensureMember(E2E_ORG.slug, profileId, "member");
+  await resetE2eProfile();
   await resetE2eInvitations();
   await resetE2eProjects();
+}
+
+/** Put the profile-test person back to the default look and name. */
+export async function resetE2eProfile(): Promise<void> {
+  const call = admin();
+  const { users } = await call<{ users: { id: string; email: string }[] }>("/auth/v1/admin/users?per_page=200");
+  const user = users.find((u) => u.email === E2E_PROFILE.email);
+  if (!user) return;
+  await call(`/rest/v1/profiles?id=eq.${user.id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ full_name: E2E_PROFILE.fullName, accent_color: "green", theme_mode: "system" }),
+  });
 }

@@ -3,6 +3,8 @@
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
+import { THEME_MODES, type ThemeMode } from "@/lib/domain/appearance";
+import { saveThemeMode } from "@/lib/profile/actions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +17,14 @@ import {
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
 
+  function choose(value: string) {
+    if (!(THEME_MODES as readonly string[]).includes(value)) return;
+    setTheme(value);
+    // Also remembered on the profile (D-027), so other devices follow. If that fails,
+    // it still applies on this device, which is all the switch promised before.
+    void saveThemeMode(value as ThemeMode);
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -25,7 +35,7 @@ export function ThemeToggle() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>Theme</DropdownMenuLabel>
-        <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
+        <DropdownMenuRadioGroup value={theme} onValueChange={choose}>
           <DropdownMenuRadioItem value="light">
             <Sun aria-hidden="true" /> Light
           </DropdownMenuRadioItem>
@@ -33,7 +43,7 @@ export function ThemeToggle() {
             <Moon aria-hidden="true" /> Dark
           </DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="system">
-            <Monitor aria-hidden="true" /> System
+            <Monitor aria-hidden="true" /> Device
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
       </DropdownMenuContent>

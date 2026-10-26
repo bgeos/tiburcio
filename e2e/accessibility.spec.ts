@@ -68,3 +68,17 @@ test("keyboard users can skip to the main content", async ({ page, isMobile }) =
   await page.keyboard.press("Enter");
   await expect(page.locator("#main")).toBeFocused();
 });
+
+test("every theme colour keeps text readable, in light and dark (D-027)", async ({ page, isMobile }) => {
+  test.skip(isMobile, "colours checked once, on desktop");
+  for (const colorScheme of ["light", "dark"] as const) {
+    await page.emulateMedia({ colorScheme });
+    await page.goto(orgPath("/settings"));
+    await page.locator("h1").first().waitFor();
+    for (const accent of ["green", "teal", "blue", "violet", "pink", "slate"]) {
+      await page.evaluate((a) => (document.documentElement.dataset.accent = a), accent);
+      const results = await new AxeBuilder({ page }).withRules(["color-contrast"]).analyze();
+      expect(results.violations.map((v) => `${accent}/${colorScheme}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
+    }
+  }
+});

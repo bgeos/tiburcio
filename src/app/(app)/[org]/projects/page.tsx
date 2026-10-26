@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { FlaskConical, FolderKanban, Pencil, Plus } from "lucide-react";
+import { EyeOff, FlaskConical, FolderKanban, Pencil, Plus } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { OrgLink } from "@/components/org-link";
 import { PageHeader } from "@/components/page-header";
@@ -10,7 +10,13 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireMembership } from "@/lib/dal/organizations";
 import { listProjects, type ProjectSummary } from "@/lib/dal/projects";
-import { PROJECT_STATUS_CATEGORY, PROJECT_STATUS_LABELS, canEditProjects } from "@/lib/domain/projects";
+import {
+  EXTERNAL_NO_PROJECTS,
+  PROJECT_STATUS_CATEGORY,
+  PROJECT_STATUS_LABELS,
+  canEditProjects,
+  canViewProjects,
+} from "@/lib/domain/projects";
 import { ArchiveProjectButton, RestoreProjectButton } from "./archive-project-button";
 import { ProjectFormDialog } from "./project-form-dialog";
 
@@ -68,6 +74,9 @@ async function ProjectsContent({
 }) {
   const [{ org: slug }, { view }] = await Promise.all([params, searchParams]);
   const org = await requireMembership(slug);
+  if (!canViewProjects(org.role)) {
+    return <EmptyState icon={EyeOff} title="No projects to show" description={EXTERNAL_NO_PROJECTS} />;
+  }
   const canEdit = canEditProjects(org.role);
   const projects = await listProjects(org);
   const showArchived = view === "archived";

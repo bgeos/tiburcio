@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canEditProjects } from "@/lib/domain/projects";
+import { canEditProjects, canViewProjects } from "@/lib/domain/projects";
 import { dependencySchema, progressSchema, projectSchema, subprojectSchema, taskSchema } from "./projects";
 
 describe("projectSchema", () => {
@@ -32,6 +32,15 @@ describe("canEditProjects", () => {
     expect(canEditProjects("production_manager")).toBe(true);
     expect(canEditProjects("member")).toBe(false);
     expect(canEditProjects("external")).toBe(false);
+  });
+});
+
+describe("canViewProjects", () => {
+  it("mirrors the database rule: externals see no projects", () => {
+    expect(canViewProjects("admin")).toBe(true);
+    expect(canViewProjects("production_manager")).toBe(true);
+    expect(canViewProjects("member")).toBe(true);
+    expect(canViewProjects("external")).toBe(false);
   });
 });
 

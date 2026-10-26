@@ -10,6 +10,8 @@ export const E2E_USER = { email: "e2e.admin@example.test", password: PASSWORD, f
 export const E2E_NO_ORG_USER = { email: "e2e.noorg@example.test", password: PASSWORD, fullName: "Noa Example" };
 /** Member (view-only) of E2E_ORG. */
 export const E2E_MEMBER = { email: "e2e.member@example.test", password: PASSWORD, fullName: "Mia Example" };
+/** External collaborator of E2E_ORG: sees no projects (D-025). */
+export const E2E_EXTERNAL = { email: "e2e.external@example.test", password: PASSWORD, fullName: "Xan Example" };
 /** Has an account, no organization; only the invitation tests use (and change) it. */
 export const E2E_INVITEE = { email: "e2e.invitee@example.test", password: PASSWORD, fullName: "Ivy Example" };
 /** Admin of another organization, to prove organizations can't see each other. */
@@ -199,16 +201,18 @@ export async function resetE2eInvitations(): Promise<void> {
 
 /** Everything the E2E tests rely on. Idempotent: safe to run before every test run. */
 export async function ensureE2eFixtures(): Promise<void> {
-  const [adminId, , , outsiderId, memberId] = await Promise.all([
+  const [adminId, , , outsiderId, memberId, externalId] = await Promise.all([
     ensureUser(E2E_USER),
     ensureUser(E2E_NO_ORG_USER),
     ensureUser(E2E_INVITEE),
     ensureUser(E2E_OUTSIDER),
     ensureUser(E2E_MEMBER),
+    ensureUser(E2E_EXTERNAL),
   ]);
   await ensureOrg(E2E_ORG, adminId);
   await ensureOrg(E2E_OTHER_ORG, outsiderId);
   await ensureMember(E2E_ORG.slug, memberId, "member");
+  await ensureMember(E2E_ORG.slug, externalId, "external");
   await resetE2eInvitations();
   await resetE2eProjects();
 }

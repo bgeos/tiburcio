@@ -75,7 +75,9 @@ is the spec (subproject = Cronograma + Materials + Crew + History). Backlog P3-1
 
 - [x] P3-11 … P3-18 (2026-10-26): tables with RLS, Projects page, project page, Cronograma,
   Materials (+ All materials), Crew and owner, History, lock plan, daily check-in.
-- [ ] P3-19 members/externals in the UI, P3-20 remove the prototype + end-to-end slice.
+- [x] P3-19 (2026-10-26): members see everything read-only (no editing controls, no check-in);
+  external collaborators get a clear "no projects" message and direct links are 404s.
+- [ ] P3-20 remove the prototype + end-to-end slice.
 
 Accept: Main Stage with 4 subprojects created via UI, each with its own owner and tasks,
 edits persist, parent summaries follow the documented progress rule. Backlog P3-*.

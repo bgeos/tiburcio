@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Package } from "lucide-react";
+import { EyeOff, Package } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { OrgLink } from "@/components/org-link";
 import { PageHeader } from "@/components/page-header";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listOrganizationMaterials } from "@/lib/dal/materials";
 import { requireMembership } from "@/lib/dal/organizations";
+import { EXTERNAL_NO_PROJECTS, canViewProjects } from "@/lib/domain/projects";
 import { MaterialsTable } from "./materials-table";
 
 export const metadata: Metadata = { title: "Materials" };
@@ -30,6 +31,9 @@ export default function MaterialsPage({ params }: PageProps<"/[org]/materials">)
 async function MaterialsContent({ params }: { params: PageProps<"/[org]/materials">["params"] }) {
   const { org: slug } = await params;
   const org = await requireMembership(slug);
+  if (!canViewProjects(org.role)) {
+    return <EmptyState icon={EyeOff} title="No materials to show" description={EXTERNAL_NO_PROJECTS} />;
+  }
   const rows = await listOrganizationMaterials(org);
 
   if (rows.length === 0) {

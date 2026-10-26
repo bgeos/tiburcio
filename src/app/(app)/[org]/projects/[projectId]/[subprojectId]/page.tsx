@@ -51,9 +51,9 @@ async function SubprojectContent({ params, searchParams }: { params: Props["para
   if (!project || !sub) notFound();
   // Only after both are known to exist: a malformed id must be a 404, not a query error.
   const history = await listActivity(org, project.id, { subprojectId: sub.id });
-  const checkIn = checkin === "1" ? project.subprojects.findIndex((s) => s.id === sub.id) : -1;
-
   const canEdit = canEditProjects(org.role);
+  // The daily check-in is the editors' routine; for viewers the link just opens the subproject.
+  const checkIn = canEdit && checkin === "1" ? project.subprojects.findIndex((s) => s.id === sub.id) : -1;
   const plan = project.subprojects;
   const schedule = schedulesFor([sub])[sub.id];
   const range = schedule.end ? { start: schedule.start, end: schedule.end } : null;

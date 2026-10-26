@@ -103,7 +103,10 @@ co-members can see each other's email on the Team page; it is not user-editable.
 
 ## Phase 3: projects, subprojects and the cronograma (D-019/D-025)
 
-Implemented: `projects`, `subprojects`, `crew_members` (P3-11). The rest is design until P3-12.
+Implemented: `projects`, `subprojects`, `crew_members` (P3-11); `tasks`, `subproject_materials`,
+`subproject_dependencies`, `plan_baselines`, `activity_log` (P3-12). The database stamps
+`plan_baselines.locked_by/locked_at` and `activity_log.actor_id`; dependency cycles are refused
+by a trigger that locks the project row.
 
 One level only: a **project** (e.g. Main Stage) has **subprojects** (Structure, Shade Sail…).
 Every table has `organization_id`, `created_at`/`updated_at`, `created_by`, `archived_at`

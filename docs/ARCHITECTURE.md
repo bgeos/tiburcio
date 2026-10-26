@@ -40,9 +40,12 @@ src/
     (auth)/accept-invite                    Phase 2
     (app)/layout.tsx                        ✅ app shell: sidebar, header, skip link
     (app)/loading.tsx, error.tsx            ✅ section loading skeleton + error boundary
-    (app)/dashboard | projects | tasks | materials | reports | team | settings   ✅ (moving under `[org]/` in Phase 2, D-016)
+    page.tsx                                `/`: picks the person's organization (D-023)
+    (auth)/no-organization                  ✅ signed in, no membership: ask for an invitation
+    (app)/[org]/layout.tsx                  ✅ membership gate (non-members → 404)
+    (app)/[org]/dashboard | projects | tasks | materials | reports | team | settings   ✅ (D-016)
     (app)/design/…                          ✅ internal component/state reference (demo data)
-    auth/callback/route.ts                  Supabase auth code exchange (Phase 2)
+    auth/confirm/route.ts                   ✅ email links (invite, recovery): verifyOtp → redirect
   components/
     ui/                                     ✅ shadcn/ui primitives (generated, editable)
     shell/                                  ✅ app-sidebar, app-header, theme-toggle, account-menu

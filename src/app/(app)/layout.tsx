@@ -2,12 +2,14 @@ import { Suspense } from "react";
 import { AccountMenu, AccountMenuSkeleton } from "@/components/shell/account-menu";
 import { AppHeader } from "@/components/shell/app-header";
 import { AppSidebar } from "@/components/shell/app-sidebar";
+import { OrgSwitcher, OrgSwitcherSkeleton } from "@/components/shell/org-switcher";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 /**
  * Authenticated app shell. Signed-out visitors are redirected by the proxy
  * (optimistic); data is protected by RLS and the DAL. The session is read only
- * inside <Suspense> (Cache Components). Organization context arrives with P2-07.
+ * inside <Suspense> (Cache Components). The organization comes from the URL
+ * (/<org>/…, D-016); `[org]/layout.tsx` checks membership.
  */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -18,7 +20,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       >
         Skip to content
       </a>
-      <AppSidebar />
+      <AppSidebar
+        orgSwitcher={
+          <Suspense fallback={<OrgSwitcherSkeleton />}>
+            <OrgSwitcher />
+          </Suspense>
+        }
+      />
       <SidebarInset className="bg-canvas">
         <AppHeader
           account={

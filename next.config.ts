@@ -7,9 +7,6 @@ const nextConfig: NextConfig = {
     // Enables unauthorized() / forbidden() and their unauthorized.tsx / forbidden.tsx UI.
     authInterrupts: true,
   },
-  async redirects() {
-    return [{ source: "/", destination: "/dashboard", permanent: false }];
-  },
   turbopack: {
     rules: {
       "*.css": {

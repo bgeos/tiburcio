@@ -34,6 +34,8 @@ live in `PROJECT_BLUEPRINT.md`; it is the source of truth for scope.
   must sit behind `<Suspense>`; never read cookies inside plain `"use cache"`.
   Every data page needs its own `loading.tsx`/`<Suspense>` (D-017).
 - Middleware is called **Proxy** in Next 16: `src/proxy.ts`.
+- App pages live under `src/app/(app)/[org]/` (URL `/<org>/<section>`, D-016). Link
+  inside an org with `OrgLink`/`useOrgPath`; URL hooks in shared layouts go in `<Suspense>`.
 - `error.tsx` props are `{ error: unknown, retry }` (not `reset`).
   `unauthorized()`/`forbidden()` are enabled (`authInterrupts`).
 - Tailwind CSS 4 + shadcn/ui (Radix, `npx shadcn@4.22.1 add <component>`).

@@ -78,6 +78,7 @@ into `SUPABASE_SECRET_KEY`. The local keys only work against your own machine.
 | `npm run db:start` / `db:stop` / `db:status` | Start, stop, or show the local Supabase stack |
 | `npm run db:reset` | Recreate the local database from migrations + seed |
 | `npm run test:db` | Database security tests (pgTAP): org isolation and role limits. Needs `db:start` |
+| `npm run org:create -- --name "…" --slug … --admin email` | Operator only: create an organization with an existing user as its first admin (invitation-only, D-021). Refuses non-local targets without `--yes` |
 
 First time only, install the test browser: `npx playwright install chromium`.
 

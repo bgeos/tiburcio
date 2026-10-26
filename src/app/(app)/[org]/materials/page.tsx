@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { FlaskConical, Package, Plus } from "lucide-react";
 import { ComingSoonAction } from "@/components/coming-soon-action";
 import { EmptyState } from "@/components/empty-state";
+import { OrgLink } from "@/components/org-link";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 
@@ -23,9 +23,9 @@ export default function MaterialsPage() {
         availability="The material catalogue and stock movements arrive in Phase 5."
         action={
           <Button variant="outline" asChild>
-            <Link href="/projects/prototype/materials">
+            <OrgLink href="/projects/prototype/materials">
               <FlaskConical aria-hidden="true" /> Try the prototype (demo data)
-            </Link>
+            </OrgLink>
           </Button>
         }
       />

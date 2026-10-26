@@ -14,7 +14,7 @@ export default function Forbidden() {
       tone="danger"
       actions={
         <Button variant="outline" asChild>
-          <Link href="/dashboard">Go to overview</Link>
+          <Link href="/">Go to overview</Link>
         </Button>
       }
     />

@@ -11,49 +11,50 @@ import {
 
 export type NavItem = {
   title: string;
-  href: string;
+  /** First path segment after the organization: /<org>/<section>. */
+  section: string;
   icon: LucideIcon;
   description: string;
 };
 
 /**
- * Primary navigation (blueprint § 7 "Global navigation").
- * Phase 2 will prefix these with the organization slug: /[org]/projects…
+ * Primary navigation (blueprint § 7 "Global navigation"). Every section lives
+ * under the organization: /<org>/<section> (D-016).
  */
 export const PRIMARY_NAV: NavItem[] = [
   {
     title: "Overview",
-    href: "/dashboard",
+    section: "dashboard",
     icon: LayoutDashboard,
     description: "Progress, schedule risks, materials and costs at a glance.",
   },
   {
     title: "Projects",
-    href: "/projects",
+    section: "projects",
     icon: FolderKanban,
     description: "Festivals, areas, structures and every nested subproject.",
   },
   {
     title: "Tasks",
-    href: "/tasks",
+    section: "tasks",
     icon: ListChecks,
     description: "Your work queue across all projects.",
   },
   {
     title: "Materials",
-    href: "/materials",
+    section: "materials",
     icon: Package,
     description: "Catalogue, stock, reservations and consumption.",
   },
   {
     title: "Reports",
-    href: "/reports",
+    section: "reports",
     icon: BarChart3,
     description: "Budgets, costs and exports.",
   },
   {
     title: "Team",
-    href: "/team",
+    section: "team",
     icon: Users,
     description: "Members, roles and external collaborators.",
   },
@@ -62,7 +63,7 @@ export const PRIMARY_NAV: NavItem[] = [
 export const SECONDARY_NAV: NavItem[] = [
   {
     title: "Settings",
-    href: "/settings",
+    section: "settings",
     icon: Settings,
     description: "Organization, statuses, fields and preferences.",
   },
@@ -70,11 +71,31 @@ export const SECONDARY_NAV: NavItem[] = [
 
 export const ALL_NAV: NavItem[] = [...PRIMARY_NAV, ...SECONDARY_NAV];
 
-/** True when `pathname` is the nav item's route or one of its children. */
-export function isNavItemActive(href: string, pathname: string): boolean {
-  return pathname === href || pathname.startsWith(`${href}/`);
+export const DEFAULT_SECTION = "dashboard";
+
+export function isSection(value: unknown): value is string {
+  return typeof value === "string" && ALL_NAV.some((item) => item.section === value);
+}
+
+/**
+ * Link to a section of an organization. Without an organization (e.g. on /design)
+ * the link goes to `/`, which picks the person's organization (see app/route.ts).
+ */
+export function orgHref(org: string | undefined, section: string): string {
+  return org ? `/${org}/${section}` : `/?section=${encodeURIComponent(section)}`;
+}
+
+/** "/jupi/projects/main-stage" → "projects". Undefined outside an organization. */
+export function sectionFromPath(pathname: string): string | undefined {
+  return pathname.split("/").filter(Boolean)[1];
+}
+
+/** True when `pathname` is inside the nav item's section. */
+export function isNavItemActive(section: string, pathname: string): boolean {
+  return sectionFromPath(pathname) === section;
 }
 
 export function findNavItem(pathname: string): NavItem | undefined {
-  return ALL_NAV.find((item) => isNavItemActive(item.href, pathname));
+  const section = sectionFromPath(pathname);
+  return ALL_NAV.find((item) => item.section === section);
 }

@@ -3,18 +3,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FolderKanban, Package } from "lucide-react";
+import { useOrgPath } from "@/components/org-link";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
-  { href: "/projects/prototype", label: "Projects", icon: FolderKanban },
-  { href: "/projects/prototype/materials", label: "All materials", icon: Package },
-];
+  { path: "/projects/prototype", label: "Projects", icon: FolderKanban },
+  { path: "/projects/prototype/materials", label: "All materials", icon: Package },
+] as const;
 
 export function PrototypeNav() {
   const pathname = usePathname();
+  const hrefs = [useOrgPath(LINKS[0].path), useOrgPath(LINKS[1].path)];
   return (
     <nav aria-label="Prototype" className="inline-flex rounded-lg bg-muted p-1">
-      {LINKS.map(({ href, label, icon: Icon }) => {
+      {LINKS.map(({ label, icon: Icon }, i) => {
+        const href = hrefs[i];
         const active = pathname === href;
         return (
           <Link

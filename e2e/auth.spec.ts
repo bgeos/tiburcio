@@ -1,18 +1,18 @@
 import { expect, test } from "@playwright/test";
-import { E2E_USER } from "./support/users";
+import { E2E_USER, orgPath } from "./support/users";
 
 // These tests start signed out.
 test.use({ storageState: { cookies: [], origins: [] } });
 
 test("signed-out visitors are sent to the login page, then back where they were going", async ({ page }) => {
-  await page.goto("/projects/prototype");
-  await expect(page).toHaveURL(/\/login\?next=%2Fprojects%2Fprototype$/);
+  await page.goto(orgPath("/projects/prototype"));
+  await expect(page).toHaveURL(/\/login\?next=%2Fe2e-org%2Fprojects%2Fprototype$/);
   await expect(page.getByRole("heading", { level: 1, name: "Sign in" })).toBeVisible();
 
   await page.getByLabel("Email").fill(E2E_USER.email);
   await page.getByLabel("Password").fill(E2E_USER.password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/projects\/prototype$/);
+  await expect(page).toHaveURL(/\/e2e-org\/projects\/prototype$/);
   await expect(page.getByRole("heading", { level: 1, name: "Main Stage" })).toBeVisible();
 });
 
@@ -34,7 +34,7 @@ test("an off-site next= link is ignored after signing in", async ({ page }) => {
   await page.getByLabel("Email").fill(E2E_USER.email);
   await page.getByLabel("Password").fill(E2E_USER.password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/localhost:3100\/dashboard$/);
+  await expect(page).toHaveURL(/localhost:3100\/e2e-org\/dashboard$/);
 });
 
 test("an invalid email link explains itself", async ({ page }) => {
@@ -56,6 +56,6 @@ test("signing out ends the session", async ({ page }) => {
   await page.getByRole("menuitem", { name: "Sign out" }).click();
   await expect(page).toHaveURL(/\/login$/);
 
-  await page.goto("/dashboard");
-  await expect(page).toHaveURL(/\/login\?next=%2Fdashboard$/);
+  await page.goto(orgPath("/dashboard"));
+  await expect(page).toHaveURL(/\/login\?next=%2Fe2e-org%2Fdashboard$/);
 });

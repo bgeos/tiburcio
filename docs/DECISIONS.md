@@ -142,6 +142,19 @@ sees an "ask for an invitation" screen, never an empty app.
 - E2E tests sign in a fictional user (`e2e.admin@example.test`) that the setup creates in the
   **local** Supabase with the secret key; the helper refuses any non-local Supabase URL.
 
+## D-023 · 2026-10-26 · Organization routing (P2-07)
+- Sections live at `/<org>/<section>` under `src/app/(app)/[org]/`. `[org]/layout.tsx` checks
+  membership before rendering; non-members (and unknown slugs) get the 404 page, so a URL never
+  confirms that an organization exists. RLS still protects the data itself.
+- `/` is a **page** (not a Route Handler, so client navigations and Server Action redirects can
+  follow it) that sends people to the first organization by name, or to `/no-organization`.
+  `/?section=x` keeps the section for links rendered outside an organization (e.g. `/design`).
+  Remembering the last-used organization can come later.
+- Slugs can't use route names: the `organizations_slug_not_reserved` constraint lists them.
+- With `/[org]` dynamic, `usePathname`/`useParams` suspend while prerendering, so the sidebar
+  link lists and header title render inside `<Suspense>` with plain-link fallbacks.
+- `npm run org:create` is the operator command for new organizations (D-021).
+
 ---
 
 # Open questions (non-blocking)

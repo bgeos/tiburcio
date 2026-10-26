@@ -4,7 +4,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-canvas px-4 py-12">
       <Link
-        href="/dashboard"
+        href="/"
         className="flex items-center gap-2 rounded-md font-semibold focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >
         <span

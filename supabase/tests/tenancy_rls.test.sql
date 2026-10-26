@@ -7,7 +7,7 @@
 
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(37);
+select plan(38);
 
 -- Helpers -------------------------------------------------------------------
 -- Sign in as one of the cast: sets the JWT claims, then switches to the API role.
@@ -65,6 +65,10 @@ select is(
   6::bigint,
   'a profile is created for every new auth user'
 );
+
+select throws_ok(
+  $$ select public.create_organization('Clash', 'no-organization', (select alice from ids)) $$,
+  '23514', null, 'organization addresses cannot use reserved route names');
 
 -- Signed out (anon) -----------------------------------------------------------
 set local role anon;

@@ -46,7 +46,7 @@ export default function AppError({
           Try again
         </Button>
         <Button variant="outline" asChild>
-          <Link href="/dashboard">Go to overview</Link>
+          <Link href="/">Go to overview</Link>
         </Button>
       </div>
     </div>

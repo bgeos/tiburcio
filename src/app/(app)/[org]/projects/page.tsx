@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { FlaskConical, FolderKanban, Plus } from "lucide-react";
 import { ComingSoonAction } from "@/components/coming-soon-action";
 import { EmptyState } from "@/components/empty-state";
+import { OrgLink } from "@/components/org-link";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 
@@ -23,9 +23,9 @@ export default function ProjectsPage() {
         availability="Creating projects arrives in Phase 3, after sign-in and organizations (Phase 2)."
         action={
           <Button variant="outline" asChild>
-            <Link href="/projects/prototype">
+            <OrgLink href="/projects/prototype">
               <FlaskConical aria-hidden="true" /> Try the prototype (demo data)
-            </Link>
+            </OrgLink>
           </Button>
         }
       />

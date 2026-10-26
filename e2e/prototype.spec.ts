@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { orgPath } from "./support/users";
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/projects/prototype");
+  await page.goto(orgPath("/projects/prototype"));
   await expect(page.getByRole("heading", { level: 1, name: "Main Stage" })).toBeVisible();
 });
 

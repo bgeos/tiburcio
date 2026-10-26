@@ -1,5 +1,5 @@
-/** Where signed-in people land by default. Becomes `/[org]/dashboard` with P2-07 (D-016). */
-export const DEFAULT_SIGNED_IN_PATH = "/dashboard";
+/** Where signed-in people land by default: `/` picks their organization (app/route.ts). */
+export const DEFAULT_SIGNED_IN_PATH = "/";
 
 export const LOGIN_PATH = "/login";
 

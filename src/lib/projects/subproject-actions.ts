@@ -3,6 +3,7 @@
 import { refresh } from "next/cache";
 import { getProjectDetail } from "@/lib/dal/project-detail";
 import { describePlanChange, type PlanSubproject } from "@/lib/domain/project-plan";
+import { SUBPROJECT_COLOR_LABELS } from "@/lib/domain/subproject-colors";
 import { formatDate } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { formDataToObject, parseForm, type FieldErrors } from "@/lib/validation/form";
@@ -33,7 +34,13 @@ export async function createSubproject(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("subprojects")
-    .insert({ organization_id: org.id, project_id: projectId, name: parsed.data.name, start_date: parsed.data.startDate })
+    .insert({
+      organization_id: org.id,
+      project_id: projectId,
+      name: parsed.data.name,
+      start_date: parsed.data.startDate,
+      color: parsed.data.color,
+    })
     .select("id")
     .single();
   if (error || !data) return { status: "error", message: "Couldn't add the subproject. Try again.", values };
@@ -67,13 +74,15 @@ export async function updateSubproject(
   const before = project?.subprojects.find((s) => s.id === subprojectId);
   if (!project || !before) return { status: "error", message: "This subproject no longer exists.", values };
 
-  const { name, startDate, reason } = parsed.data;
-  if (name === before.name && startDate === before.startDate) return { status: "saved", savedAt: Date.now() };
+  const { name, startDate, color, reason } = parsed.data;
+  if (name === before.name && startDate === before.startDate && color === before.color) {
+    return { status: "saved", savedAt: Date.now() };
+  }
 
   const supabase = await createClient();
   const { error } = await supabase
     .from("subprojects")
-    .update({ name, start_date: startDate })
+    .update({ name, start_date: startDate, color })
     .eq("id", subprojectId)
     .eq("organization_id", org.id);
   if (error) return { status: "error", message: "Couldn't save the subproject. Try again.", values };
@@ -85,6 +94,7 @@ export async function updateSubproject(
   const details = [
     name !== before.name && `Name: ${before.name} → ${name}`,
     startDate !== before.startDate && `Start: ${formatDate(before.startDate)} → ${formatDate(startDate)}`,
+    color !== before.color && `Colour: ${SUBPROJECT_COLOR_LABELS[before.color]} → ${SUBPROJECT_COLOR_LABELS[color]}`,
     ...change.lines,
     ...change.newOverlaps.map((o) => `Overlap: ${o}`),
   ].filter((d): d is string => Boolean(d));

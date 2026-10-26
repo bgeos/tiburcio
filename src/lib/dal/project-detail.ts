@@ -2,6 +2,7 @@ import "server-only";
 import type { MaterialStatus } from "@/lib/domain/materials";
 import type { ProjectStatus } from "@/lib/domain/projects";
 import type { DateRange, IsoDate } from "@/lib/domain/schedule";
+import { isSubprojectColor, type SubprojectColor } from "@/lib/domain/subproject-colors";
 import type { TaskStatus } from "@/lib/domain/tasks";
 import { createClient } from "@/lib/supabase/server";
 import type { Membership } from "./organizations";
@@ -23,6 +24,7 @@ export type SubprojectView = {
   id: string;
   name: string;
   startDate: IsoDate;
+  color: SubprojectColor;
   ownerCrewId: string | null;
   ownerName: string | null;
   /** Not archived, in cronograma order. */
@@ -70,7 +72,7 @@ export async function getProjectDetail(org: Membership, projectId: string): Prom
 
   const { data: subprojects, error: subError } = await supabase
     .from("subprojects")
-    .select("id, name, start_date, owner_crew_id")
+    .select("id, name, start_date, color, owner_crew_id")
     .eq("project_id", projectId)
     .is("archived_at", null)
     .order("sort_order")
@@ -119,6 +121,7 @@ export async function getProjectDetail(org: Membership, projectId: string): Prom
       id: s.id,
       name: s.name,
       startDate: s.start_date,
+      color: isSubprojectColor(s.color) ? s.color : "blue",
       ownerCrewId: s.owner_crew_id,
       ownerName: s.owner_crew_id ? (crewNames.get(s.owner_crew_id) ?? null) : null,
       tasks: (tasks.data ?? [])

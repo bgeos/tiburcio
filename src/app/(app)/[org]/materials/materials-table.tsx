@@ -6,6 +6,7 @@ import { PackageSearch } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { EmptyState } from "@/components/empty-state";
 import { MaterialStatusBadge } from "@/components/material-status-badge";
+import { SubprojectDot } from "@/components/subproject-color";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -48,12 +49,15 @@ export function MaterialsTable({ rows, orgSlug }: { rows: MaterialRow[]; orgSlug
       id: "subproject",
       header: "Subproject",
       cell: (row) => (
-        <Link
-          href={`/${orgSlug}/projects/${row.projectId}/${row.subprojectId}?tab=materials`}
-          className="text-primary underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
-        >
-          {row.subproject}
-        </Link>
+        <span className="inline-flex items-center gap-1.5">
+          <SubprojectDot color={row.subprojectColor} />
+          <Link
+            href={`/${orgSlug}/projects/${row.projectId}/${row.subprojectId}?tab=materials`}
+            className="text-primary underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
+          >
+            {row.subproject}
+          </Link>
+        </span>
       ),
       sortValue: (row) => row.subproject,
     },

@@ -1,5 +1,6 @@
 import "server-only";
 import type { MaterialStatus } from "@/lib/domain/materials";
+import { isSubprojectColor, type SubprojectColor } from "@/lib/domain/subproject-colors";
 import { createClient } from "@/lib/supabase/server";
 import type { Membership } from "./organizations";
 
@@ -12,6 +13,7 @@ export type MaterialRow = {
   project: string;
   subprojectId: string;
   subproject: string;
+  subprojectColor: SubprojectColor;
 };
 
 type Row = {
@@ -21,6 +23,7 @@ type Row = {
   subprojects: {
     id: string;
     name: string;
+    color: string;
     archived_at: string | null;
     projects: { id: string; name: string; archived_at: string | null } | null;
   } | null;
@@ -36,7 +39,7 @@ export async function listOrganizationMaterials(org: Membership): Promise<Materi
     .from("subproject_materials")
     .select(
       // Name the foreign keys: subprojects also relate to projects through the dependency links.
-      "id, description, status, subprojects!subproject_materials_organization_id_subproject_id_fkey(id, name, archived_at, projects!subprojects_organization_id_project_id_fkey(id, name, archived_at))",
+      "id, description, status, subprojects!subproject_materials_organization_id_subproject_id_fkey(id, name, color, archived_at, projects!subprojects_organization_id_project_id_fkey(id, name, archived_at))",
     )
     .eq("organization_id", org.id)
     .is("archived_at", null)
@@ -57,6 +60,7 @@ export async function listOrganizationMaterials(org: Membership): Promise<Materi
           project: project.name,
           subprojectId: sub.id,
           subproject: sub.name,
+          subprojectColor: isSubprojectColor(sub.color) ? sub.color : "blue",
         },
       ];
     })

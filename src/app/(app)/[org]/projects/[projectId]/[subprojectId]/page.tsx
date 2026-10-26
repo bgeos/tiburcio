@@ -8,6 +8,7 @@ import { OrgLink } from "@/components/org-link";
 import { PageHeader } from "@/components/page-header";
 import { ProgressDonut } from "@/components/progress-donut";
 import { StatusBadge } from "@/components/status-badge";
+import { SubprojectDot } from "@/components/subproject-color";
 import { Timeline } from "@/components/timeline";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -75,6 +76,7 @@ async function SubprojectContent({ params, searchParams }: { params: Props["para
       {checkIn >= 0 ? <CheckInBar project={project} index={checkIn} /> : null}
       <PageHeader
         title={sub.name}
+        titleAdornment={<SubprojectDot color={sub.color} className="size-3.5" />}
         description={
           <>
             Owner: {sub.ownerName ?? "—"} · Starts {formatDate(sub.startDate)} · {range ? formatRange(range) : "no tasks yet"}
@@ -91,7 +93,8 @@ async function SubprojectContent({ params, searchParams }: { params: Props["para
                 projectId={project.id}
                 plan={plan}
                 dependencies={project.dependencies}
-                subproject={{ id: sub.id, name: sub.name, startDate: sub.startDate }}
+                usedColors={plan.map((s) => s.color)}
+                subproject={{ id: sub.id, name: sub.name, startDate: sub.startDate, color: sub.color }}
                 trigger={
                   <Button variant="outline">
                     <Pencil aria-hidden="true" /> Edit subproject
@@ -315,6 +318,7 @@ function Cronograma({
           <Timeline
             label={`${sub.name} tasks timeline`}
             today={today}
+            color={sub.color}
             rows={sub.tasks.map((task, i) => ({
               id: task.id,
               label: task.name,

@@ -2,12 +2,16 @@ import { addDays, daysBetween, type DateRange, type IsoDate } from "@/lib/domain
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { formatDate, formatRange } from "@/lib/format";
+import type { SubprojectColor } from "@/lib/domain/subproject-colors";
+import { SUBPROJECT_BG, SubprojectDot } from "./subproject-color";
 
 export type TimelineRow = {
   id: string;
   label: string;
   sublabel?: string;
   range: DateRange | null;
+  /** The subproject's colour: bar colour plus a dot by the label (rows that are subprojects). */
+  color?: SubprojectColor;
   /** Original (locked) plan, drawn as a dashed line under the bar. */
   baseline?: DateRange | null;
   /** Overlap text for screen readers; `overlaps` are the days drawn in red. */
@@ -45,13 +49,18 @@ export function Timeline({
   today,
   label,
   showOverlapKey = false,
+  color,
 }: {
   rows: TimelineRow[];
   today: IsoDate;
   label: string;
   /** Show the red "Overlap" legend entry (only where overlaps can occur). */
   showOverlapKey?: boolean;
+  /** One colour for every bar (a subproject's tasks take their subproject's colour). */
+  color?: SubprojectColor;
 }) {
+  const barColor = (row: TimelineRow) => row.color ?? color;
+  const legendColor = rows.map(barColor).find(Boolean);
   const { first, last, todayInside, todayBefore } = span(rows, today);
   const total = daysBetween(first, last) + 1;
   const pos = (date: IsoDate) => (daysBetween(first, date) / total) * 100;
@@ -83,24 +92,27 @@ export function Timeline({
             {rows.map((row) => (
               <li key={row.id} className="flex items-center py-2">
                 <div className="w-40 shrink-0 pr-3">
-                  {row.href ? (
-                    <Link
-                      href={row.href}
-                      className="text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
-                    >
-                      {row.label}
-                    </Link>
-                  ) : row.onSelect ? (
-                    <button
-                      type="button"
-                      onClick={row.onSelect}
-                      className="text-left text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
-                    >
-                      {row.label}
-                    </button>
-                  ) : (
-                    <p className="text-sm font-medium">{row.label}</p>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    {row.color ? <SubprojectDot color={row.color} /> : null}
+                    {row.href ? (
+                      <Link
+                        href={row.href}
+                        className="text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
+                      >
+                        {row.label}
+                      </Link>
+                    ) : row.onSelect ? (
+                      <button
+                        type="button"
+                        onClick={row.onSelect}
+                        className="text-left text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
+                      >
+                        {row.label}
+                      </button>
+                    ) : (
+                      <p className="text-sm font-medium">{row.label}</p>
+                    )}
+                  </div>
                   {row.sublabel ? <p className="text-xs text-muted-foreground">{row.sublabel}</p> : null}
                   <span className="sr-only">
                     {`Planned ${formatRange(row.range)}.`}
@@ -119,7 +131,9 @@ export function Timeline({
                     <div
                       className={cn(
                         "absolute top-1 flex h-4 items-center rounded-sm",
-                        row.done ? "bg-status-done" : "bg-primary",
+                        barColor(row) ? SUBPROJECT_BG[barColor(row)!] : row.done ? "bg-status-done" : "bg-primary",
+                        // Finished work fades in its colour (status itself is shown as text elsewhere).
+                        barColor(row) && row.done && "opacity-45",
                       )}
                       style={{ left: `${pos(row.range.start)}%`, width: `${width(row.range)}%` }}
                     />
@@ -145,7 +159,8 @@ export function Timeline({
       </div>
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground" aria-hidden="true">
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-2.5 w-5 rounded-sm bg-primary" /> Current plan
+          <span className={cn("h-2.5 w-5 rounded-sm", legendColor ? SUBPROJECT_BG[legendColor] : "bg-primary")} />
+          {legendColor && !color ? "Current plan, in each subproject's colour" : "Current plan"}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="h-1.5 w-5 rounded-sm border border-dashed border-muted-foreground" /> Original plan

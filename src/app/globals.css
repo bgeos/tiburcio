@@ -58,6 +58,12 @@
   --color-status-cancelled-soft: var(--status-cancelled-soft);
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
+  --color-sub-blue: var(--sub-blue);
+  --color-sub-aqua: var(--sub-aqua);
+  --color-sub-yellow: var(--sub-yellow);
+  --color-sub-magenta: var(--sub-magenta);
+  --color-sub-green: var(--sub-green);
+  --color-sub-violet: var(--sub-violet);
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -119,6 +125,14 @@
   --status-cancelled: oklch(0.5 0.01 255);
   --status-cancelled-soft: oklch(0.95 0.003 255);
   --warning: oklch(0.5 0.12 65);
+
+  /* Subproject colours (D-027): validated colour-blind-safe set, light steps. */
+  --sub-blue: #2a78d6;
+  --sub-aqua: #1baf7a;
+  --sub-yellow: #eda100;
+  --sub-magenta: #e87ba4;
+  --sub-green: #008300;
+  --sub-violet: #6250d6;
   --warning-soft: oklch(0.95 0.06 85);
 
   --sidebar: oklch(1 0 0);
@@ -185,6 +199,13 @@
   --status-cancelled: oklch(0.7 0.01 255);
   --status-cancelled-soft: oklch(0.28 0.005 255);
   --warning: oklch(0.85 0.12 85);
+
+  --sub-blue: #3987e5;
+  --sub-aqua: #199e70;
+  --sub-yellow: #c98500;
+  --sub-magenta: #d55181;
+  --sub-green: #008300;
+  --sub-violet: #9085e9;
   --warning-soft: oklch(0.32 0.05 75);
 
   --sidebar: oklch(0.2 0.013 230);

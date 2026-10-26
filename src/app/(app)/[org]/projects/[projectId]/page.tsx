@@ -8,6 +8,7 @@ import { OrgLink } from "@/components/org-link";
 import { PageHeader } from "@/components/page-header";
 import { ProgressDonut } from "@/components/progress-donut";
 import { StatusBadge } from "@/components/status-badge";
+import { SubprojectDot } from "@/components/subproject-color";
 import { Timeline } from "@/components/timeline";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -108,6 +109,7 @@ async function ProjectContent({ params }: { params: Params }) {
                 projectId={project.id}
                 plan={plan}
                 dependencies={project.dependencies}
+                usedColors={plan.map((s) => s.color)}
                 trigger={
                   <Button>
                     <Plus aria-hidden="true" /> Add subproject
@@ -189,6 +191,7 @@ async function ProjectContent({ params }: { params: Params }) {
                   return {
                     id: sub.id,
                     label: sub.name,
+                    color: sub.color,
                     href: `/${org.slug}/projects/${project.id}/${sub.id}`,
                     sublabel: sub.ownerName ?? undefined,
                     range: s.end ? { start: s.start, end: s.end } : null,
@@ -300,7 +303,8 @@ function SubprojectCard({
       <CardHeader className="grid-cols-[1fr_auto] items-center gap-x-4">
         <ProgressDonut value={rollupProgress(sub.tasks)} label={`${sub.name} progress`} className="col-start-2 row-span-3 row-start-1" />
         <CardTitle>
-          <h3 className="text-base font-semibold">
+          <h3 className="flex items-center gap-2 text-base font-semibold">
+            <SubprojectDot color={sub.color} className="size-3" />
             <OrgLink
               href={`/projects/${project.id}/${sub.id}`}
               className="text-primary underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
@@ -364,7 +368,8 @@ function SubprojectCard({
             projectId={project.id}
             plan={project.subprojects}
             dependencies={project.dependencies}
-            subproject={{ id: sub.id, name: sub.name, startDate: sub.startDate }}
+            usedColors={project.subprojects.map((s) => s.color)}
+            subproject={{ id: sub.id, name: sub.name, startDate: sub.startDate, color: sub.color }}
             trigger={
               <Button size="sm" variant="outline">
                 <Pencil aria-hidden="true" /> Edit<span className="sr-only"> {sub.name}</span>

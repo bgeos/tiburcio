@@ -1,10 +1,11 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { CircleAlert } from "lucide-react";
+import { Check, CircleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { TextField, TextareaField } from "@/components/form/text-field";
 import { PlanPreview } from "@/components/plan-preview";
+import { SUBPROJECT_BG } from "@/components/subproject-color";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,7 +20,14 @@ import {
 import { FieldGroup } from "@/components/ui/field";
 import { describePlanChange, type PlanSubproject } from "@/lib/domain/project-plan";
 import type { Dependency } from "@/lib/domain/schedule";
+import {
+  SUBPROJECT_COLORS,
+  SUBPROJECT_COLOR_LABELS,
+  nextSubprojectColor,
+  type SubprojectColor,
+} from "@/lib/domain/subproject-colors";
 import { createSubproject, updateSubproject, type SubprojectFormState } from "@/lib/projects/subproject-actions";
+import { cn } from "@/lib/utils";
 
 type Props = {
   orgSlug: string;
@@ -27,8 +35,10 @@ type Props = {
   /** The project's current plan, for the "what changes" preview. */
   plan: PlanSubproject[];
   dependencies: Dependency[];
+  /** Colours already used in the project: a new subproject gets the least-used one. */
+  usedColors: SubprojectColor[];
   /** Omit to create a subproject. */
-  subproject?: { id: string; name: string; startDate: string };
+  subproject?: { id: string; name: string; startDate: string; color: SubprojectColor };
   trigger: React.ReactNode;
 };
 
@@ -66,13 +76,14 @@ export function SubprojectFormDialog(props: Props) {
   );
 }
 
-function SubprojectForm({ orgSlug, projectId, plan, dependencies, subproject, onSaved }: Props & { onSaved: () => void }) {
+function SubprojectForm({ orgSlug, projectId, plan, dependencies, usedColors, subproject, onSaved }: Props & { onSaved: () => void }) {
   const action = subproject
     ? updateSubproject.bind(null, orgSlug, projectId, subproject.id)
     : createSubproject.bind(null, orgSlug, projectId);
   const [state, formAction, pending] = useActionState(action, { status: "idle" } as SubprojectFormState);
   const [name, setName] = useState(subproject?.name ?? "");
   const [startDate, setStartDate] = useState(subproject?.startDate ?? "");
+  const [color, setColor] = useState<SubprojectColor>(subproject?.color ?? nextSubprojectColor(usedColors));
 
   const lastSaved = useRef(0);
   useEffect(() => {
@@ -118,6 +129,35 @@ function SubprojectForm({ orgSlug, projectId, plan, dependencies, subproject, on
           description="Its tasks run one after another from this day."
         />
       </FieldGroup>
+
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium">Colour</legend>
+        <p className="text-sm text-muted-foreground">Used for its timeline bar, card and tasks. Red is kept for overlaps.</p>
+        <div className="grid grid-cols-3 gap-2">
+          {SUBPROJECT_COLORS.map((c) => (
+            <label
+              key={c}
+              className={cn(
+                "flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-1.5 text-sm has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
+                color === c && "border-primary bg-accent font-medium",
+              )}
+            >
+              <input
+                type="radio"
+                name="color"
+                value={c}
+                checked={color === c}
+                onChange={() => setColor(c)}
+                className="sr-only"
+              />
+              <span aria-hidden="true" className={cn("grid size-5 shrink-0 place-items-center rounded-full", SUBPROJECT_BG[c])}>
+                {color === c ? <Check className="size-3.5 text-card" /> : null}
+              </span>
+              {SUBPROJECT_COLOR_LABELS[c]}
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       {preview ? <PlanPreview change={preview} emptyText="No tasks yet, so no other dates change." /> : null}
 

@@ -17,6 +17,16 @@ export function applyAccent(accent: AccentColor) {
 }
 
 /**
+ * True while the profile form is open: it previews choices and restores the saved look
+ * itself. The shell may finish loading after a choice was made; it must not undo it.
+ */
+let previewing = false;
+
+export function setPreviewing(on: boolean) {
+  previewing = on;
+}
+
+/**
  * The profile is the source of truth for appearance (D-027). When this device's copy
  * differs (first visit, or changed on another device), bring it in line.
  */
@@ -25,10 +35,10 @@ export function PreferencesSync({ accentColor, themeMode }: { accentColor: Accen
   // Apply each saved mode once: after that the top bar switch changes both itself.
   const appliedMode = useRef<ThemeMode | null>(null);
   useEffect(() => {
-    applyAccent(accentColor);
+    if (!previewing) applyAccent(accentColor);
   }, [accentColor]);
   useEffect(() => {
-    if (appliedMode.current === themeMode) return;
+    if (previewing || appliedMode.current === themeMode) return;
     appliedMode.current = themeMode;
     if (theme !== themeMode) setTheme(themeMode);
   }, [theme, themeMode, setTheme]);

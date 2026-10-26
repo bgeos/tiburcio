@@ -45,18 +45,20 @@ describe("canViewProjects", () => {
 });
 
 describe("subprojectSchema", () => {
-  it("accepts a name and a real date", () => {
-    expect(subprojectSchema.parse({ name: " Structure ", startDate: "2027-01-04" })).toEqual({
+  it("accepts a name, a real date and a colour", () => {
+    expect(subprojectSchema.parse({ name: " Structure ", startDate: "2027-01-04", color: "aqua" })).toEqual({
       name: "Structure",
       startDate: "2027-01-04",
+      color: "aqua",
       reason: "",
     });
   });
 
   it.each([
-    [{ name: "", startDate: "2027-01-04" }, "Enter a subproject name."],
-    [{ name: "Structure", startDate: "" }, "Choose a date."],
-    [{ name: "Structure", startDate: "2027-02-30" }, "Choose a valid date."],
+    [{ name: "", startDate: "2027-01-04", color: "blue" }, "Enter a subproject name."],
+    [{ name: "Structure", startDate: "", color: "blue" }, "Choose a date."],
+    [{ name: "Structure", startDate: "2027-02-30", color: "blue" }, "Choose a valid date."],
+    [{ name: "Structure", startDate: "2027-01-04", color: "red" }, "Choose a colour."],
   ])("rejects %j", (input, message) => {
     expect(subprojectSchema.safeParse(input).error?.issues[0].message).toBe(message);
   });

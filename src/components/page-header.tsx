@@ -3,11 +3,14 @@ import { cn } from "@/lib/utils";
 export function PageHeader({
   title,
   description,
+  titleAdornment,
   actions,
   className,
   headingRef,
 }: {
   title: string;
+  /** Decorative mark before the title (e.g. a subproject's colour); not part of its name. */
+  titleAdornment?: React.ReactNode;
   description?: React.ReactNode;
   actions?: React.ReactNode;
   className?: string;
@@ -25,8 +28,9 @@ export function PageHeader({
         <h1
           ref={headingRef}
           tabIndex={headingRef ? -1 : undefined}
-          className="text-2xl font-semibold tracking-tight outline-none"
+          className={cn("text-2xl font-semibold tracking-tight outline-none", titleAdornment && "flex items-center gap-2.5")}
         >
+          {titleAdornment}
           {title}
         </h1>
         {description ? (

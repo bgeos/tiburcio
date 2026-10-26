@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { PROJECT_STATUSES } from "@/lib/domain/projects";
+import { SUBPROJECT_COLORS } from "@/lib/domain/subproject-colors";
 
 /** Project form (create and edit). Same limits as the projects table. */
 export const projectSchema = z.object({
@@ -20,6 +21,7 @@ const isoDate = z
 export const subprojectSchema = z.object({
   name: z.string().trim().min(1, "Enter a subproject name.").max(120, "Use at most 120 characters."),
   startDate: isoDate,
+  color: z.enum(SUBPROJECT_COLORS, "Choose a colour."),
   reason: z.string().trim().max(1000, "Use at most 1000 characters.").default(""),
 });
 

@@ -5,7 +5,7 @@ import { Check, CircleAlert, Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { TextField } from "@/components/form/text-field";
-import { applyAccent } from "@/components/shell/preferences-sync";
+import { applyAccent, setPreviewing } from "@/components/shell/preferences-sync";
 import { Button } from "@/components/ui/button";
 import { FieldGroup } from "@/components/ui/field";
 import {
@@ -57,13 +57,14 @@ export function ProfileForm({
   useEffect(() => {
     setThemeRef.current = setTheme;
   }, [setTheme]);
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    setPreviewing(true);
+    return () => {
+      setPreviewing(false);
       applyAccent(saved.current.accent);
       setThemeRef.current(saved.current.mode);
-    },
-    [],
-  );
+    };
+  }, []);
 
   const fieldErrors = state.status === "invalid" ? state.fieldErrors : {};
   const values = state.status === "invalid" || state.status === "error" ? state.values : {};

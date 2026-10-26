@@ -29,7 +29,11 @@ export type SubprojectView = {
   tasks: TaskView[];
   /** Not archived, in list order. */
   materials: MaterialView[];
+  /** Not archived, in list order. */
+  crew: CrewView[];
 };
+
+export type CrewView = { id: string; name: string; role: string };
 
 export type MaterialView = { id: string; description: string; status: MaterialStatus };
 
@@ -89,7 +93,12 @@ export async function getProjectDetail(org: Membership, projectId: string): Prom
       .is("archived_at", null)
       .order("sort_order")
       .order("created_at"),
-    supabase.from("crew_members").select("id, name").in("subproject_id", ids),
+    supabase
+      .from("crew_members")
+      .select("id, subproject_id, name, role, archived_at")
+      .in("subproject_id", ids)
+      .order("sort_order")
+      .order("created_at"),
     supabase.from("subproject_dependencies").select("id, predecessor_id, successor_id").eq("project_id", projectId),
     supabase.from("plan_baselines").select("locked_at, snapshot").eq("project_id", projectId).maybeSingle(),
   ]);
@@ -127,6 +136,9 @@ export async function getProjectDetail(org: Membership, projectId: string): Prom
       materials: (materials.data ?? [])
         .filter((m) => m.subproject_id === s.id)
         .map((m) => ({ id: m.id, description: m.description, status: m.status as MaterialStatus })),
+      crew: (crew.data ?? [])
+        .filter((c) => c.subproject_id === s.id && !c.archived_at)
+        .map((c) => ({ id: c.id, name: c.name, role: c.role })),
     })),
     // Links to archived subprojects are kept in the database but not shown.
     dependencies: (dependencies.data ?? [])

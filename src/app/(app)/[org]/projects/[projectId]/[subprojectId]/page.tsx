@@ -21,10 +21,11 @@ import { canEditProjects } from "@/lib/domain/projects";
 import { daysBetween } from "@/lib/domain/schedule";
 import { formatDate, formatRange, pluralDays } from "@/lib/format";
 import { SubprojectFormDialog } from "../subproject-form-dialog";
+import { CrewTab } from "./crew-tab";
 import { MaterialsTab } from "./materials-tab";
 import { AddTaskButton, RemoveTaskButton, TaskStatusSelect, UpdateTaskButton, type TaskScope } from "./task-dialogs";
 
-const TABS = ["cronograma", "materials"] as const;
+const TABS = ["cronograma", "materials", "crew"] as const;
 
 export const metadata: Metadata = { title: "Subproject" };
 
@@ -118,6 +119,7 @@ async function SubprojectContent({ params, searchParams }: { params: Props["para
         <TabsList className="w-full justify-start overflow-x-auto sm:w-fit">
           <TabsTrigger value="cronograma">Cronograma ({sub.tasks.length})</TabsTrigger>
           <TabsTrigger value="materials">Materials ({sub.materials.length})</TabsTrigger>
+          <TabsTrigger value="crew">Crew ({sub.crew.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="cronograma">
           <Cronograma project={project} sub={sub} scope={scope} canEdit={canEdit} today={todayIn(org.timezone)} />
@@ -126,6 +128,14 @@ async function SubprojectContent({ params, searchParams }: { params: Props["para
           <MaterialsTab
             scope={{ orgSlug: org.slug, projectId: project.id, subprojectId: sub.id, subprojectName: sub.name }}
             materials={sub.materials}
+            canEdit={canEdit}
+          />
+        </TabsContent>
+        <TabsContent value="crew">
+          <CrewTab
+            scope={{ orgSlug: org.slug, projectId: project.id, subprojectId: sub.id, subprojectName: sub.name }}
+            crew={sub.crew}
+            ownerCrewId={sub.ownerCrewId}
             canEdit={canEdit}
           />
         </TabsContent>

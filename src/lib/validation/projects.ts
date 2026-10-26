@@ -57,3 +57,9 @@ export const progressSchema = z.coerce
 export const materialSchema = z.object({
   description: z.string().trim().min(1, "Describe the material.").max(300, "Use at most 300 characters."),
 });
+
+/** A crew member of a subproject (people on site, not app users; D-025). */
+export const crewSchema = z.object({
+  name: z.string().trim().min(1, "Enter a name.").max(120, "Use at most 120 characters."),
+  role: z.string().trim().max(80, "Use at most 80 characters.").default(""),
+});

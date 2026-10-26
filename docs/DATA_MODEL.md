@@ -101,7 +101,9 @@ co-members can see each other's email on the Team page; it is not user-editable.
 - Policy helpers `private.is_org_member`, `private.has_org_role`, `private.can_see_profile`
   live in the `private` schema (not exposed by the Data API).
 
-## Phase 3: projects, subprojects and the cronograma (design, D-019/D-025)
+## Phase 3: projects, subprojects and the cronograma (D-019/D-025)
+
+Implemented: `projects`, `subprojects`, `crew_members` (P3-11). The rest is design until P3-12.
 
 One level only: a **project** (e.g. Main Stage) has **subprojects** (Structure, Shade Sail…).
 Every table has `organization_id`, `created_at`/`updated_at`, `created_by`, `archived_at`

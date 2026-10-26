@@ -185,6 +185,19 @@ Product owner's answers after reviewing `/[org]/projects/prototype`:
 This supersedes the generic Phase 3 plan (recursive projects, project members, status
 definitions, task assignees, Kanban). See DATA_MODEL § Phase 3 and BACKLOG P3-11…P3-20.
 
+## D-026 · 2026-10-26 · What the Overview counts
+The Overview (`/<org>/dashboard`) is computed from **current projects**: not archived and
+in planning or active; finished projects are left out. Rules in `lib/domain/dashboard.ts`
+(unit-tested):
+- **Active projects:** status active (planning ones shown as a hint).
+- **Open tasks:** every task that isn't done (to do, in progress, blocked).
+- **Overdue tasks:** not done, and the planned last day (subproject start + durations +
+  waiting days) is before today in the organization's timezone. A task ending today is not overdue.
+- **Materials not on site:** any status other than "On site"; hint = how many are still to request.
+- Per project: progress by the D-007 rule, task count, overlaps (red), overdue tasks.
+- No tasks / no materials / no projects → "—", never 0. External collaborators see nothing.
+Costs (Phase 6) and stock shortages (Phase 5) are added when those exist.
+
 ---
 
 # Open questions (non-blocking)

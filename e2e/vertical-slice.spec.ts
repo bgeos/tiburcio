@@ -140,6 +140,16 @@ test("a delayed task previews the red overlap, nothing else moves, and it surviv
   await expect(page.getByRole("img", { name: `${PROJECT} progress: 11% complete` })).toBeVisible();
   await expect(page.getByRole("list", { name: "Recent changes" })).toContainText("Bamboo delivery came late");
 
+  // The Overview sums it up (other test projects may be listed too: look at this one).
+  await page.goto(orgPath("/dashboard"));
+  const overview = page.getByRole("list", { name: "Current projects" }).getByRole("listitem").filter({ hasText: PROJECT });
+  await expect(overview).toContainText("Active");
+  await expect(overview).toContainText("11% done");
+  await expect(overview).toContainText("9 tasks");
+  await expect(overview).toContainText("2 overlaps");
+  await expect(overview).not.toContainText("overdue"); // planned for 2027
+  await expect(page.getByRole("list", { name: "Tasks by status" })).toBeVisible();
+
   await page.goto(orgPath("/materials"));
   for (const sub of SUBPROJECTS) await expect(page.getByRole("row").filter({ hasText: `${sub.name} hardware kit` })).toContainText(PROJECT);
 });

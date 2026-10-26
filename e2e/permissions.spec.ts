@@ -95,6 +95,10 @@ test("an external collaborator sees no projects, and direct links lead nowhere",
   await page.goto(orgPath("/materials"));
   await expect(page.getByText("No materials to show")).toBeVisible();
 
+  await page.goto(orgPath("/dashboard"));
+  await expect(page.getByText("Nothing to show yet")).toBeVisible();
+  await expect(page.getByRole("list", { name: "Current projects" })).toHaveCount(0);
+
   await page.goto(orgPath(`/projects/${projectId}`));
   await expect(page.getByRole("heading", { level: 1, name: "Page not found" })).toBeVisible();
   await page.goto(orgPath(`/projects/${projectId}/${ids["Structure"]}`));

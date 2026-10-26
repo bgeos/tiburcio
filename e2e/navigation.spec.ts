@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { orgPath } from "./support/users";
+import { E2E_OTHER_ORG, E2E_OUTSIDER, orgPath } from "./support/users";
 
 const ROUTES = [
   { path: orgPath("/dashboard"), heading: "Overview" },
@@ -25,11 +25,21 @@ for (const route of ROUTES) {
   });
 }
 
-test("dashboard shows no fabricated metrics", async ({ page }) => {
-  await page.goto(orgPath("/dashboard"));
+test("an organization without projects sees dashes on the Overview, never fake zeros", async ({ browser }) => {
+  // The other organization has no projects (the E2E organization's change as tests run).
+  const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+  const page = await context.newPage();
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(E2E_OUTSIDER.email);
+  await page.getByLabel("Password").fill(E2E_OUTSIDER.password);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(new RegExp(`/${E2E_OTHER_ORG.slug}/dashboard$`));
+
   const tiles = page.getByRole("region", { name: "Key figures" });
   await expect(tiles.getByText("—")).toHaveCount(4);
   await expect(tiles.getByText(/^\d+$/)).toHaveCount(0);
+  await expect(page.getByText("No current projects")).toBeVisible();
+  await context.close();
 });
 
 test.describe("desktop sidebar", () => {

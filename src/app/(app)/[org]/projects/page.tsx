@@ -134,7 +134,14 @@ function ProjectCard({ project, orgSlug, canEdit }: { project: ProjectSummary; o
     <Card className="h-full gap-3">
       <CardHeader className="gap-2">
         <CardTitle>
-          <h2 className="text-base font-semibold">{project.name}</h2>
+          <h2 className="text-base font-semibold">
+            <OrgLink
+              href={`/projects/${project.id}`}
+              className="text-primary underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
+            >
+              {project.name}
+            </OrgLink>
+          </h2>
         </CardTitle>
         <StatusBadge category={PROJECT_STATUS_CATEGORY[project.status]} label={PROJECT_STATUS_LABELS[project.status]} />
       </CardHeader>

@@ -76,7 +76,49 @@ async function ensureMember(orgSlug: string, userId: string, role: string): Prom
   });
 }
 
-/** Remove every project of the E2E organization (subprojects, tasks… cascade). */
+/** Create a project in the E2E organization directly (for tests about other screens). */
+export async function createE2eProject(name: string): Promise<string> {
+  const [row] = await admin()<{ id: string }[]>("/rest/v1/projects", {
+    method: "POST",
+    headers: { prefer: "return=representation" },
+    body: JSON.stringify({ organization_id: await orgId(E2E_ORG.slug), name, status: "active" }),
+  });
+  return row.id;
+}
+
+/** Add tasks to a subproject (looked up by name) until the Cronograma UI exists (P3-15). */
+export async function addE2eTasks(projectId: string, subprojectName: string, durations: number[]): Promise<void> {
+  const call = admin();
+  const [sub] = await call<{ id: string; organization_id: string }[]>(
+    `/rest/v1/subprojects?select=id,organization_id&project_id=eq.${projectId}&name=eq.${encodeURIComponent(subprojectName)}`,
+  );
+  if (!sub) throw new Error(`No subproject ${subprojectName}`);
+  await call("/rest/v1/tasks", {
+    method: "POST",
+    body: JSON.stringify(
+      durations.map((duration_days, i) => ({
+        organization_id: sub.organization_id,
+        subproject_id: sub.id,
+        name: `${subprojectName} task ${i + 1}`,
+        duration_days,
+        sort_order: i,
+      })),
+    ),
+  });
+}
+
+/**
+ * Remove the E2E organization's projects with exactly this name. Test files clean up only
+ * what they created, because other files run at the same time.
+ */
+export async function deleteE2eProjects(name: string): Promise<void> {
+  await admin()(
+    `/rest/v1/projects?organization_id=eq.${await orgId(E2E_ORG.slug)}&name=eq.${encodeURIComponent(name)}`,
+    { method: "DELETE" },
+  );
+}
+
+/** Remove every project of the E2E organization (subprojects, tasks… cascade). Setup only. */
 export async function resetE2eProjects(): Promise<void> {
   await admin()(`/rest/v1/projects?organization_id=eq.${await orgId(E2E_ORG.slug)}`, { method: "DELETE" });
 }

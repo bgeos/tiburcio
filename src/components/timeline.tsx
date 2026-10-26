@@ -1,6 +1,7 @@
 import { addDays, daysBetween, type DateRange, type IsoDate } from "@/lib/domain/schedule";
 import { cn } from "@/lib/utils";
-import { formatDate, formatRange } from "./prototype-model";
+import Link from "next/link";
+import { formatDate, formatRange } from "@/lib/format";
 
 export type TimelineRow = {
   id: string;
@@ -13,16 +14,26 @@ export type TimelineRow = {
   warning?: string | null;
   overlaps?: DateRange[];
   done?: boolean;
+  /** Link the row label (server or client callers)… */
+  href?: string;
+  /** …or make it a button (client callers only). */
   onSelect?: () => void;
 };
 
+/**
+ * The days to draw: the plan's own dates. Today stretches the scale only when it falls
+ * inside the plan; a plan months away would otherwise be squeezed against one edge.
+ */
 function span(rows: TimelineRow[], today: IsoDate) {
-  const dates = [today];
+  const dates: IsoDate[] = [];
   for (const row of rows) {
     for (const r of [row.range, row.baseline]) if (r) dates.push(r.start, r.end);
   }
   dates.sort();
-  return { first: dates[0], last: dates[dates.length - 1] };
+  const first = dates[0] ?? today;
+  const last = dates[dates.length - 1] ?? today;
+  const todayInside = today >= first && today <= last;
+  return { first, last, todayInside, todayBefore: today < first };
 }
 
 /**
@@ -41,7 +52,7 @@ export function Timeline({
   /** Show the red "Overlap" legend entry (only where overlaps can occur). */
   showOverlapKey?: boolean;
 }) {
-  const { first, last } = span(rows, today);
+  const { first, last, todayInside, todayBefore } = span(rows, today);
   const total = daysBetween(first, last) + 1;
   const pos = (date: IsoDate) => (daysBetween(first, date) / total) * 100;
   const width = (r: DateRange) => ((daysBetween(r.start, r.end) + 1) / total) * 100;
@@ -66,7 +77,14 @@ export function Timeline({
             {rows.map((row) => (
               <li key={row.id} className="flex items-center py-2">
                 <div className="w-40 shrink-0 pr-3">
-                  {row.onSelect ? (
+                  {row.href ? (
+                    <Link
+                      href={row.href}
+                      className="text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
+                    >
+                      {row.label}
+                    </Link>
+                  ) : row.onSelect ? (
                     <button
                       type="button"
                       onClick={row.onSelect}
@@ -85,10 +103,12 @@ export function Timeline({
                   </span>
                 </div>
                 <div className="relative h-8 flex-1" aria-hidden="true">
-                  <div
-                    className="absolute inset-y-0 w-px bg-destructive/60"
-                    style={{ left: `${pos(today)}%` }}
-                  />
+                  {todayInside ? (
+                    <div
+                      className="absolute inset-y-0 w-px bg-destructive/60"
+                      style={{ left: `${pos(today)}%` }}
+                    />
+                  ) : null}
                   {row.range ? (
                     <div
                       className={cn(
@@ -129,9 +149,15 @@ export function Timeline({
             <span className="h-2.5 w-5 rounded-sm bg-destructive" /> Overlapping days
           </span>
         ) : null}
-        <span className="inline-flex items-center gap-1.5">
-          <span className="h-3 w-px bg-destructive/60" /> Today ({formatDate(today)})
-        </span>
+        {todayInside ? (
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-3 w-px bg-destructive/60" /> Today ({formatDate(today)})
+          </span>
+        ) : (
+          <span>
+            Today: {formatDate(today)}, {todayBefore ? "before" : "after"} this plan
+          </span>
+        )}
       </div>
     </div>
   );

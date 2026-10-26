@@ -7,15 +7,9 @@ import { scheduleSubproject, type Dependency, type DateRange, type IsoDate } fro
  * Never import this into real pages, metrics or reports.
  */
 
-export const MATERIAL_STATUSES = ["to_request", "requested", "ready_at_warehouse", "on_site"] as const;
-export type MaterialStatus = (typeof MATERIAL_STATUSES)[number];
+import { MATERIAL_STATUSES, MATERIAL_STATUS_LABELS, type MaterialStatus } from "@/lib/domain/materials";
 
-export const MATERIAL_STATUS_LABELS: Record<MaterialStatus, string> = {
-  to_request: "To request",
-  requested: "Requested",
-  ready_at_warehouse: "Ready at warehouse",
-  on_site: "On site",
-};
+export { MATERIAL_STATUSES, MATERIAL_STATUS_LABELS, type MaterialStatus };
 
 export type ProtoTask = {
   id: string;

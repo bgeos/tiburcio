@@ -1,16 +1,18 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { E2E_MEMBER, orgPath, resetE2eProjects } from "./support/users";
+import { E2E_MEMBER, deleteE2eProjects, orgPath } from "./support/users";
 
 // These tests change the E2E organization's projects: one at a time, on desktop only.
-test.describe.configure({ mode: "serial" });
+// Multi-step journeys: allow more than the default 30 s while other workers are busy.
+test.describe.configure({ mode: "serial", timeout: 90_000 });
 test.skip(({ isMobile }) => isMobile, "project editing runs once, on desktop");
-test.afterAll(async ({ isMobile }) => {
-  if (!isMobile) await resetE2eProjects();
-});
-
 const NAME = `E2E Festival ${Date.now()}`;
 const RENAMED = `${NAME} (renamed)`;
+
+// Only this file's projects: other test files run at the same time.
+test.afterAll(async ({ isMobile }) => {
+  if (!isMobile) await Promise.all([deleteE2eProjects(NAME), deleteE2eProjects(RENAMED)]);
+});
 
 function card(page: import("@playwright/test").Page, name: string) {
   return page.getByRole("listitem").filter({ has: page.getByRole("heading", { name, exact: true }) });

@@ -3,7 +3,8 @@ import { latestEmailTo, linkIn } from "./support/mail";
 import { E2E_INVITEE, E2E_ORG, E2E_OUTSIDER, orgPath, resetE2eInvitations } from "./support/users";
 
 // These tests change the shared E2E organization, so they run one at a time, on desktop only.
-test.describe.configure({ mode: "serial" });
+// Multi-step journeys: allow more than the default 30 s while other workers are busy.
+test.describe.configure({ mode: "serial", timeout: 90_000 });
 test.skip(({ isMobile }) => isMobile, "invitation flows run once, on desktop");
 // afterAll runs even in projects where every test is skipped; clean up only where the
 // tests ran, or the mobile worker deletes invitations the desktop tests are using.

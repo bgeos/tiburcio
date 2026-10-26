@@ -12,7 +12,7 @@ import { itemProgress } from "@/lib/domain/progress";
 import { STATUS_CATEGORY_LABELS } from "@/lib/domain/status";
 import { PlanChangeDialog, type BuildResult, type Values } from "./plan-change-dialog";
 import { formatDate, formatRange, pluralDays, type ChangeLog } from "./prototype-model";
-import { Timeline } from "./timeline";
+import { Timeline } from "@/components/timeline";
 
 const TASK_STATUSES: ProtoTask["status"][] = ["todo", "in_progress", "blocked", "done"];
 

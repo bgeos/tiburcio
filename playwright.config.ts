@@ -23,9 +23,13 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? "github" : "list",
+  // Navigations to data pages can take a few seconds while every worker and the
+  // server are busy (and longer on CI runners); 5 s (the default) is too tight.
+  expect: { timeout: 10_000 },
   use: {
     baseURL: BASE_URL,
     trace: "on-first-retry",
+    screenshot: "only-on-failure",
   },
   projects: [
     { name: "setup", testMatch: /auth\.setup\.ts/ },

@@ -29,7 +29,7 @@ import {
   type PrototypeAction,
 } from "./prototype-model";
 import { usePrototypeStore } from "./prototype-store";
-import { Timeline } from "./timeline";
+import { Timeline } from "@/components/timeline";
 
 type View = { kind: "overview" } | { kind: "subproject"; id: string; checkIn: boolean };
 

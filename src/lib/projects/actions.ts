@@ -1,12 +1,11 @@
 "use server";
 
 import { refresh } from "next/cache";
-import { requireUser } from "@/lib/dal/auth";
-import { getMembership, type Membership } from "@/lib/dal/organizations";
-import { PROJECT_STATUS_LABELS, canEditProjects, type ProjectStatus } from "@/lib/domain/projects";
+import { PROJECT_STATUS_LABELS, type ProjectStatus } from "@/lib/domain/projects";
 import { createClient } from "@/lib/supabase/server";
 import { formDataToObject, parseForm, type FieldErrors } from "@/lib/validation/form";
 import { projectSchema } from "@/lib/validation/projects";
+import { NOT_ALLOWED, editableOrganization, logActivity } from "./guards";
 
 export type ProjectFormState =
   | { status: "idle" }
@@ -14,25 +13,6 @@ export type ProjectFormState =
   | { status: "error"; message: string; values: Record<string, string> }
   /** `savedAt` lets the form tell two saves apart (to close its dialog). */
   | { status: "saved"; savedAt: number };
-
-const NOT_ALLOWED = "Only admins and production managers can change projects.";
-
-/** The organization, if the signed-in person may edit its projects. Checked in every action. */
-async function editableOrganization(orgSlug: string): Promise<Membership | null> {
-  await requireUser();
-  const membership = await getMembership(orgSlug);
-  return membership && canEditProjects(membership.role) ? membership : null;
-}
-
-type Supabase = Awaited<ReturnType<typeof createClient>>;
-
-/** History entry for a project-level change. A failed log doesn't undo the change. */
-async function logActivity(supabase: Supabase, org: Membership, projectId: string, summary: string, details: string[] = []) {
-  const { error } = await supabase
-    .from("activity_log")
-    .insert({ organization_id: org.id, project_id: projectId, summary, details });
-  if (error) console.error(`activity_log insert failed for project ${projectId}: ${error.message}`);
-}
 
 export async function createProject(
   orgSlug: string,
@@ -57,9 +37,11 @@ export async function createProject(
     return { status: "error", message: "Couldn't create the project. Try again.", values };
   }
 
-  await logActivity(supabase, org, data.id, `Project created: ${parsed.data.name}`, [
-    `Status: ${PROJECT_STATUS_LABELS[parsed.data.status]}`,
-  ]);
+  await logActivity(supabase, org, {
+    projectId: data.id,
+    summary: `Project created: ${parsed.data.name}`,
+    details: [`Status: ${PROJECT_STATUS_LABELS[parsed.data.status]}`],
+  });
   refresh();
   return { status: "saved", savedAt: Date.now() };
 }
@@ -99,7 +81,7 @@ export async function updateProject(
   const { error } = await supabase.from("projects").update(next).eq("id", projectId).eq("organization_id", org.id);
   if (error) return { status: "error", message: "Couldn't save the project. Try again.", values };
 
-  await logActivity(supabase, org, projectId, `Project updated: ${next.name}`, changes);
+  await logActivity(supabase, org, { projectId, summary: `Project updated: ${next.name}`, details: changes });
   refresh();
   return { status: "saved", savedAt: Date.now() };
 }
@@ -119,7 +101,7 @@ export async function setProjectArchived(orgSlug: string, projectId: string, arc
     .maybeSingle<{ name: string }>();
   if (error || !data) return { ok: false, message: "Couldn't update the project. Try again." };
 
-  await logActivity(supabase, org, projectId, `${archived ? "Project archived" : "Project restored"}: ${data.name}`);
+  await logActivity(supabase, org, { projectId, summary: `${archived ? "Project archived" : "Project restored"}: ${data.name}` });
   refresh();
   return { ok: true };
 }

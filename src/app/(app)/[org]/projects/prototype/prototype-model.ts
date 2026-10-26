@@ -8,28 +8,13 @@ import {
   diffRanges,
   findOverlaps,
   scheduleSubproject,
-  type DateRange,
-  type IsoDate,
   type Overlap,
   type SubprojectSchedule,
 } from "@/lib/domain/schedule";
 
-const dayMonth = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+import { formatDate, formatRange, pluralDays } from "@/lib/format";
 
-export function formatDate(date: IsoDate | null): string {
-  return date ? dayMonth.format(new Date(`${date}T00:00:00Z`)) : "—";
-}
-
-export function formatRange(range: DateRange | null): string {
-  if (!range) return "—";
-  return range.start === range.end
-    ? formatDate(range.start)
-    : `${formatDate(range.start)} – ${formatDate(range.end)}`;
-}
-
-export function pluralDays(n: number): string {
-  return `${n} ${Math.abs(n) === 1 ? "day" : "days"}`;
-}
+export { formatDate, formatRange, pluralDays };
 
 export function schedulesOf(subprojects: ProtoSubproject[]): Record<string, SubprojectSchedule> {
   return Object.fromEntries(subprojects.map((s) => [s.id, scheduleSubproject(s.start, s.tasks)]));

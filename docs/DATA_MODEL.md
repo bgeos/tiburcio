@@ -31,12 +31,11 @@ updated in the same change.
 
 ```
 organizations ─┬─ organization_members ── profiles (1:1 auth.users)
-               ├─ projects ──(parent_project_id)──▶ projects        (any depth)
-               │     ├─ project_members
-               │     └─ tasks ──(parent_task_id)──▶ tasks            (subtasks)
-               │           ├─ task_assignees
-               │           └─ task_dependencies (task → task, any project in org)
-               ├─ status_definitions
+               ├─ projects ── plan_baselines, activity_log            (Phase 3, D-025)
+               │     └─ subprojects ── subproject_dependencies (within a project)
+               │           ├─ tasks              (cronograma: sequential, durations)
+               │           ├─ subproject_materials
+               │           └─ crew_members       (owner = one of them)
                ├─ materials ── material_movements ── stock_locations
                │       └──── material_allocations (→ project / task)
                ├─ suppliers, purchase_items
@@ -102,62 +101,56 @@ co-members can see each other's email on the Team page; it is not user-editable.
 - Policy helpers `private.is_org_member`, `private.has_org_role`, `private.can_see_profile`
   live in the `private` schema (not exposed by the Data API).
 
-## Phase 3: projects and tasks
+## Phase 3: projects, subprojects and the cronograma (design, D-019/D-025)
+
+One level only: a **project** (e.g. Main Stage) has **subprojects** (Structure, Shade Sail…).
+Every table has `organization_id`, `created_at`/`updated_at`, `created_by`, `archived_at`
+(soft delete: archived rows are hidden but kept for history) and RLS:
+**read** = org `admin`, `production_manager`, `member`; **write** = `admin`, `production_manager`;
+`external` sees nothing yet. Child rows use composite same-org foreign keys.
 
 ### `projects`
-| column | type | notes |
-| --- | --- | --- |
-| id, organization_id | uuid | `unique (organization_id, id)` |
-| parent_project_id | uuid null | composite FK to `projects(organization_id, id)` |
-| name | text | |
-| description | text | |
-| owner_id | uuid null | profile; the subproject owner (e.g. the DJ Booth lead) |
-| status_id | uuid null | → `status_definitions` |
-| start_date, due_date | date null | check `due_date >= start_date` |
-| sort_order | int | ordering among siblings |
-| archived_at | timestamptz null | |
+`name` (1–120), `description` (optional), `status text check in ('planning','active','finished')`,
+`sort_order`.
 
-- Any depth. Cycles are prevented by a trigger that walks ancestors on
-  insert/update of `parent_project_id`.
-- Archiving a project hides its descendants in default views but does not change their own
-  `archived_at`.
+### `subprojects`
+`project_id`, `name`, `start_date date not null`, `owner_crew_id uuid null` (→ `crew_members`
+of the **same subproject**, checked by trigger), `sort_order`.
+Its end date is not stored: it is the end of its last task (`lib/domain/schedule.ts`).
 
-### `project_members`
-`(project_id, user_id)` unique, `role text check (role in ('owner','editor','viewer'))`,
-plus `organization_id` for RLS. Membership applies to the project and its descendants.
-
-### `status_definitions`
-`organization_id`, `scope ('project'|'task')`, `name`, `color`,
-`category text check (category in ('todo','in_progress','blocked','done','cancelled'))`,
-`sort_order`. Seeded with defaults per new org. The **category** carries
-meaning for calculations (e.g. `done`), and the name and colour are user-facing.
+### `crew_members`
+`subproject_id`, `name` (1–120), `role` (free text, e.g. "Rigger"), `sort_order`.
+Crew are people on site, not app users (no sign-in). Daily cost comes later.
 
 ### `tasks`
-| column | type | notes |
-| --- | --- | --- |
-| id, organization_id | uuid | `unique (organization_id, id)` |
-| project_id | uuid | composite FK to `projects` |
-| parent_task_id | uuid null | composite FK to `tasks`. Must be in the same project (trigger) |
-| title, description | text | |
-| status_id | uuid | → `status_definitions` (scope `task`) |
-| priority | text | `check in ('low','medium','high','urgent')` |
-| owner_id | uuid null | |
-| start_date, due_date | date null | |
-| actual_start, actual_end | date null | Phase 4 |
-| is_milestone | bool | Phase 4 |
-| progress | numeric(5,2) null | 0–100, manual. Only meaningful on leaf tasks |
-| estimated_hours | numeric(8,2) null | for future effort weighting |
-| sort_order | int | |
-| archived_at | timestamptz null | |
+`subproject_id`, `name`, `duration_days int check (>= 1)`, `delay_days int default 0 check (>= 0)`
+(wait before starting, e.g. a late delivery), `status text check in ('todo','in_progress','blocked','done')`,
+`progress numeric(5,2) null check (0–100)`, `actual_start date`, `actual_end date`, `sort_order`.
+Tasks run one after another from the subproject's start date in `sort_order`; planned dates
+are computed, not stored (start day counts as day 1, calendar days).
 
-### `task_assignees`
-`(task_id, user_id)` unique, plus `organization_id`.
+### `subproject_materials`
+`subproject_id`, `description` (free text, e.g. "Steel cable, 8 mm"),
+`status text check in ('to_request','requested','ready_at_warehouse','on_site')`, `sort_order`.
+Not linked to the Phase 5 catalogue/stock yet.
 
-### `task_dependencies` (Phase 4)
-`organization_id`, `predecessor_id`, `successor_id` (both composite FKs to
-`tasks`, so tasks must be in the same org but can be in any project),
-`type text default 'finish_to_start'`, `lag_days int default 0`.
-Self-dependency and cycles are rejected by trigger (recursive CTE).
+### `subproject_dependencies`
+`predecessor_id`, `successor_id` (subprojects of the **same project**; no self-links, no cycles).
+Meaning: "successor starts after predecessor finishes". Nothing moves automatically: an
+overlap is reported (in red) instead.
+
+### `plan_baselines`
+One per project (`project_id` unique): `locked_at`, `locked_by`, `snapshot jsonb`
+(`{ id: { start, end } }` for every subproject and task at lock time). "Lock plan" replaces it.
+
+### `activity_log`
+`project_id`, `subproject_id null`, `actor_id`, `summary`, `details jsonb` (lines such as
+"Assemble poles: 7–10 Jan → 8–11 Jan"), `reason text null`, `created_at`. Append-only:
+inserted with each change, never updated or deleted by users.
+
+### Rules (see `lib/domain`)
+- Progress: `rollupProgress` (D-007): each task counts equally, Done = 100, archived excluded.
+- Overlaps: `findOverlaps` on dependencies, using computed dates.
 
 ## Phase 5: materials and inventory
 

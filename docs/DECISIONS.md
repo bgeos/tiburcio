@@ -167,6 +167,24 @@ sees an "ask for an invitation" screen, never an empty app.
 - `accept_invitation` only accepts the invited email address, so a forwarded link is useless.
 - After sign-in, people go straight to their organization (no extra hop via `/`).
 
+## D-025 · 2026-10-26 · Phase 3 builds the prototype for real
+Product owner's answers after reviewing `/[org]/projects/prototype`:
+1. **Scope:** the prototype is the spec: projects → subprojects (one level), Cronograma,
+   Materials, Crew and History tabs, All materials, daily check-in, lock plan (baseline),
+   overlap warnings in red, progress donuts. Kanban and nested subprojects are later.
+2. **Permissions:** admins and production managers edit everything; members view only;
+   external collaborators see no projects yet (sharing comes later). Subproject owners
+   editing their own subproject comes later.
+3. **Crew** is typed per subproject (name + role), not an organization-wide directory. The
+   subproject tab is called **Crew** (replaces "People"); the owner is picked from that crew.
+4. **Fields:** project = name, optional description, status (planning / active / finished);
+   subproject = name, owner (from its crew), start date.
+5. **The prototype is removed** once the real screens work (it stays in Git history).
+6. **Data entry is by hand**; no spreadsheet import.
+
+This supersedes the generic Phase 3 plan (recursive projects, project members, status
+definitions, task assignees, Kanban). See DATA_MODEL § Phase 3 and BACKLOG P3-11…P3-20.
+
 ---
 
 # Open questions (non-blocking)

@@ -37,17 +37,17 @@ Status: ⬜ todo · 🟡 doing · ✅ done. IDs are stable; append rather than r
 | ID | Task | Acceptance criteria | Status |
 | --- | --- | --- | --- |
 | P3-00 | Clickable prototype of the subproject workspace (D-019) at `/projects/prototype` | Demo data only, labelled; cronograma/materials/people/history tabs; daily check-in; previews and overlap warnings; E2E + axe | ✅ 2026-10-26, plus progress donuts, red overlaps and an "All materials" view at `/projects/prototype/materials` (2 demo projects). Rules in `lib/domain/schedule.ts` and `progress.ts` (unit-tested) |
-| P3-00b | Revise DATA_MODEL for D-019 after prototype feedback | Owner = crew person; task duration + wait days; `project_dependencies` between subprojects; `project_materials` (description + status); `crew_members`; baseline snapshots; history with reason | ⬜ |
-| P3-01 | Migration: `status_definitions` (+ default seeding per org), `projects`, `project_members` + RLS | Composite same-org FKs; cycle-prevention trigger; RLS tests | ⬜ |
-| P3-02 | Migration: `tasks`, `task_assignees`, `activity_log` (tasks/projects) + RLS | Subtask same-project trigger; audit rows written; RLS tests | ⬜ |
-| P3-03 | `lib/domain/progress.ts` + unit tests | Implements DATA_MODEL progress rule incl. empty → null, cancelled excluded, no double count | ⬜ |
-| P3-04 | Projects list + create/edit/archive project & subproject (UI + actions) | Main Stage → 4 subprojects created via UI; persists after refresh | ⬜ |
-| P3-05 | Project detail: children, owner, members, progress with method label | Progress matches P3-03 rule; empty state handled | ⬜ |
-| P3-06 | Task CRUD: create/edit/archive tasks and subtasks, assignees, status, priority, dates, progress | Validation errors shown; archive confirmed | ⬜ |
-| P3-07 | Table view with sort/filter/search (+ pagination if > 50 rows) | Filters predictable; URL reflects filter state | ⬜ |
-| P3-08 | Kanban view by status (drag or menu to move) | Moving a card persists; keyboard alternative exists | ⬜ |
-| P3-09 | Project members & roles UI | Owner of DJ Area can edit DJ tasks but not Stage tasks (RLS test + E2E) | ⬜ |
-| P3-10 | E2E: first vertical slice (see ROADMAP) | Passes against local Supabase seed | ⬜ |
+| — | ~~P3-00b, P3-01, P3-02, P3-03, P3-04, P3-05, P3-06, P3-07, P3-08, P3-09, P3-10~~ | Superseded by D-025 (prototype as spec): recursive projects, project members, status definitions, task assignees and Kanban are not in Phase 3 | ⏭ |
+| P3-11 | Migration: `projects`, `subprojects`, `crew_members` + RLS + pgTAP | Members read, admin/PM write, externals nothing; owner must be crew of the same subproject; same-org FKs | ⬜ |
+| P3-12 | Migration: `tasks`, `subproject_materials`, `subproject_dependencies`, `plan_baselines`, `activity_log` + RLS + pgTAP | Dependencies only within one project, no cycles; activity log append-only | ⬜ |
+| P3-13 | Projects page: list, create, edit, archive projects | Persists after refresh; members see no edit buttons and the server refuses their edits | ⬜ |
+| P3-14 | Project page: subproject cards, add/edit/archive subproject, dependencies, timeline, progress donut, red overlaps | Matches the prototype; dates from tasks | ⬜ |
+| P3-15 | Subproject Cronograma tab: add/update/archive tasks with change preview, status, progress, actual dates | Later tasks shift; other subprojects never move; overlaps previewed | ⬜ |
+| P3-16 | Subproject Materials tab + organization "All materials" page with filters | Replaces the `/materials` placeholder | ⬜ |
+| P3-17 | Subproject Crew tab; owner picked from crew | Owner shown on cards and timeline | ⬜ |
+| P3-18 | History tab + project history, lock plan (baseline, "vs. original"), daily check-in | Every change logged with optional reason | ⬜ |
+| P3-19 | Permissions in the UI: members read-only, externals no projects | E2E as member and external; RLS already proves it | ⬜ |
+| P3-20 | Remove the prototype; E2E vertical slice | Create Main Stage + 3 subprojects + tasks by UI, delay a task → red overlap, survives refresh | ⬜ |
 
 ## Phases 4–9
 

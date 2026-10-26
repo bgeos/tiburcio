@@ -70,8 +70,8 @@ Accept: unauthenticated users blocked, org isolation proved by tests, role
 permissions tested, no secrets in client or Git. Backlog P2-*.
 
 ## Phase 3: Projects and tasks ⬜
-Product shape agreed in D-019 (subproject = cronograma + materials + people). A clickable
-prototype with demo data is at `/projects/prototype` (P3-00) for feedback before building.
+Product shape agreed in D-019 and confirmed in D-025: the prototype at `/<org>/projects/prototype`
+is the spec (subproject = Cronograma + Materials + Crew + History). Backlog P3-11 … P3-20.
 
 Accept: Main Stage with 4 subprojects created via UI, each with its own owner and tasks,
 edits persist, parent summaries follow the documented progress rule. Backlog P3-*.

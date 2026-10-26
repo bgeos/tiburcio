@@ -111,7 +111,7 @@ co-members can see each other's email on the Team page; it is not user-editable.
 | parent_project_id | uuid null | composite FK to `projects(organization_id, id)` |
 | name | text | |
 | description | text | |
-| owner_id | uuid null | profile; the subproject owner (e.g. "Fernanda" for DJ area) |
+| owner_id | uuid null | profile; the subproject owner (e.g. the DJ Booth lead) |
 | status_id | uuid null | → `status_definitions` |
 | start_date, due_date | date null | check `due_date >= start_date` |
 | sort_order | int | ordering among siblings |

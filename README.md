@@ -49,7 +49,7 @@ npm run db:start    # first run downloads the Docker images (several minutes)
 npm run db:status   # prints the local URL and keys
 ```
 
-Copy the **API URL** and the **publishable key** from `db:status` into `.env.local`
+Run `npm run db:env` to create `.env.local` from the running stack, or copy the **API URL** and the **publishable key** from `db:status` into `.env.local`
 (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`), and the **secret key**
 into `SUPABASE_SECRET_KEY`. The local keys only work against your own machine.
 
@@ -77,6 +77,7 @@ into `SUPABASE_SECRET_KEY`. The local keys only work against your own machine.
 | `npm run check` | Lint + typecheck + unit tests |
 | `npm run db:start` / `db:stop` / `db:status` | Start, stop, or show the local Supabase stack |
 | `npm run db:reset` | Recreate the local database from migrations + seed |
+| `npm run db:env` | Write `.env.local` from the running local stack (never overwrites; `-- --force` to replace) |
 | `npm run test:db` | Database security tests (pgTAP): org isolation and role limits. Needs `db:start` |
 | `npm run org:create -- --name "…" --slug … --admin email` | Operator only: create an organization with an existing user as its first admin (invitation-only, D-021). Refuses non-local targets without `--yes` |
 
@@ -91,6 +92,13 @@ See [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
 Reference spreadsheets and screenshots from the team go in `example files/` and
 `examples web ui/`. Both are git-ignored because they contain real names and budgets.
+
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every push to `main` and on pull requests: lint, typecheck,
+unit tests, production build and a scan of the browser bundle for secrets; then a throwaway local
+Supabase inside the runner for the database (pgTAP) and browser (Playwright) tests.
+No hosted project or secret is needed.
 
 ## Environments
 

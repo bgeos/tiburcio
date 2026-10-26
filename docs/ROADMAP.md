@@ -7,7 +7,7 @@ Full acceptance criteria are in `PROJECT_BLUEPRINT.md` § 6.
 | --- | --- | --- |
 | 0 | Inspect, plan, prepare | ✅ |
 | 1 | App shell and design system | ✅ |
-| 2 | Database, auth, authorization | 🟡 |
+| 2 | Database, auth, authorization | ✅ |
 | 3 | Project hierarchy and tasks | ⬜ |
 | 4 | Scheduling and dependencies | ⬜ |
 | 5 | Materials and inventory | ⬜ |
@@ -53,13 +53,19 @@ Known limits, carried forward:
 - `/design` is public. Review for removal or admin-only access in Phase 9.
 - UI strings are English and not yet externalised (Q1).
 
-## Phase 2: Database, auth, authorization 🟡
+## Phase 2: Database, auth, authorization ✅ (2026-10-26)
 - [x] P2-01 local Supabase stack (2026-10-26).
 - [x] P2-03 identity and tenancy tables with RLS (2026-10-26).
 - [x] P2-04/05 database tests: org isolation and role limits, `npm run test:db` (2026-10-26).
 - [x] P2-02/06 Supabase clients, proxy session refresh, sign in/out (2026-10-26).
 - [x] P2-07 organization URLs `/[org]/…`, switcher, no-organization page, `org:create` (2026-10-26).
 - [x] P2-08 invitations: invite, email/link, accept, revoke (2026-10-26).
+- [ ] ~~P2-09 seed data~~ skipped by the product owner; tests create their own fixtures.
+- [x] P2-10 CI workflow written and verified locally; first green run on GitHub needs a remote.
+
+Acceptance: signed-out visitors are redirected and get no data (E2E + RLS for `anon`);
+org isolation and role limits are proved by 54 pgTAP tests; no secret in client code
+(bundle scan in CI) or in Git (`.env*` ignored).
 Accept: unauthenticated users blocked, org isolation proved by tests, role
 permissions tested, no secrets in client or Git. Backlog P2-*.
 

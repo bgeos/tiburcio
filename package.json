@@ -16,6 +16,7 @@
     "db:stop": "supabase stop",
     "db:status": "supabase status",
     "db:reset": "supabase db reset",
+    "db:env": "node scripts/write-local-env.mjs",
     "test:db": "supabase test db",
     "org:create": "node scripts/create-organization.mjs"
   },

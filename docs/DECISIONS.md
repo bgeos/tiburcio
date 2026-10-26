@@ -128,6 +128,20 @@ manager, sent with the server-only admin client (P2-08). There is no self-servic
 operator script (locally by `supabase/seed.sql`). A signed-in user without any membership
 sees an "ask for an invitation" screen, never an empty app.
 
+## D-022 · 2026-10-26 · How sign-in works (P2-02/P2-06)
+- `@supabase/ssr` keeps the session in cookies. `src/proxy.ts` refreshes it on every request
+  and does **optimistic** redirects only (signed out → `/login?next=…`; signed in → away
+  from `/login`). Authorization stays in RLS, the DAL and each Server Action.
+- Identity comes from `auth.getClaims()` (verified JWT), never from an unverified cookie.
+- `getCurrentUser()` in `lib/dal/auth.ts` calls `connection()` first: Supabase compares token
+  expiry with `Date.now()`, which Cache Components only allows at request time. Anything that
+  reads the session renders behind `<Suspense>`.
+- Sign-in shows one generic error for a wrong email or password, so it doesn't reveal who
+  has an account. `next=` is accepted only as a same-site path (`safeNextPath`).
+- Sign-out ends the session on this device only (`scope: "local"`).
+- E2E tests sign in a fictional user (`e2e.admin@example.test`) that the setup creates in the
+  **local** Supabase with the secret key; the helper refuses any non-local Supabase URL.
+
 ---
 
 # Open questions (non-blocking)

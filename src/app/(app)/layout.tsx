@@ -1,10 +1,13 @@
+import { Suspense } from "react";
+import { AccountMenu, AccountMenuSkeleton } from "@/components/shell/account-menu";
 import { AppHeader } from "@/components/shell/app-header";
 import { AppSidebar } from "@/components/shell/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 /**
- * Authenticated app shell. Phase 2 adds the session check (behind a
- * <Suspense> boundary, per Cache Components) and the organization context.
+ * Authenticated app shell. Signed-out visitors are redirected by the proxy
+ * (optimistic); data is protected by RLS and the DAL. The session is read only
+ * inside <Suspense> (Cache Components). Organization context arrives with P2-07.
  */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -17,7 +20,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </a>
       <AppSidebar />
       <SidebarInset className="bg-canvas">
-        <AppHeader />
+        <AppHeader
+          account={
+            <Suspense fallback={<AccountMenuSkeleton />}>
+              <AccountMenu />
+            </Suspense>
+          }
+        />
         <main
           id="main"
           tabIndex={-1}

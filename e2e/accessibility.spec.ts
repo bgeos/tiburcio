@@ -12,9 +12,11 @@ const PAGES = [
   "/team",
   "/settings",
   "/design",
-  "/login",
   "/does-not-exist",
 ];
+
+/** Pages people see while signed out. */
+const SIGNED_OUT_PAGES = ["/login", "/login?error=link"];
 
 for (const theme of ["light", "dark"] as const) {
   test.describe(`${theme} theme`, () => {
@@ -38,6 +40,26 @@ for (const theme of ["light", "dark"] as const) {
             targets: v.nodes.slice(0, 5).map((n) => n.target.join(" ")),
           })),
         ).toEqual([]);
+      });
+    }
+  });
+}
+
+for (const theme of ["light", "dark"] as const) {
+  test.describe(`${theme} theme, signed out`, () => {
+    test.use({ colorScheme: theme, storageState: { cookies: [], origins: [] } });
+
+    for (const path of SIGNED_OUT_PAGES) {
+      test(`${path} has no serious or critical axe violations`, async ({ page }) => {
+        await page.goto(path);
+        await page.locator("h1").first().waitFor();
+        const results = await new AxeBuilder({ page })
+          .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+          .analyze();
+        const blocking = results.violations.filter(
+          (v) => v.impact === "serious" || v.impact === "critical",
+        );
+        expect(blocking.map((v) => ({ id: v.id, impact: v.impact, help: v.help }))).toEqual([]);
       });
     }
   });

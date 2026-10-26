@@ -48,7 +48,7 @@ accessibility and responsive behavior checked. Backlog P1-01 … P1-09 all done.
 - [x] Unit tests (Vitest) + E2E/axe tests (Playwright) passing. See BACKLOG § Phase 1 verification log.
 
 Known limits, carried forward:
-- No auth yet: the shell is publicly viewable and contains no data. Phase 2 adds the session check.
+- ~~No auth yet~~: since P2-06 every app page requires sign-in.
 - Routes have no `/[org]` prefix yet. Decided: they will (D-016); the move happens in Phase 2.
 - `/design` is public. Review for removal or admin-only access in Phase 9.
 - UI strings are English and not yet externalised (Q1).
@@ -57,6 +57,7 @@ Known limits, carried forward:
 - [x] P2-01 local Supabase stack (2026-10-26).
 - [x] P2-03 identity and tenancy tables with RLS (2026-10-26).
 - [x] P2-04/05 database tests: org isolation and role limits, `npm run test:db` (2026-10-26).
+- [x] P2-02/06 Supabase clients, proxy session refresh, sign in/out (2026-10-26).
 Accept: unauthenticated users blocked, org isolation proved by tests, role
 permissions tested, no secrets in client or Git. Backlog P2-*.
 

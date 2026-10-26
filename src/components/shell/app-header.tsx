@@ -4,10 +4,10 @@ import { usePathname } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { findNavItem } from "@/lib/navigation";
-import { AccountMenu } from "./account-menu";
 import { ThemeToggle } from "./theme-toggle";
 
-export function AppHeader() {
+/** `account` is the session-reading account menu, passed in from the server layout. */
+export function AppHeader({ account }: { account: React.ReactNode }) {
   const pathname = usePathname();
   const section = pathname.startsWith("/design")
     ? "Design system"
@@ -22,7 +22,7 @@ export function AppHeader() {
       </p>
       <div className="ml-auto flex items-center gap-1">
         <ThemeToggle />
-        <AccountMenu />
+        {account}
       </div>
     </header>
   );

@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Card,
   CardContent,
@@ -18,11 +20,14 @@ export default function LoginPage() {
           <h1 className="text-xl font-semibold">Sign in</h1>
         </CardTitle>
         <CardDescription>
-          Use the email address your organization invited.
+          JupiGenio is invitation-only. Use the email address your organization invited.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <LoginForm />
+        {/* The form reads ?next= from the URL, which is request-time data. */}
+        <Suspense fallback={<Skeleton className="h-56 w-full" />}>
+          <LoginForm />
+        </Suspense>
       </CardContent>
     </Card>
   );

@@ -16,6 +16,7 @@
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/playwright/.auth/
 
 # reference material from the team (real names/budgets) — never commit
 /example files/

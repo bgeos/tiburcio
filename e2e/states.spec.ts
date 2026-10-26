@@ -46,6 +46,8 @@ test("slow pages show a loading skeleton, then content", async ({ page }) => {
 });
 
 test.describe("login form", () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
   test("shows validation errors for empty and invalid input", async ({ page }) => {
     await page.goto("/login");
     await page.getByRole("button", { name: "Sign in" }).click();
@@ -57,15 +59,6 @@ test.describe("login form", () => {
     await page.getByLabel("Password").fill("x");
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page.getByText("Enter a valid email address.")).toBeVisible();
-  });
-
-  test("says plainly that sign-in is not connected yet", async ({ page }) => {
-    await page.goto("/login");
-    await page.getByLabel("Email").fill("manager@example.com");
-    await page.getByLabel("Password").fill("anything");
-    await page.getByRole("button", { name: "Sign in" }).click();
-    await expect(page.getByText(/Sign-in isn't connected yet/)).toBeVisible();
-    await expect(page).toHaveURL(/\/login$/);
   });
 });
 

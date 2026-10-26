@@ -1,40 +1,26 @@
 "use client";
 
 import { useActionState } from "react";
-import { Info } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { CircleAlert } from "lucide-react";
 import { TextField } from "@/components/form/text-field";
 import { Button } from "@/components/ui/button";
 import { FieldGroup } from "@/components/ui/field";
-import { loginSchema, type LoginInput } from "@/lib/validation/auth";
-import { parseForm, type FormState } from "@/lib/validation/form";
-
-/**
- * Phase 1: validates input only. Phase 2 swaps `validateOnly` for a server
- * action that re-validates with the same schema and signs in with Supabase.
- */
-async function validateOnly(
-  _previous: FormState<LoginInput>,
-  formData: FormData,
-): Promise<FormState<LoginInput>> {
-  const result = parseForm(loginSchema, formData);
-  if (!result.success) {
-    return { status: "invalid", fieldErrors: result.fieldErrors, values: result.values };
-  }
-  return {
-    status: "error",
-    message: "Sign-in isn't connected yet. Accounts and organizations arrive in Phase 2.",
-    values: { email: result.data.email },
-  };
-}
+import { signIn } from "@/lib/auth/actions";
 
 export function LoginForm() {
-  const [state, formAction, pending] = useActionState(validateOnly, { status: "idle" });
+  const [state, formAction, pending] = useActionState(signIn, { status: "idle" });
+  // Where to go after signing in; the server action only accepts same-site paths.
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") ?? "";
+  const badLink = searchParams.get("error") === "link";
 
   const fieldErrors = state.status === "invalid" ? state.fieldErrors : {};
   const values = state.status === "invalid" || state.status === "error" ? state.values : {};
 
   return (
     <form action={formAction} noValidate className="space-y-5">
+      <input type="hidden" name="next" value={next} />
       <FieldGroup>
         <TextField
           name="email"
@@ -55,18 +41,28 @@ export function LoginForm() {
         />
       </FieldGroup>
 
-      {state.status === "error" ? (
+      {badLink && state.status === "idle" ? (
         <p
-          role="status"
+          role="alert"
           className="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning-soft p-3 text-sm text-warning"
         >
-          <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+          <CircleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+          That link is invalid or has expired. Ask the person who invited you for a new one.
+        </p>
+      ) : null}
+
+      {state.status === "error" ? (
+        <p
+          role="alert"
+          className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+        >
+          <CircleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
           {state.message}
         </p>
       ) : null}
 
       <Button type="submit" size="lg" className="w-full" disabled={pending}>
-        {pending ? "Checking…" : "Sign in"}
+        {pending ? "Signing in…" : "Sign in"}
       </Button>
     </form>
   );

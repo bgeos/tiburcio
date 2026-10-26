@@ -73,7 +73,7 @@ into `SUPABASE_SECRET_KEY`. The local keys only work against your own machine.
 | `npm run typecheck` | Regenerate route types, then TypeScript check |
 | `npm test` | Unit tests (Vitest, single run) |
 | `npm run test:watch` | Unit tests in watch mode |
-| `npm run test:e2e` | Browser + accessibility tests (Playwright). Builds the app and serves it on port 3100 |
+| `npm run test:e2e` | Browser + accessibility tests (Playwright). Builds the app and serves it on port 3100. Needs `db:start`: it signs in a fictional local user |
 | `npm run check` | Lint + typecheck + unit tests |
 | `npm run db:start` / `db:stop` / `db:status` | Start, stop, or show the local Supabase stack |
 | `npm run db:reset` | Recreate the local database from migrations + seed |

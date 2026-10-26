@@ -28,6 +28,8 @@ end;
 $$;
 
 -- Fixtures (as postgres) ------------------------------------------------------
+-- Lookups by name are scoped to the test organizations: the local database may also
+-- hold real projects and browser-test data with the same names.
 insert into auth.users (id, instance_id, aud, role, email)
 select gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', p || '@example.test'
 from unnest(array['alice', 'bob', 'carol', 'dan', 'eve']) as p;
@@ -44,16 +46,16 @@ from ids, (values ('dan', 'production_manager'), ('carol', 'member'), ('eve', 'e
 
 -- Org B's project, created as postgres.
 insert into public.projects (organization_id, name) select org_b, 'B Stage' from ids;
-update ids set project_b = (select id from public.projects where name = 'B Stage');
+update ids set project_b = (select id from public.projects where name = 'B Stage' and organization_id = (select org_b from ids));
 insert into public.subprojects (organization_id, project_id, name, start_date) select org_b, project_b, 'B Area', '2027-01-04' from ids;
-update ids set sub_b = (select id from public.subprojects where name = 'B Area');
+update ids set sub_b = (select id from public.subprojects where name = 'B Area' and organization_id = (select org_b from ids));
 
 -- Alice (admin) builds Main Stage ---------------------------------------------------
 select pg_temp.sign_in('alice');
 select lives_ok($$ insert into public.projects (organization_id, name, status) values ((select org_a from ids), 'Main Stage', 'active') $$,
   'admin can create a project');
 select pg_temp.sign_out();
-update ids set project_a = (select id from public.projects where name = 'Main Stage');
+update ids set project_a = (select id from public.projects where name = 'Main Stage' and organization_id = (select org_a from ids));
 select pg_temp.sign_in('alice');
 
 select lives_ok($$ insert into public.subprojects (organization_id, project_id, name, start_date)
@@ -61,8 +63,8 @@ select lives_ok($$ insert into public.subprojects (organization_id, project_id, 
          ((select org_a from ids), (select project_a from ids), 'Shade Sail', '2027-01-14') $$,
   'admin can add subprojects');
 select pg_temp.sign_out();
-update ids set sub_a = (select id from public.subprojects where name = 'Structure'),
-               sub_a2 = (select id from public.subprojects where name = 'Shade Sail');
+update ids set sub_a = (select id from public.subprojects where name = 'Structure' and organization_id = (select org_a from ids)),
+               sub_a2 = (select id from public.subprojects where name = 'Shade Sail' and organization_id = (select org_a from ids));
 select pg_temp.sign_in('alice');
 
 select lives_ok($$ insert into public.crew_members (organization_id, subproject_id, name, role)
@@ -70,8 +72,8 @@ select lives_ok($$ insert into public.crew_members (organization_id, subproject_
          ((select org_a from ids), (select sub_a2 from ids), 'Lúcia Andrade', 'Lead') $$,
   'admin can add crew');
 select pg_temp.sign_out();
-update ids set crew_a = (select id from public.crew_members where name = 'Tomás Ferraz'),
-               crew_a2 = (select id from public.crew_members where name = 'Lúcia Andrade');
+update ids set crew_a = (select id from public.crew_members where name = 'Tomás Ferraz' and organization_id = (select org_a from ids)),
+               crew_a2 = (select id from public.crew_members where name = 'Lúcia Andrade' and organization_id = (select org_a from ids));
 select pg_temp.sign_in('alice');
 
 select lives_ok($$ update public.subprojects set owner_crew_id = (select crew_a from ids) where id = (select sub_a from ids) $$,

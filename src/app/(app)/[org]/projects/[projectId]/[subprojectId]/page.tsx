@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { ArrowLeft, ListChecks, OctagonAlert, Pencil, TriangleAlert } from "lucide-react";
+import { ArrowLeft, ArrowRight, ClipboardCheck, ListChecks, OctagonAlert, Pencil, TriangleAlert } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
+import { HistoryList } from "@/components/history-list";
 import { OrgLink } from "@/components/org-link";
 import { PageHeader } from "@/components/page-header";
 import { ProgressDonut } from "@/components/progress-donut";
@@ -13,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { todayIn } from "@/lib/dates";
+import { listActivity } from "@/lib/dal/activity";
 import { requireMembership } from "@/lib/dal/organizations";
 import { getProjectDetail, type ProjectDetail, type SubprojectView } from "@/lib/dal/project-detail";
 import { itemProgress, rollupProgress } from "@/lib/domain/progress";
@@ -25,7 +27,7 @@ import { CrewTab } from "./crew-tab";
 import { MaterialsTab } from "./materials-tab";
 import { AddTaskButton, RemoveTaskButton, TaskStatusSelect, UpdateTaskButton, type TaskScope } from "./task-dialogs";
 
-const TABS = ["cronograma", "materials", "crew"] as const;
+const TABS = ["cronograma", "materials", "crew", "history"] as const;
 
 export const metadata: Metadata = { title: "Subproject" };
 
@@ -40,13 +42,16 @@ export default function SubprojectPage({ params, searchParams }: Props) {
 }
 
 async function SubprojectContent({ params, searchParams }: { params: Props["params"]; searchParams: Props["searchParams"] }) {
-  const [{ org: slug, projectId, subprojectId }, { tab }] = await Promise.all([params, searchParams]);
+  const [{ org: slug, projectId, subprojectId }, { tab, checkin }] = await Promise.all([params, searchParams]);
   // ?tab=materials opens that tab (links from the All materials page).
   const defaultTab = TABS.find((t) => t === tab) ?? "cronograma";
   const org = await requireMembership(slug);
   const project = await getProjectDetail(org, projectId);
   const sub = project?.subprojects.find((s) => s.id === subprojectId);
   if (!project || !sub) notFound();
+  // Only after both are known to exist: a malformed id must be a 404, not a query error.
+  const history = await listActivity(org, project.id, { subprojectId: sub.id });
+  const checkIn = checkin === "1" ? project.subprojects.findIndex((s) => s.id === sub.id) : -1;
 
   const canEdit = canEditProjects(org.role);
   const plan = project.subprojects;
@@ -67,6 +72,7 @@ async function SubprojectContent({ params, searchParams }: { params: Props["para
           <ArrowLeft aria-hidden="true" /> {project.name}
         </OrgLink>
       </Button>
+      {checkIn >= 0 ? <CheckInBar project={project} index={checkIn} /> : null}
       <PageHeader
         title={sub.name}
         description={
@@ -120,6 +126,7 @@ async function SubprojectContent({ params, searchParams }: { params: Props["para
           <TabsTrigger value="cronograma">Cronograma ({sub.tasks.length})</TabsTrigger>
           <TabsTrigger value="materials">Materials ({sub.materials.length})</TabsTrigger>
           <TabsTrigger value="crew">Crew ({sub.crew.length})</TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
         <TabsContent value="cronograma">
           <Cronograma project={project} sub={sub} scope={scope} canEdit={canEdit} today={todayIn(org.timezone)} />
@@ -139,8 +146,55 @@ async function SubprojectContent({ params, searchParams }: { params: Props["para
             canEdit={canEdit}
           />
         </TabsContent>
+        <TabsContent value="history">
+          <HistoryList label={`${sub.name} history`} entries={history} timeZone={org.timezone} />
+        </TabsContent>
       </Tabs>
     </>
+  );
+}
+
+/**
+ * Daily check-in (D-019): step through the project's subprojects one by one while
+ * talking with each owner. Plain links, so it also works without JavaScript.
+ */
+function CheckInBar({ project, index }: { project: ProjectDetail; index: number }) {
+  const subs = project.subprojects;
+  const sub = subs[index];
+  const step = (i: number) => `/projects/${project.id}/${subs[i].id}?checkin=1` as const;
+  return (
+    <section
+      aria-label="Daily check-in"
+      className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/30 bg-accent p-3 text-accent-foreground"
+    >
+      <ClipboardCheck aria-hidden="true" className="size-5 shrink-0" />
+      <p className="min-w-48 flex-1 text-sm">
+        <span className="font-semibold">
+          Daily check-in · {index + 1} of {subs.length}.
+        </span>{" "}
+        Talk with {sub.ownerName ?? "the owner"}, then update the cronograma, materials and crew.
+      </p>
+      <div className="flex gap-2">
+        {index > 0 ? (
+          <Button size="sm" variant="outline" asChild>
+            <OrgLink href={step(index - 1)}>
+              <ArrowLeft aria-hidden="true" /> Previous
+            </OrgLink>
+          </Button>
+        ) : null}
+        {index < subs.length - 1 ? (
+          <Button size="sm" asChild>
+            <OrgLink href={step(index + 1)}>
+              Next subproject <ArrowRight aria-hidden="true" />
+            </OrgLink>
+          </Button>
+        ) : (
+          <Button size="sm" asChild>
+            <OrgLink href={`/projects/${project.id}`}>Finish check-in</OrgLink>
+          </Button>
+        )}
+      </div>
+    </section>
   );
 }
 

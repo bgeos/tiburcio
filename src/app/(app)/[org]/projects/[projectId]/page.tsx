@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { ArrowLeft, Archive, CalendarRange, OctagonAlert, Pencil, Plus } from "lucide-react";
+import { ArrowLeft, Archive, CalendarRange, ClipboardCheck, OctagonAlert, Pencil, Plus } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
+import { HistoryList } from "@/components/history-list";
 import { OrgLink } from "@/components/org-link";
 import { PageHeader } from "@/components/page-header";
 import { ProgressDonut } from "@/components/progress-donut";
@@ -11,6 +12,7 @@ import { Timeline } from "@/components/timeline";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { listActivity } from "@/lib/dal/activity";
 import { requireMembership } from "@/lib/dal/organizations";
 import { getProjectDetail, type ProjectDetail, type SubprojectView } from "@/lib/dal/project-detail";
 import { rollupProgress } from "@/lib/domain/progress";
@@ -21,6 +23,7 @@ import { formatDate, formatRange, pluralDays } from "@/lib/format";
 import { ProjectFormDialog } from "../project-form-dialog";
 import { ArchiveSubprojectButton } from "./archive-subproject-button";
 import { DependenciesSection } from "./dependencies-section";
+import { LockPlanButton } from "./lock-plan-button";
 import { SubprojectFormDialog } from "./subproject-form-dialog";
 
 export const metadata: Metadata = { title: "Project" };
@@ -47,6 +50,8 @@ async function ProjectContent({ params }: { params: Params }) {
   const org = await requireMembership(slug);
   const project = await getProjectDetail(org, projectId);
   if (!project) notFound();
+  // Only after the project is known to exist: a malformed id must be a 404, not a query error.
+  const history = await listActivity(org, project.id, { limit: 10 });
 
   const canEdit = canEditProjects(org.role);
   const plan = project.subprojects;
@@ -79,6 +84,16 @@ async function ProjectContent({ params }: { params: Params }) {
         actions={
           canEdit ? (
             <>
+              {plan.length ? (
+                <>
+                  <Button variant="outline" asChild>
+                    <OrgLink href={`/projects/${project.id}/${plan[0].id}?checkin=1`}>
+                      <ClipboardCheck aria-hidden="true" /> Start daily check-in
+                    </OrgLink>
+                  </Button>
+                  <LockPlanButton orgSlug={org.slug} projectId={project.id} relock={Boolean(project.baseline)} />
+                </>
+              ) : null}
               <ProjectFormDialog
                 orgSlug={org.slug}
                 project={project}
@@ -216,6 +231,18 @@ async function ProjectContent({ params }: { params: Params }) {
           />
         </>
       )}
+
+      <section aria-labelledby="changes-heading" className="space-y-3">
+        <h2 id="changes-heading" className="text-lg font-semibold">
+          Recent changes
+        </h2>
+        <HistoryList
+          label="Recent changes"
+          entries={history}
+          timeZone={org.timezone}
+          subprojectName={(id) => plan.find((s) => s.id === id)?.name}
+        />
+      </section>
     </>
   );
 }

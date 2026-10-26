@@ -149,4 +149,6 @@ test("a malformed or unknown project address is 'not found'", async ({ page }) =
   await expect(page.getByRole("heading", { level: 1, name: "Page not found" })).toBeVisible();
   await page.goto(orgPath("/projects/00000000-0000-4000-8000-000000000000"));
   await expect(page.getByRole("heading", { level: 1, name: "Page not found" })).toBeVisible();
+  await page.goto(orgPath(`/projects/${projectId}/not-a-uuid`));
+  await expect(page.getByRole("heading", { level: 1, name: "Page not found" })).toBeVisible();
 });

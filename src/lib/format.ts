@@ -16,3 +16,13 @@ export function formatRange(range: DateRange | null): string {
 export function pluralDays(n: number): string {
   return `${n} ${Math.abs(n) === 1 ? "day" : "days"}`;
 }
+
+/** A moment (e.g. a history entry) in the organization's timezone: "26 Oct, 14:05". */
+export function formatDateTime(iso: string, timeZone: string): string {
+  const options: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" };
+  try {
+    return new Intl.DateTimeFormat("en-GB", { ...options, timeZone }).format(new Date(iso));
+  } catch {
+    return new Intl.DateTimeFormat("en-GB", { ...options, timeZone: "UTC" }).format(new Date(iso));
+  }
+}

@@ -28,6 +28,8 @@ end;
 $$;
 
 -- Fixtures (as postgres) ------------------------------------------------------
+-- Lookups by name are scoped to the test organizations: the local database may also
+-- hold real projects and browser-test data with the same names.
 insert into auth.users (id, instance_id, aud, role, email)
 select gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', p || '@example.test'
 from unnest(array['alice', 'bob', 'carol', 'eve']) as p;
@@ -51,18 +53,18 @@ from ids, (values ('carol', 'member'), ('eve', 'external')) as v(p, r);
 insert into public.projects (organization_id, name) select org_a, 'Main Stage' from ids;
 insert into public.projects (organization_id, name) select org_a, 'Chill-out Garden' from ids;
 insert into public.projects (organization_id, name) select org_b, 'B Stage' from ids;
-update ids set main_stage = (select id from public.projects where name = 'Main Stage'),
-               other_project = (select id from public.projects where name = 'Chill-out Garden'),
-               project_b = (select id from public.projects where name = 'B Stage');
+update ids set main_stage = (select id from public.projects where name = 'Main Stage' and organization_id = (select org_a from ids)),
+               other_project = (select id from public.projects where name = 'Chill-out Garden' and organization_id = (select org_a from ids)),
+               project_b = (select id from public.projects where name = 'B Stage' and organization_id = (select org_b from ids));
 insert into public.subprojects (organization_id, project_id, name, start_date)
 select org_a, main_stage, n, date '2027-01-04' from ids, unnest(array['Structure', 'Shade Sail', 'DJ Booth']) n
 union all select org_a, other_project, 'Bamboo Dome', '2027-01-08' from ids
 union all select org_b, project_b, 'B Area', '2027-01-04' from ids;
-update ids set structure = (select id from public.subprojects where name = 'Structure'),
-               shade = (select id from public.subprojects where name = 'Shade Sail'),
-               dj = (select id from public.subprojects where name = 'DJ Booth'),
-               elsewhere = (select id from public.subprojects where name = 'Bamboo Dome'),
-               sub_b = (select id from public.subprojects where name = 'B Area');
+update ids set structure = (select id from public.subprojects where name = 'Structure' and organization_id = (select org_a from ids)),
+               shade = (select id from public.subprojects where name = 'Shade Sail' and organization_id = (select org_a from ids)),
+               dj = (select id from public.subprojects where name = 'DJ Booth' and organization_id = (select org_a from ids)),
+               elsewhere = (select id from public.subprojects where name = 'Bamboo Dome' and organization_id = (select org_a from ids)),
+               sub_b = (select id from public.subprojects where name = 'B Area' and organization_id = (select org_b from ids));
 insert into public.tasks (organization_id, subproject_id, name, duration_days) select org_b, sub_b, 'B task', 2 from ids;
 
 -- Tasks -------------------------------------------------------------------------------

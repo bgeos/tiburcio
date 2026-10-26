@@ -1,0 +1,124 @@
+# Decisions
+
+Format: ID · date · decision · rationale. Status is *Accepted* unless noted.
+Revisiting a decision means adding a new entry that supersedes the old one.
+
+## D-001 · 2026-10-26 · Keep the existing create-next-app scaffold
+Next.js 16.4 / React 19.3 / Tailwind 4 / TypeScript strict / `src/` layout /
+`@/*` alias, with `cacheComponents` and `partialPrefetching` already enabled. It matches the
+blueprint stack, so nothing is rewritten.
+
+## D-002 · 2026-10-26 · npm is the package manager
+A `package-lock.json` already exists. Don't mix in pnpm or yarn.
+
+## D-003 · 2026-10-26 · Supabase as backend; RLS is the primary authorization boundary
+The app queries Supabase as the signed-in user (`@supabase/ssr`). The secret key is used
+only in `server-only` modules for invitations and admin tasks. See ARCHITECTURE.md.
+
+## D-004 · 2026-10-26 · `organization_id` on every org-owned table + composite FKs
+Simple, fast RLS policies. Composite `(organization_id, parent_id)` foreign keys
+make cross-org references impossible at the database level.
+
+## D-005 · 2026-10-26 · No server-side `"use cache"` on user/org data for now
+Avoids cross-user cache leaks. Data is rendered at request time behind `<Suspense>`.
+Revisit with `"use cache: private"` or user-keyed tags if profiling shows a need.
+
+## D-006 · 2026-10-26 · Stock is an append-only ledger + locked balance rows
+`material_movements` is never updated or deleted. Posting/reserving goes through SQL
+functions using `SELECT … FOR UPDATE`, which prevents negative stock under concurrency.
+
+## D-007 · 2026-10-26 · Default progress rule: equal weight per eligible leaf task across the subtree
+See DATA_MODEL.md § Progress calculation. Configurable weighting comes in Phase 7.
+
+## D-008 · 2026-10-26 · Recharts for charts (first release)
+React-native API, small learning curve, enough for donut, bar and line charts. Revisit
+(ECharts) if large datasets or Gantt-like rendering need it.
+
+## D-009 · 2026-10-26 · Forms: React Hook Form + Zod; UI: shadcn/ui (Phase 1)
+*Superseded in part by D-013 (forms).* Zod schemas are shared between client forms and
+Server Actions (server always re-validates).
+
+## D-010 · 2026-10-26 · Testing: Vitest (unit), SQL tests on local Supabase (RLS), Playwright (E2E)
+Vitest is already installed. The others are added when the first code needing them lands.
+
+## D-011 · 2026-10-26 · Statuses are rows with a fixed `category`
+Users rename and recolour statuses, and calculations use the category
+(`todo|in_progress|blocked|done|cancelled`).
+
+## D-012 · 2026-10-26 · No currency conversion in the MVP
+Amounts carry a currency. Totals are grouped per currency.
+
+## D-013 · 2026-10-26 · Forms: native React 19 forms (`useActionState`) + Zod, no React Hook Form
+Supersedes the form-library part of D-009. `@hookform/resolvers` v5 and v6 both fail npm
+peer resolution in this tree (optional `@typeschema/*` peers conflict with the zod/effect
+versions pulled in by the shadcn CLI). Forcing the install was rejected. Instead:
+`parseForm(schema, formData)` (`src/lib/validation/form.ts`) validates on the client and
+will be reused unchanged inside Server Actions (Phase 2). This is Next.js's recommended pattern,
+needs one dependency fewer, and works without JavaScript once actions are server-side.
+Revisit if a form needs complex client state (field arrays, dependent fields).
+
+## D-014 · 2026-10-26 · shadcn/ui on Radix, `radix-nova` style; theming via next-themes
+shadcn CLI 4.22.1 with the Radix base (mature, accessible primitives). Its new `cn`
+package (from shadcn-ui, replacing clsx + tailwind-merge) and `next-themes` (light/dark/
+system with a `.dark` class, no flash) come with it. Generated components live in
+`src/components/ui/` and may be edited. The generated `use-mobile` hook was rewritten
+with `useSyncExternalStore` to satisfy the React hooks lint rules.
+
+## D-015 · 2026-10-26 · Experimental `authInterrupts` enabled
+Needed for `unauthorized()` / `forbidden()` and their 401/403 pages, which the Data
+Access Layer will call in Phase 2. It is an experimental Next.js flag, so re-check on upgrades.
+
+## D-016 · 2026-10-26 · Phase 1 routes have no organization prefix
+`/projects` etc. Phase 2 decides between `/[org]/…` URLs and an active-org cookie. URL
+prefixes make links shareable and unambiguous across orgs. Leaning towards `/[org]/…`.
+
+## D-017 · 2026-10-26 · Every data page owns its loading boundary
+Client navigation inside the app shell does not re-show `(app)/loading.tsx`, because it sits
+at the shared layout (Next 16 instant navigation). Pages that read data must have their
+own `loading.tsx` or `<Suspense>` around the data-reading part. This is verified by an E2E test.
+
+## D-018 · 2026-10-26 · The team's reference spreadsheets stay out of Git
+`example files/` and `examples web ui/` are git-ignored: they contain real people's names
+and budgets. Seeds and demos use fictional data only.
+
+## D-019 · 2026-10-26 · Subproject workspace: cronograma, materials, people
+Product owner's answers (refines Phases 3–5; a worked example will follow before building):
+- **One level of nesting:** project → subprojects. Each subproject has an owner and three
+  tabs: **Cronograma** (tasks), **Materials** and **People**.
+- **Tasks** are entered as name + start date + **duration in calendar days**. The end date is derived.
+- **Planned vs. actual:** keep the planned dates and record the actual ones.
+- **Dependencies are between subprojects** (e.g. one area can't start until another is done),
+  not mainly between tasks.
+- **Materials** are a list per subproject (not per task), with a request status
+  (to request → requested → ready at the warehouse). No warehouse stock tracking for now.
+- **People** are crew, not app users (no sign-in for now). Proposed: each person has a
+  role and an optional daily cost (`numeric(14,2)` + currency) so crew cost can be totalled.
+- **Editing:** only the production manager for now. Subproject owners editing their own
+  subproject comes later.
+- **Daily updates:** a daily check-in screen that steps through subprojects, a change
+  history ("what changed since yesterday"), and a combined timeline at project level.
+- **UI language:** English (answers Q1).
+- **Progress donuts** for the project and each subproject, using the D-007 rule (every task
+  counts equally; Done = 100; tasks carry a manual 0–100 %). **Overlaps are shown in red**
+  (`destructive` token, always with an icon and text). On the timeline only the overlapping
+  days are red.
+- **All materials view:** one table of every material from every subproject (material,
+  project, subproject, status), filterable by project, subproject and status. It reads the
+  same data the subproject Materials tabs edit; there is no separate materials list to keep in sync.
+
+---
+
+# Open questions (non-blocking)
+
+Sensible defaults are used until answered.
+
+| # | Question | Default used now |
+| --- | --- | --- |
+| Q1 | UI language(s): English only, or Brazilian Portuguese? The team's spreadsheets are all in pt-BR. | **Answered: English** (D-019) |
+| Q2 | Default currency and timezone? The spreadsheets suggest Brazil. | Per-organization setting. Proposed default changed to `BRL` / `America/Sao_Paulo` (was EUR/Lisbon) |
+| Q3 | Hosted Supabase project now, or local Docker only until Phase 9? | Local Supabase for development; create the hosted staging project when needed |
+| Q4 | Email provider for invitations (Supabase default SMTP is rate-limited)? | Supabase default for dev; choose Resend/Postmark etc. before staging |
+| Q5 | What can `external` collaborators see: costs, materials, other subprojects? | Only explicitly shared projects; no costs or catalogue |
+| Q6 | Should a subproject owner see sibling subprojects (e.g. DJ owner sees Stage)? | Read-only visibility of siblings is *off*; access flows down from shared ancestors only |
+| Q7 | Product name / branding: "JupiGenio"? | Used as the working name |
+| Q8 | Should task progress be derived from status (e.g. In progress = 50%) as an org option? | Manual 0–100; `done` = 100 |

@@ -34,6 +34,13 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
           "--border-radius": "var(--radius)",
+          // Rich colours from our tokens: sonner's own success green fails text contrast (WCAG 1.4.3).
+          "--success-bg": "var(--status-done-soft)",
+          "--success-text": "var(--status-done)",
+          "--success-border": "color-mix(in oklch, var(--status-done) 30%, transparent)",
+          "--error-bg": "color-mix(in oklch, var(--destructive) 10%, var(--popover))",
+          "--error-text": "var(--destructive)",
+          "--error-border": "color-mix(in oklch, var(--destructive) 40%, transparent)",
         } as React.CSSProperties
       }
       toastOptions={{

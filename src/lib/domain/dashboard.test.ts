@@ -42,6 +42,14 @@ describe("summarizeDashboard", () => {
     ]);
   });
 
+  it("adds overlapping task links to the project's overlaps", () => {
+    // t3 (Structure) ends 13 Jan; t4 (Shade Sail) starts 13 Jan and waits for it.
+    const summary = summarizeDashboard([stage], "2027-01-01", [{ predecessorId: "t3", successorId: "t4" }]);
+    expect(summary.projects[0].overlapCount).toBe(2);
+    // A link to a task outside the current projects (unknown dates) isn't counted.
+    expect(summarizeDashboard([stage], "2027-01-01", [{ predecessorId: "elsewhere", successorId: "t4" }]).projects[0].overlapCount).toBe(1);
+  });
+
   it("marks unfinished tasks whose planned last day has passed as overdue", () => {
     // t1 (4–6 Jan) is done; t2 ends 10 Jan; today 11 Jan → only t2 is overdue.
     const summary = summarizeDashboard([stage], "2027-01-11");

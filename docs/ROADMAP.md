@@ -84,5 +84,9 @@ edits persist, parent summaries follow the documented progress rule. Backlog P3-
 Met by `e2e/vertical-slice.spec.ts` (UI only, survives a reload, another organization gets a 404)
 plus the pgTAP RLS tests.
 
-## Phases 4–9 ⬜
+## Phase 4: Planning views 🟡
+- [x] P4-01 (2026-10-26): task dependencies across subprojects and projects (D-027).
+- [ ] Rest of the phase (Gantt library evaluation, overdue/blocked indicators): broken down in BACKLOG when started.
+
+## Phases 5–9 ⬜
 See blueprint § 6. They are broken down into backlog items when the preceding phase is complete.

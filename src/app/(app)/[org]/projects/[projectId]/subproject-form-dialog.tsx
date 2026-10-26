@@ -20,6 +20,7 @@ import {
 import { FieldGroup } from "@/components/ui/field";
 import { describePlanChange, type PlanSubproject } from "@/lib/domain/project-plan";
 import type { Dependency } from "@/lib/domain/schedule";
+import type { TaskLink } from "@/lib/domain/task-links";
 import {
   SUBPROJECT_COLORS,
   SUBPROJECT_COLOR_LABELS,
@@ -35,6 +36,8 @@ type Props = {
   /** The project's current plan, for the "what changes" preview. */
   plan: PlanSubproject[];
   dependencies: Dependency[];
+  /** Task links touching this project, for overlap previews. */
+  taskLinks: TaskLink[];
   /** Colours already used in the project: a new subproject gets the least-used one. */
   usedColors: SubprojectColor[];
   /** Omit to create a subproject. */
@@ -76,7 +79,7 @@ export function SubprojectFormDialog(props: Props) {
   );
 }
 
-function SubprojectForm({ orgSlug, projectId, plan, dependencies, usedColors, subproject, onSaved }: Props & { onSaved: () => void }) {
+function SubprojectForm({ orgSlug, projectId, plan, dependencies, taskLinks, usedColors, subproject, onSaved }: Props & { onSaved: () => void }) {
   const action = subproject
     ? updateSubproject.bind(null, orgSlug, projectId, subproject.id)
     : createSubproject.bind(null, orgSlug, projectId);
@@ -102,6 +105,8 @@ function SubprojectForm({ orgSlug, projectId, plan, dependencies, usedColors, su
           plan,
           plan.map((s) => (s.id === subproject.id ? { ...s, startDate } : s)),
           dependencies,
+          taskLinks,
+          projectId,
         )
       : null;
 

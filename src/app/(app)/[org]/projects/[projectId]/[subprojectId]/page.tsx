@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { ArrowLeft, ArrowRight, ClipboardCheck, ListChecks, OctagonAlert, Pencil, TriangleAlert } from "lucide-react";
+import { ArrowLeft, ArrowRight, ClipboardCheck, Link2, ListChecks, OctagonAlert, Pencil, TriangleAlert } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { HistoryList } from "@/components/history-list";
 import { OrgLink } from "@/components/org-link";
@@ -18,15 +18,27 @@ import { todayIn } from "@/lib/dates";
 import { listActivity } from "@/lib/dal/activity";
 import { requireMembership } from "@/lib/dal/organizations";
 import { getProjectDetail, type ProjectDetail, type SubprojectView } from "@/lib/dal/project-detail";
+import { listLinkableTasks } from "@/lib/dal/task-links";
 import { itemProgress, rollupProgress } from "@/lib/domain/progress";
 import { overlapMessage, overlapsFor, schedulesFor } from "@/lib/domain/project-plan";
 import { canEditProjects } from "@/lib/domain/projects";
 import { daysBetween } from "@/lib/domain/schedule";
+import {
+  linksTouching,
+  taskOverlapMessage,
+  taskOverlapWindows,
+  taskOverlaps,
+  taskPlace,
+  type LinkedTask,
+  type TaskLink,
+  type TaskOverlap,
+} from "@/lib/domain/task-links";
 import { formatDate, formatRange, pluralDays } from "@/lib/format";
 import { SubprojectFormDialog } from "../subproject-form-dialog";
 import { CrewTab } from "./crew-tab";
 import { MaterialsTab } from "./materials-tab";
 import { AddTaskButton, RemoveTaskButton, TaskStatusSelect, UpdateTaskButton, type TaskScope } from "./task-dialogs";
+import { TaskLinksButton } from "./task-links-dialog";
 
 const TABS = ["cronograma", "materials", "crew", "history"] as const;
 
@@ -62,9 +74,20 @@ async function SubprojectContent({ params, searchParams }: { params: Props["para
   const slip = original && schedule.end ? daysBetween(original.end, schedule.end) : null;
   const name = (id: string) => plan.find((s) => s.id === id)?.name ?? "—";
   const overlaps = overlapsFor(plan, project.dependencies).filter((o) => o.predecessorId === sub.id || o.successorId === sub.id);
+  const taskLinks = linksTouching(project.taskLinks, sub.tasks.map((t) => t.id));
+  const linkOverlaps = taskOverlaps(taskLinks);
+  // The choices for "waits for…" (editors only): every current task of the organization.
+  const candidates = canEdit ? await listLinkableTasks(org) : [];
   const after = project.dependencies.filter((d) => d.successorId === sub.id).map((d) => name(d.predecessorId));
   const before = project.dependencies.filter((d) => d.predecessorId === sub.id).map((d) => name(d.successorId));
-  const scope: TaskScope = { orgSlug: org.slug, projectId: project.id, subprojectId: sub.id, plan, dependencies: project.dependencies };
+  const scope: TaskScope = {
+    orgSlug: org.slug,
+    projectId: project.id,
+    subprojectId: sub.id,
+    plan,
+    dependencies: project.dependencies,
+    taskLinks: project.taskLinks,
+  };
 
   return (
     <>
@@ -93,6 +116,7 @@ async function SubprojectContent({ params, searchParams }: { params: Props["para
                 projectId={project.id}
                 plan={plan}
                 dependencies={project.dependencies}
+                taskLinks={project.taskLinks}
                 usedColors={plan.map((s) => s.color)}
                 subproject={{ id: sub.id, name: sub.name, startDate: sub.startDate, color: sub.color }}
                 trigger={
@@ -107,7 +131,7 @@ async function SubprojectContent({ params, searchParams }: { params: Props["para
         }
       />
 
-      {overlaps.length ? (
+      {overlaps.length || linkOverlaps.length ? (
         <section aria-label="Warnings" className="space-y-2">
           {overlaps.map((o) => (
             <p
@@ -118,6 +142,18 @@ async function SubprojectContent({ params, searchParams }: { params: Props["para
               <span>
                 <span className="font-semibold">Overlap: </span>
                 {overlapMessage(plan, o)} Check with both owners, or change a start date.
+              </span>
+            </p>
+          ))}
+          {linkOverlaps.map((o) => (
+            <p
+              key={o.link.id}
+              className="flex gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+            >
+              <OctagonAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+              <span>
+                <span className="font-semibold">Overlap: </span>
+                {taskOverlapMessage(o, project.id)} Check with both owners, or change a duration.
               </span>
             </p>
           ))}
@@ -132,7 +168,15 @@ async function SubprojectContent({ params, searchParams }: { params: Props["para
           <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
         <TabsContent value="cronograma">
-          <Cronograma project={project} sub={sub} scope={scope} canEdit={canEdit} today={todayIn(org.timezone)} />
+          <Cronograma
+            project={project}
+            sub={sub}
+            scope={scope}
+            canEdit={canEdit}
+            today={todayIn(org.timezone)}
+            links={taskLinks}
+            candidates={candidates}
+          />
         </TabsContent>
         <TabsContent value="materials">
           <MaterialsTab
@@ -207,15 +251,31 @@ function Cronograma({
   scope,
   canEdit,
   today,
+  links,
+  candidates,
 }: {
   project: ProjectDetail;
   sub: SubprojectView;
   scope: TaskScope;
   canEdit: boolean;
   today: string;
+  /** Task links touching this subproject's tasks. */
+  links: TaskLink[];
+  candidates: LinkedTask[];
 }) {
   const schedule = schedulesFor([sub])[sub.id];
   const baseline = project.baseline?.ranges ?? {};
+  const overlaps = taskOverlaps(links);
+  const asLinked = (i: number): LinkedTask => ({
+    id: sub.tasks[i].id,
+    name: sub.tasks[i].name,
+    subprojectId: sub.id,
+    subprojectName: sub.name,
+    projectId: project.id,
+    projectName: project.name,
+    color: sub.color,
+    range: schedule.tasks[i],
+  });
 
   return (
     <div className="space-y-4">
@@ -266,6 +326,7 @@ function Cronograma({
                         {task.delayDays > 0 ? (
                           <p className="text-xs text-muted-foreground">Waits {pluralDays(task.delayDays)} before starting</p>
                         ) : null}
+                        <TaskLinkNotes taskId={task.id} links={links} overlaps={overlaps} projectId={project.id} />
                       </TableCell>
                       <TableCell className="whitespace-nowrap tabular-nums">{formatRange(planned)}</TableCell>
                       <TableCell className="text-right tabular-nums">{task.durationDays}</TableCell>
@@ -305,6 +366,12 @@ function Cronograma({
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
                             <UpdateTaskButton scope={scope} task={task} />
+                            <TaskLinksButton
+                              orgSlug={scope.orgSlug}
+                              task={asLinked(i)}
+                              links={links.filter((l) => l.predecessor.id === task.id || l.successor.id === task.id)}
+                              candidates={candidates}
+                            />
                             <RemoveTaskButton scope={scope} task={task} />
                           </div>
                         </TableCell>
@@ -326,11 +393,58 @@ function Cronograma({
               range: schedule.tasks[i],
               baseline: baseline[task.id] ?? null,
               done: task.status === "done",
+              warning:
+                overlaps
+                  .filter((o) => o.link.predecessor.id === task.id || o.link.successor.id === task.id)
+                  .map((o) => taskOverlapMessage(o, project.id))
+                  .join(" ") || null,
+              overlaps: taskOverlapWindows(overlaps, task.id),
             }))}
+            showOverlapKey={overlaps.length > 0}
           />
         </>
       )}
     </div>
+  );
+}
+
+/** "Waits for …" / "Needed by …" under a task's name; red when the two overlap. */
+function TaskLinkNotes({
+  taskId,
+  links,
+  overlaps,
+  projectId,
+}: {
+  taskId: string;
+  links: TaskLink[];
+  overlaps: TaskOverlap[];
+  projectId: string;
+}) {
+  const notes = links.flatMap((link) => {
+    const waits = link.successor.id === taskId;
+    if (!waits && link.predecessor.id !== taskId) return [];
+    const other = waits ? link.predecessor : link.successor;
+    const overlap = overlaps.find((o) => o.link.id === link.id);
+    return [{ id: link.id, text: `${waits ? "Waits for" : "Needed by"} ${taskPlace(other, projectId)}`, overlap }];
+  });
+  if (notes.length === 0) return null;
+  return (
+    <ul className="mt-0.5 space-y-0.5 text-xs">
+      {notes.map((n) => (
+        <li
+          key={n.id}
+          className={n.overlap ? "flex items-center gap-1 font-medium text-destructive" : "flex items-center gap-1 text-muted-foreground"}
+        >
+          {n.overlap ? (
+            <OctagonAlert aria-hidden="true" className="size-3 shrink-0" />
+          ) : (
+            <Link2 aria-hidden="true" className="size-3 shrink-0" />
+          )}
+          {n.text}
+          {n.overlap ? ` (overlaps ${pluralDays(n.overlap.days)})` : ""}
+        </li>
+      ))}
+    </ul>
   );
 }
 

@@ -7,7 +7,7 @@ import type { MaterialStatus } from "./materials";
 import { overlapsFor, schedulesFor, type PlanSubproject } from "./project-plan";
 import { rollupProgress } from "./progress";
 import type { ProjectStatus } from "./projects";
-import type { Dependency, IsoDate } from "./schedule";
+import { daysBetween, type DateRange, type Dependency, type IsoDate } from "./schedule";
 import { TASK_STATUSES, type TaskStatus } from "./tasks";
 
 export type DashboardTask = PlanSubproject["tasks"][number] & { status: TaskStatus; progress: number | null };
@@ -45,13 +45,38 @@ export type DashboardSummary = {
   projects: ProjectHealth[];
 };
 
-/** A task is overdue when it isn't done and its planned last day is before today. */
-export function summarizeDashboard(projects: DashboardProject[], today: IsoDate): DashboardSummary {
+/**
+ * A task is overdue when it isn't done and its planned last day is before today.
+ * `taskLinks` (by task id) add their overlaps to every project that holds one end.
+ */
+export function summarizeDashboard(
+  projects: DashboardProject[],
+  today: IsoDate,
+  taskLinks: Dependency[] = [],
+): DashboardSummary {
   const current = projects.filter((p) => p.status !== "finished");
   const tasksByStatus = Object.fromEntries(TASK_STATUSES.map((s) => [s, 0])) as Record<TaskStatus, number>;
   let taskCount = 0;
   let overdueTasks = 0;
   const materials = current.flatMap((p) => p.materialStatuses);
+
+  // Planned dates and project of every task in a current project, for task-link overlaps.
+  const taskRange = new Map<string, DateRange>();
+  const taskProject = new Map<string, string>();
+  for (const project of current) {
+    const schedules = schedulesFor(project.subprojects);
+    for (const sub of project.subprojects) {
+      for (const t of schedules[sub.id].tasks) {
+        taskRange.set(t.id, t);
+        taskProject.set(t.id, project.id);
+      }
+    }
+  }
+  const overlappingLinks = taskLinks.filter((l) => {
+    const before = taskRange.get(l.predecessorId);
+    const after = taskRange.get(l.successorId);
+    return before && after && daysBetween(after.start, before.end) >= 0;
+  });
 
   const health = current.map((project) => {
     const schedules = schedulesFor(project.subprojects);
@@ -72,7 +97,11 @@ export function summarizeDashboard(projects: DashboardProject[], today: IsoDate)
       status: project.status,
       progress: rollupProgress(tasks),
       taskCount: tasks.length,
-      overlapCount: overlapsFor(project.subprojects, project.dependencies).length,
+      overlapCount:
+        overlapsFor(project.subprojects, project.dependencies).length +
+        overlappingLinks.filter(
+          (l) => taskProject.get(l.predecessorId) === project.id || taskProject.get(l.successorId) === project.id,
+        ).length,
       overdueCount,
     };
   });

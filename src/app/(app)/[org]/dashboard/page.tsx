@@ -9,7 +9,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getDashboardProjects } from "@/lib/dal/dashboard";
+import { getDashboardProjects, getTaskLinkIds } from "@/lib/dal/dashboard";
 import { requireMembership } from "@/lib/dal/organizations";
 import { todayIn } from "@/lib/dates";
 import { summarizeDashboard, type DashboardSummary, type ProjectHealth } from "@/lib/domain/dashboard";
@@ -48,7 +48,8 @@ async function DashboardContent({ params }: { params: PageProps<"/[org]/dashboar
   if (!canViewProjects(org.role)) {
     return <EmptyState icon={EyeOff} title="Nothing to show yet" description={EXTERNAL_NO_PROJECTS} />;
   }
-  const summary = summarizeDashboard(await getDashboardProjects(org), todayIn(org.timezone));
+  const [projects, taskLinks] = await Promise.all([getDashboardProjects(org), getTaskLinkIds(org)]);
+  const summary = summarizeDashboard(projects, todayIn(org.timezone), taskLinks);
   const noProjects = summary.projects.length === 0;
 
   return (

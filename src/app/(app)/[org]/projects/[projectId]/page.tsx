@@ -19,6 +19,7 @@ import { getProjectDetail, type ProjectDetail, type SubprojectView } from "@/lib
 import { rollupProgress } from "@/lib/domain/progress";
 import { overlapMessage, overlapWindows, overlapsFor, schedulesFor } from "@/lib/domain/project-plan";
 import { PROJECT_STATUS_CATEGORY, PROJECT_STATUS_LABELS, canEditProjects } from "@/lib/domain/projects";
+import { taskOverlapMessage, taskOverlaps, taskPlace, type TaskOverlap } from "@/lib/domain/task-links";
 import { daysBetween, type Overlap } from "@/lib/domain/schedule";
 import { formatDate, formatRange, pluralDays } from "@/lib/format";
 import { ProjectFormDialog } from "../project-form-dialog";
@@ -58,6 +59,8 @@ async function ProjectContent({ params }: { params: Params }) {
   const plan = project.subprojects;
   const schedules = schedulesFor(plan);
   const overlaps = overlapsFor(plan, project.dependencies);
+  // Task links all touch this project (the other end may be in another project).
+  const linkOverlaps = taskOverlaps(project.taskLinks);
   const allTasks = plan.flatMap((s) => s.tasks);
   const doneTasks = allTasks.filter((t) => t.status === "done").length;
   const baseline = project.baseline?.ranges ?? {};
@@ -109,6 +112,7 @@ async function ProjectContent({ params }: { params: Params }) {
                 projectId={project.id}
                 plan={plan}
                 dependencies={project.dependencies}
+                taskLinks={project.taskLinks}
                 usedColors={plan.map((s) => s.color)}
                 trigger={
                   <Button>
@@ -166,10 +170,16 @@ async function ProjectContent({ params }: { params: Params }) {
               ) : (
                 <p className="text-sm text-muted-foreground">No overlaps between subprojects.</p>
               )}
+              {linkOverlaps.length ? (
+                <p className="flex items-center gap-1.5 text-sm font-medium text-destructive">
+                  <OctagonAlert aria-hidden="true" className="size-4 shrink-0" />
+                  {linkOverlaps.length} {linkOverlaps.length === 1 ? "overlap" : "overlaps"} between linked tasks
+                </p>
+              ) : null}
             </div>
           </section>
 
-          <OverlapWarnings plan={plan} overlaps={overlaps} />
+          <OverlapWarnings plan={plan} overlaps={overlaps} linkOverlaps={linkOverlaps} projectId={project.id} />
 
           <section aria-labelledby="timeline-heading" className="space-y-3 rounded-xl border bg-card p-4">
             <h2 id="timeline-heading" className="text-lg font-semibold">
@@ -216,6 +226,7 @@ async function ProjectContent({ params }: { params: Params }) {
                     sub={sub}
                     project={project}
                     overlaps={overlaps}
+                    linkOverlaps={linkOverlaps}
                     orgSlug={org.slug}
                     canEdit={canEdit}
                     startsAfter={project.dependencies.filter((d) => d.successorId === sub.id).map((d) => name(d.predecessorId))}
@@ -250,8 +261,18 @@ async function ProjectContent({ params }: { params: Params }) {
   );
 }
 
-function OverlapWarnings({ plan, overlaps }: { plan: SubprojectView[]; overlaps: Overlap[] }) {
-  if (overlaps.length === 0) return null;
+function OverlapWarnings({
+  plan,
+  overlaps,
+  linkOverlaps,
+  projectId,
+}: {
+  plan: SubprojectView[];
+  overlaps: Overlap[];
+  linkOverlaps: TaskOverlap[];
+  projectId: string;
+}) {
+  if (overlaps.length === 0 && linkOverlaps.length === 0) return null;
   return (
     <section aria-label="Warnings" className="space-y-2">
       {overlaps.map((o) => (
@@ -266,6 +287,18 @@ function OverlapWarnings({ plan, overlaps }: { plan: SubprojectView[]; overlaps:
           </span>
         </p>
       ))}
+      {linkOverlaps.map((o) => (
+        <p
+          key={o.link.id}
+          className="flex gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+        >
+          <OctagonAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+          <span>
+            <span className="font-semibold">Overlap: </span>
+            {taskOverlapMessage(o, projectId)} Check with both owners, or change a duration.
+          </span>
+        </p>
+      ))}
     </section>
   );
 }
@@ -274,6 +307,7 @@ function SubprojectCard({
   sub,
   project,
   overlaps,
+  linkOverlaps,
   orgSlug,
   canEdit,
   startsAfter,
@@ -281,6 +315,7 @@ function SubprojectCard({
   sub: SubprojectView;
   project: ProjectDetail;
   overlaps: Overlap[];
+  linkOverlaps: TaskOverlap[];
   orgSlug: string;
   canEdit: boolean;
   startsAfter: string[];
@@ -297,6 +332,13 @@ function SubprojectCard({
         ? [`Runs ${pluralDays(o.days)} into ${name(o.successorId)}`]
         : [],
   );
+  for (const { link, days } of linkOverlaps) {
+    if (link.successor.subprojectId === sub.id) {
+      notes.push(`${link.successor.name} overlaps ${taskPlace(link.predecessor, project.id)} by ${pluralDays(days)}`);
+    } else if (link.predecessor.subprojectId === sub.id) {
+      notes.push(`${link.predecessor.name} runs ${pluralDays(days)} into ${taskPlace(link.successor, project.id)}`);
+    }
+  }
 
   return (
     <Card className="h-full gap-3">
@@ -368,6 +410,7 @@ function SubprojectCard({
             projectId={project.id}
             plan={project.subprojects}
             dependencies={project.dependencies}
+            taskLinks={project.taskLinks}
             usedColors={project.subprojects.map((s) => s.color)}
             subproject={{ id: sub.id, name: sub.name, startDate: sub.startDate, color: sub.color }}
             trigger={

@@ -21,6 +21,7 @@ import { FieldGroup } from "@/components/ui/field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { describePlanChange, type PlanSubproject, type PlanTask } from "@/lib/domain/project-plan";
 import type { Dependency } from "@/lib/domain/schedule";
+import type { TaskLink } from "@/lib/domain/task-links";
 import { TASK_STATUSES, type TaskStatus } from "@/lib/domain/tasks";
 import { addTask, archiveTask, setTaskStatus, updateTask, type TaskFormState } from "@/lib/projects/task-actions";
 
@@ -31,6 +32,8 @@ export type TaskScope = {
   subprojectId: string;
   plan: PlanSubproject[];
   dependencies: Dependency[];
+  /** Task links touching this project, for overlap previews. */
+  taskLinks: TaskLink[];
 };
 
 type EditableTask = PlanTask & { progress: number | null; status: TaskStatus };
@@ -106,6 +109,8 @@ function TaskForm({ scope, task, onSaved }: { scope: TaskScope; task?: EditableT
           scope.plan,
           withTasks(scope, (tasks) => (task ? tasks.map((t) => (t.id === task.id ? draft : t)) : [...tasks, draft])),
           scope.dependencies,
+          scope.taskLinks,
+          scope.projectId,
         )
       : null;
 
@@ -218,6 +223,8 @@ export function RemoveTaskButton({ scope, task }: { scope: TaskScope; task: Plan
     scope.plan,
     withTasks(scope, (tasks) => tasks.filter((t) => t.id !== task.id)),
     scope.dependencies,
+    scope.taskLinks,
+    scope.projectId,
   );
   return (
     <Dialog

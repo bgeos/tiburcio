@@ -14,6 +14,7 @@ import {
   type Overlap,
   type SubprojectSchedule,
 } from "./schedule";
+import { taskOverlapMessage, taskOverlaps, taskPlace, type TaskLink } from "./task-links";
 
 export type PlanTask = { id: string; name: string; durationDays: number; delayDays: number };
 export type PlanSubproject = { id: string; name: string; startDate: IsoDate; tasks: PlanTask[] };
@@ -75,11 +76,16 @@ export type PlanChange = {
   resolvedOverlaps: string[];
 };
 
-/** What replacing the plan `before` with `after` changes. Nothing else ever moves. */
+/**
+ * What replacing the plan `before` with `after` changes. Nothing else ever moves.
+ * `taskLinks` touching this project are checked too; tasks of other projects keep their dates.
+ */
 export function describePlanChange(
   before: PlanSubproject[],
   after: PlanSubproject[],
   dependencies: Dependency[],
+  taskLinks: TaskLink[] = [],
+  projectId?: string,
 ): PlanChange {
   const names = new Map<string, string>();
   for (const s of [...before, ...after]) {
@@ -101,11 +107,31 @@ export function describePlanChange(
   const key = (o: Overlap) => `${o.predecessorId}>${o.successorId}`;
   const old = new Map(overlapsFor(before, dependencies).map((o) => [key(o), o]));
   const now = new Map(overlapsFor(after, dependencies).map((o) => [key(o), o]));
+
+  // Task links: this project's tasks take their (new) planned dates; a task removed
+  // from this project's plan takes its links with it.
+  const inPlan = (ranges: Record<string, DateRange>) => (link: TaskLink) =>
+    [link.predecessor, link.successor].every((t) => t.projectId !== projectId || t.id in ranges);
+  const taskOverlapsIn = (ranges: Record<string, DateRange>) =>
+    new Map(taskOverlaps(taskLinks.filter(inPlan(ranges)), ranges).map((o) => [o.link.id, o]));
+  const oldTask = taskOverlapsIn(rangesBefore);
+  const nowTask = taskOverlapsIn(rangesAfter);
+
   return {
     lines,
-    newOverlaps: [...now.entries()].filter(([k, o]) => old.get(k)?.days !== o.days).map(([, o]) => overlapMessage(after, o)),
-    resolvedOverlaps: [...old.entries()]
-      .filter(([k]) => !now.has(k))
-      .map(([, o]) => `${nameOf(after, o.successorId)} no longer overlaps ${nameOf(after, o.predecessorId)}.`),
+    newOverlaps: [
+      ...[...now.entries()].filter(([k, o]) => old.get(k)?.days !== o.days).map(([, o]) => overlapMessage(after, o)),
+      ...[...nowTask.entries()]
+        .filter(([k, o]) => oldTask.get(k)?.days !== o.days)
+        .map(([, o]) => taskOverlapMessage(o, projectId, rangesAfter)),
+    ],
+    resolvedOverlaps: [
+      ...[...old.entries()]
+        .filter(([k]) => !now.has(k))
+        .map(([, o]) => `${nameOf(after, o.successorId)} no longer overlaps ${nameOf(after, o.predecessorId)}.`),
+      ...[...oldTask.entries()]
+        .filter(([k]) => !nowTask.has(k))
+        .map(([, o]) => `${taskPlace(o.link.successor, projectId)} no longer overlaps ${taskPlace(o.link.predecessor, projectId)}.`),
+    ],
   };
 }

@@ -2,9 +2,21 @@ import "server-only";
 import type { DashboardProject } from "@/lib/domain/dashboard";
 import type { MaterialStatus } from "@/lib/domain/materials";
 import type { ProjectStatus } from "@/lib/domain/projects";
+import type { Dependency } from "@/lib/domain/schedule";
 import type { TaskStatus } from "@/lib/domain/tasks";
 import { createClient } from "@/lib/supabase/server";
 import type { Membership } from "./organizations";
+
+/** Every task link of the organization, by task id (the Overview counts their overlaps). */
+export async function getTaskLinkIds(org: Membership): Promise<Dependency[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("task_dependencies")
+    .select("predecessor_task_id, successor_task_id")
+    .eq("organization_id", org.id);
+  if (error) throw new Error(`Could not load the overview: ${error.message}`);
+  return data.map((d) => ({ predecessorId: d.predecessor_task_id, successorId: d.successor_task_id }));
+}
 
 /** Current projects (not archived, planning or active) with what the Overview counts, read as the user (RLS). */
 export async function getDashboardProjects(org: Membership): Promise<DashboardProject[]> {

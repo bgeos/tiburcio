@@ -34,6 +34,7 @@ organizations ─┬─ organization_members ── profiles (1:1 auth.users)
                ├─ projects ── plan_baselines, activity_log            (Phase 3, D-025)
                │     └─ subprojects ── subproject_dependencies (within a project)
                │           ├─ tasks              (cronograma: sequential, durations)
+               │           │     └─ task_dependencies (any two tasks of the org, P4-01)
                │           ├─ subproject_materials
                │           └─ crew_members       (owner = one of them)
                ├─ materials ── material_movements ── stock_locations
@@ -143,6 +144,13 @@ Not linked to the Phase 5 catalogue/stock yet.
 `predecessor_id`, `successor_id` (subprojects of the **same project**; no self-links, no cycles).
 Meaning: "successor starts after predecessor finishes". Nothing moves automatically: an
 overlap is reported (in red) instead.
+
+### `task_dependencies` (P4-01, D-027)
+`predecessor_task_id`, `successor_task_id`: any two tasks of the **same organization**, also in
+different subprojects or projects. Not inside one subproject (its tasks already run in order),
+no self-links, no cycles (trigger, organization-wide advisory lock). Same meaning as subproject
+links: nothing moves; an overlap is reported in red, with a preview before saving. Removed
+links are deleted (the history keeps who removed what). Links to archived tasks are ignored.
 
 ### `plan_baselines`
 One per project (`project_id` unique): `locked_at`, `locked_by`, `snapshot jsonb`

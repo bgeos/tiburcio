@@ -1,10 +1,12 @@
 import "server-only";
 import type { MaterialStatus } from "@/lib/domain/materials";
 import type { ProjectStatus } from "@/lib/domain/projects";
-import type { DateRange, IsoDate } from "@/lib/domain/schedule";
+import { scheduleSubproject, type DateRange, type IsoDate } from "@/lib/domain/schedule";
 import { isSubprojectColor, type SubprojectColor } from "@/lib/domain/subproject-colors";
 import type { TaskStatus } from "@/lib/domain/tasks";
+import type { LinkedTask, TaskLink } from "@/lib/domain/task-links";
 import { createClient } from "@/lib/supabase/server";
+import { loadTaskLinks } from "./task-links";
 import type { Membership } from "./organizations";
 
 export type { TaskStatus };
@@ -48,6 +50,8 @@ export type ProjectDetail = {
   /** Not archived, in display order. */
   subprojects: SubprojectView[];
   dependencies: { id: string; predecessorId: string; successorId: string }[];
+  /** Task links touching this project's tasks; the other end may be in another project. */
+  taskLinks: TaskLink[];
   baseline: { lockedAt: string; ranges: Record<string, DateRange> } | null;
 };
 
@@ -111,42 +115,63 @@ export async function getProjectDetail(org: Membership, projectId: string): Prom
   const crewNames = new Map((crew.data ?? []).map((c) => [c.id, c.name as string]));
   const active = new Set(ids);
 
+  const views: SubprojectView[] = subprojects.map((s) => ({
+    id: s.id,
+    name: s.name,
+    startDate: s.start_date,
+    color: isSubprojectColor(s.color) ? s.color : "blue",
+    ownerCrewId: s.owner_crew_id,
+    ownerName: s.owner_crew_id ? (crewNames.get(s.owner_crew_id) ?? null) : null,
+    tasks: (tasks.data ?? [])
+      .filter((t) => t.subproject_id === s.id)
+      .map((t) => ({
+        id: t.id,
+        name: t.name,
+        durationDays: t.duration_days,
+        delayDays: t.delay_days,
+        status: t.status as TaskStatus,
+        progress: t.progress === null ? null : Number(t.progress),
+        actualStart: t.actual_start,
+        actualEnd: t.actual_end,
+      })),
+    materials: (materials.data ?? [])
+      .filter((m) => m.subproject_id === s.id)
+      .map((m) => ({ id: m.id, description: m.description, status: m.status as MaterialStatus })),
+    crew: (crew.data ?? [])
+      .filter((c) => c.subproject_id === s.id && !c.archived_at)
+      .map((c) => ({ id: c.id, name: c.name, role: c.role })),
+  }));
+
+  // This project's tasks as link ends, with their planned dates.
+  const own = new Map<string, LinkedTask>();
+  for (const sub of views) {
+    const schedule = scheduleSubproject(sub.startDate, sub.tasks);
+    sub.tasks.forEach((t, i) =>
+      own.set(t.id, {
+        id: t.id,
+        name: t.name,
+        subprojectId: sub.id,
+        subprojectName: sub.name,
+        projectId: project.id,
+        projectName: project.name,
+        color: sub.color,
+        range: { start: schedule.tasks[i].start, end: schedule.tasks[i].end },
+      }),
+    );
+  }
+
   return {
     id: project.id,
     name: project.name,
     description: project.description,
     status: project.status as ProjectStatus,
     archivedAt: project.archived_at,
-    subprojects: subprojects.map((s) => ({
-      id: s.id,
-      name: s.name,
-      startDate: s.start_date,
-      color: isSubprojectColor(s.color) ? s.color : "blue",
-      ownerCrewId: s.owner_crew_id,
-      ownerName: s.owner_crew_id ? (crewNames.get(s.owner_crew_id) ?? null) : null,
-      tasks: (tasks.data ?? [])
-        .filter((t) => t.subproject_id === s.id)
-        .map((t) => ({
-          id: t.id,
-          name: t.name,
-          durationDays: t.duration_days,
-          delayDays: t.delay_days,
-          status: t.status as TaskStatus,
-          progress: t.progress === null ? null : Number(t.progress),
-          actualStart: t.actual_start,
-          actualEnd: t.actual_end,
-        })),
-      materials: (materials.data ?? [])
-        .filter((m) => m.subproject_id === s.id)
-        .map((m) => ({ id: m.id, description: m.description, status: m.status as MaterialStatus })),
-      crew: (crew.data ?? [])
-        .filter((c) => c.subproject_id === s.id && !c.archived_at)
-        .map((c) => ({ id: c.id, name: c.name, role: c.role })),
-    })),
+    subprojects: views,
     // Links to archived subprojects are kept in the database but not shown.
     dependencies: (dependencies.data ?? [])
       .filter((d) => active.has(d.predecessor_id) && active.has(d.successor_id))
       .map((d) => ({ id: d.id, predecessorId: d.predecessor_id, successorId: d.successor_id })),
+    taskLinks: await loadTaskLinks(supabase, org.id, own),
     baseline: baseline.data
       ? { lockedAt: baseline.data.locked_at, ranges: baseline.data.snapshot as Record<string, DateRange> }
       : null,

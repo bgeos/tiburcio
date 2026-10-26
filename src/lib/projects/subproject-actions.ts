@@ -90,7 +90,7 @@ export async function updateSubproject(
   // Describe the change from the database's view of the plan, not the browser's.
   const plan: PlanSubproject[] = project.subprojects;
   const after = plan.map((s) => (s.id === subprojectId ? { ...s, name, startDate } : s));
-  const change = describePlanChange(plan, after, project.dependencies);
+  const change = describePlanChange(plan, after, project.dependencies, project.taskLinks, project.id);
   const details = [
     name !== before.name && `Name: ${before.name} → ${name}`,
     startDate !== before.startDate && `Start: ${formatDate(before.startDate)} → ${formatDate(startDate)}`,

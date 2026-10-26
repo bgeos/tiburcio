@@ -55,8 +55,8 @@ Status: ⬜ todo · 🟡 doing · ✅ done. IDs are stable; append rather than r
 ## Phases 4–9
 
 Broken down when Phase 3 is complete. Known early items:
-- P4-01 (next, D-027): task dependencies between any two tasks of the organization, also across projects: `task_dependencies` + cycle trigger + pgTAP, "waits for" in the task dialog with preview, red task overlaps on the cronograma, project page and Overview.
-- P4: `task_dependencies` + cycle trigger + tests, Gantt library evaluation (record in DECISIONS), overdue/blocked indicators.
+- ✅ P4-01 (2026-10-26, D-027): task dependencies between any two tasks of the organization, also across projects: migration `task_dependencies` (cycle + same-subproject trigger, +13 pgTAP), `lib/domain/task-links.ts` (unit-tested; previews and history include task overlaps), "Links" dialog per task (choose any task, overlap previewed before adding), "Waits for / Needed by" notes, red task overlaps on the cronograma, its timeline, project page and Overview. 6 E2E incl. the Shade Sail example, a circle refused, axe. Also fixed: success/error toasts now use our colour tokens (sonner's green failed contrast).
+- P4 next: Gantt library evaluation (record in DECISIONS), overdue/blocked indicators.
 - P5: materials, locations, ledger, `post_material_movement` / `reserve_material` with concurrency tests, the "12 plywood sheets for DJ task" scenario.
 - P6: budgets/expenses, Recharts dashboard from real queries, drill-down, CSV export via RLS-scoped route.
 

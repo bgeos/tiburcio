@@ -70,3 +70,32 @@ export async function listOrganizationMaterials(org: Membership): Promise<Materi
     })
     .sort((a, b) => a.project.localeCompare(b.project) || a.subproject.localeCompare(b.subproject));
 }
+
+/** A current subproject a material can be added to, from the Materials page. */
+export type SubprojectChoice = { projectId: string; project: string; subprojectId: string; subproject: string };
+
+type ChoiceRow = {
+  id: string;
+  name: string;
+  archived_at: string | null;
+  projects: { id: string; name: string; archived_at: string | null } | null;
+};
+
+/** Every current subproject of every current project, sorted by project then subproject. */
+export async function listSubprojectChoices(org: Membership): Promise<SubprojectChoice[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("subprojects")
+    .select("id, name, archived_at, projects!subprojects_organization_id_project_id_fkey(id, name, archived_at)")
+    .eq("organization_id", org.id)
+    .is("archived_at", null)
+    .returns<ChoiceRow[]>();
+  if (error) throw new Error(`Could not load subprojects: ${error.message}`);
+  return data
+    .flatMap((row) =>
+      row.projects && !row.projects.archived_at
+        ? [{ projectId: row.projects.id, project: row.projects.name, subprojectId: row.id, subproject: row.name }]
+        : [],
+    )
+    .sort((a, b) => a.project.localeCompare(b.project) || a.subproject.localeCompare(b.subproject));
+}

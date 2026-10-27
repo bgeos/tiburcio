@@ -85,6 +85,33 @@ test("the Materials page lists every subproject's materials, with filters", asyn
   await expect(page.getByRole("tab", { name: /Materials/ })).toHaveAttribute("aria-selected", "true");
 });
 
+test("a material can be added from the Materials page, choosing its subproject", async ({ page }) => {
+  await page.goto(orgPath("/materials"));
+  await page.getByRole("button", { name: "Add material" }).click();
+  const dialog = page.getByRole("dialog", { name: "Add material" });
+
+  // Where it's needed comes first.
+  await dialog.getByLabel("Material").fill("Gaffer tape, 10 rolls");
+  await dialog.getByRole("button", { name: "Add material" }).click();
+  await expect(dialog.getByText("Choose a project and a subproject.")).toBeVisible();
+
+  await dialog.getByRole("combobox", { name: "Project", exact: true }).click();
+  await page.getByRole("option", { name: STAGE }).click();
+  await dialog.getByRole("combobox", { name: "Subproject" }).click();
+  await page.getByRole("option", { name: "DJ Booth" }).click();
+  await dialog.getByLabel("Needed by (optional)").fill("2027-01-09");
+  await dialog.getByRole("button", { name: "Add material" }).click();
+  await expect(dialog).toBeHidden();
+
+  const row = page.getByRole("table").getByRole("row").filter({ hasText: "Gaffer tape, 10 rolls" });
+  await expect(row).toContainText("DJ Booth");
+  await expect(row).toContainText("To request");
+  await expect(row).toContainText("9 Jan");
+  // And it's in the subproject's own list.
+  await openMaterialsTab(page, ids.stage, ids["DJ Booth"]);
+  await expect(page.getByRole("list", { name: "DJ Booth materials" })).toContainText("Gaffer tape, 10 rolls");
+});
+
 test("a member sees materials but cannot change them", async ({ browser }) => {
   const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
   const page = await context.newPage();
@@ -99,5 +126,8 @@ test("a member sees materials but cannot change them", async ({ browser }) => {
   await expect(page.getByLabel("New material")).toHaveCount(0);
   await expect(page.getByRole("combobox", { name: /^Status of / })).toHaveCount(0);
   await expect(page.getByRole("button", { name: /^Remove / })).toHaveCount(0);
+  await page.goto(orgPath("/materials"));
+  await expect(page.getByRole("table")).toContainText("Steel cable, 8 mm");
+  await expect(page.getByRole("button", { name: "Add material" })).toHaveCount(0);
   await context.close();
 });

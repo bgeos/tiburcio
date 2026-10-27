@@ -1,6 +1,7 @@
 "use server";
 
 import { refresh } from "next/cache";
+import { z } from "zod";
 import { getProjectDetail } from "@/lib/dal/project-detail";
 import { MATERIAL_STATUSES, MATERIAL_STATUS_LABELS, type MaterialStatus } from "@/lib/domain/materials";
 import { formatDate } from "@/lib/format";
@@ -56,6 +57,15 @@ export async function addMaterial(
   await logActivity(supabase, ctx.org, { projectId, subprojectId, summary: `Material added: ${parsed.data.description}` });
   refresh();
   return { status: "saved", savedAt: Date.now() };
+}
+
+/** Add a material from the organization-wide Materials page: the form names the subproject. */
+export async function addMaterialToSubproject(orgSlug: string, previous: MaterialFormState, formData: FormData): Promise<MaterialFormState> {
+  const where = z.object({ projectId: z.uuid(), subprojectId: z.uuid() }).safeParse(formDataToObject(formData));
+  if (!where.success) {
+    return { status: "invalid", fieldErrors: { subprojectId: ["Choose a project and a subproject."] }, values: formDataToObject(formData) };
+  }
+  return addMaterial(orgSlug, where.data.projectId, where.data.subprojectId, previous, formData);
 }
 
 export async function setMaterialStatus(

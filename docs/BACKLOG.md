@@ -66,6 +66,7 @@ Broken down when Phase 3 is complete. Known early items:
 - ~~P5: materials, locations, ledger, reservations~~: dropped by the product owner (2026-10-27).
 - ✅ ORG-01 (2026-10-27, D-033): admins and production managers create organizations (one per festival) and switch between them. Migration `create_my_organization` (+13 pgTAP), `lib/organizations/actions.ts`, `lib/validation/organizations.ts` (unit-tested; address suggested from the name), "New organization" in the sidebar menu, "Your organizations" on the profile page. 4 E2E incl. a taken address, switching, members can't, axe.
 - ✅ CAL-01 (2026-10-27, D-034): needed-by dates on materials, dates on my tasks, and all of them on the calendar with tasks and milestones, each kind with its own mark and a show/hide switch. Migration `due_dates` (+5 pgTAP), `DueNote` component, late/overdue rules (unit-tested), calendar kinds (unit-tested). 3 E2E incl. late materials, the hide switch and axe.
+- ✅ MAT-01 (2026-10-27): "Add material" on the Materials page (admins and production managers): choose project and subproject, describe it, optional needed-by day. `listSubprojectChoices`, `addMaterialToSubproject` (reuses the subproject action and its checks). 1 E2E + member check. Also: material dates no longer auto-save while typing (Save button, Enter or leaving the field).
 - P6: budgets/expenses, Recharts dashboard from real queries, drill-down, CSV export via RLS-scoped route.
 
 ### Requirements observed in the team's own spreadsheets (2026-10-26)

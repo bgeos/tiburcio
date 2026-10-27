@@ -1,4 +1,5 @@
 import {
+  CalendarDays,
   FolderKanban,
   LayoutDashboard,
   ListChecks,
@@ -32,6 +33,12 @@ export const PRIMARY_NAV: NavItem[] = [
     section: "projects",
     icon: FolderKanban,
     description: "Festivals, areas, structures and every nested subproject.",
+  },
+  {
+    title: "Calendar",
+    section: "calendar",
+    icon: CalendarDays,
+    description: "Tasks and milestones by month or week, across projects.",
   },
   {
     title: "My tasks",

@@ -4,6 +4,7 @@ import { E2E_OTHER_ORG, E2E_OUTSIDER, orgPath } from "./support/users";
 const ROUTES = [
   { path: orgPath("/dashboard"), heading: "Overview" },
   { path: orgPath("/projects"), heading: "Projects" },
+  { path: orgPath("/calendar"), heading: "Calendar" },
   { path: orgPath("/tasks"), heading: "My tasks" },
   { path: orgPath("/materials"), heading: "Materials" },
   { path: orgPath("/team"), heading: "Team" },

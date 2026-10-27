@@ -5,7 +5,7 @@
 
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(13);
+select plan(16);
 
 create function pg_temp.sign_in(person text) returns void language plpgsql as $$
 begin
@@ -91,6 +91,17 @@ select is_empty($$ select 1 from public.task_dependencies $$, 'another organizat
 
 select pg_temp.sign_in('alice');
 select lives_ok($$ delete from public.task_dependencies where successor_task_id = (select dome from ids) $$, 'an admin removes a link');
+
+-- P4-08: the remaining edge cases. Set up structure → Rig sail is still linked.
+select throws_ok($$ insert into public.task_dependencies (organization_id, predecessor_task_id, successor_task_id)
+  select org_a, rig, s2 from ids $$, '23514', null, 'two tasks cannot wait for each other');
+select lives_ok($$ update public.tasks set archived_at = now() where id = (select s2 from ids) $$, 'archiving a linked task is allowed');
+reset role;
+-- The link stays (the history needs it; the app ignores links to archived tasks).
+-- Deleting a task for good (not possible in the app) takes its links with it.
+delete from public.tasks where id = (select rig from ids);
+select is((select count(*) from public.task_dependencies where organization_id = (select org_a from ids)), 0::bigint,
+  'links go with a deleted task');
 
 select * from finish();
 rollback;

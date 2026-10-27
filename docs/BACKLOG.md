@@ -62,7 +62,7 @@ Broken down when Phase 3 is complete. Known early items:
 - ✅ P4-05 (2026-10-27, D-030): organization-wide milestones. Migration `milestones` + `task_milestones` (+12 pgTAP); managed on the Projects page; listed on every project page and the Overview; flag lines on timelines; tasks linked from their Links dialog ("must be done before"), late days red with warnings, row notes, previews and history. `lib/domain/milestones.ts` (unit-tested). 5 E2E incl. members and axe.
 - ✅ P4-06 (2026-10-27, D-031): Gantt view per project, extending our own timeline (libraries compared, none fit); read-only, Days / Weeks zoom, arrows, today, milestones, original plan, red days, text for screen readers, phone layout. `lib/domain/gantt.ts` + `components/gantt.tsx`. 3 E2E incl. dark/phone axe.
 - ✅ P4-07 (2026-10-27): Calendar (`/[org]/calendar`, in the sidebar): Month grid and Week list of every current task on the days it runs, plus milestones; previous / today / next; filter by project (kept in the address); phones get the month as a list of the days with something on. Tasks link to their subproject. Not for external collaborators. `lib/domain/calendar.ts` (unit-tested). 3 E2E incl. axe and phone width.
-- P4 next (product owner, 2026-10-27): close the phase (P4-08). No separate "Risks" panel.
+- ✅ P4-08 (2026-10-27): Phase 4 closed. Acceptance and known limitations in ROADMAP; +3 pgTAP for dependency edge cases (two-task circle, archiving keeps links, deleting a task removes them).
 - P5: materials, locations, ledger, `post_material_movement` / `reserve_material` with concurrency tests, the "12 plywood sheets for DJ task" scenario.
 - P6: budgets/expenses, Recharts dashboard from real queries, drill-down, CSV export via RLS-scoped route.
 

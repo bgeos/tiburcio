@@ -8,8 +8,8 @@ Full acceptance criteria are in `PROJECT_BLUEPRINT.md` § 6.
 | 0 | Inspect, plan, prepare | ✅ |
 | 1 | App shell and design system | ✅ |
 | 2 | Database, auth, authorization | ✅ |
-| 3 | Project hierarchy and tasks | ⬜ |
-| 4 | Scheduling and dependencies | ⬜ |
+| 3 | Project hierarchy and tasks | ✅ |
+| 4 | Scheduling and dependencies | ✅ |
 | 5 | Materials and inventory | ⬜ |
 | 6 | Budgets, analytics, reports | ⬜ |
 | 7 | Customization and templates | ⬜ |
@@ -84,7 +84,7 @@ edits persist, parent summaries follow the documented progress rule. Backlog P3-
 Met by `e2e/vertical-slice.spec.ts` (UI only, survives a reload, another organization gets a 404)
 plus the pgTAP RLS tests.
 
-## Phase 4: Planning views 🟡
+## Phase 4: Scheduling and dependencies ✅ (2026-10-27)
 - [x] P4-01 (2026-10-26): task dependencies across subprojects and projects (D-027).
 - [x] P4-02 (2026-10-27): "My tasks" (personal to-dos and reminders) replaces the Tasks placeholder; Reports removed from the navigation (D-028).
 - [x] P4-03 (2026-10-27): the project status follows the work (D-029).
@@ -92,7 +92,30 @@ plus the pgTAP RLS tests.
 - [x] P4-05 (2026-10-27): organization-wide milestones; tasks must be done before them (D-030).
 - [x] P4-06 (2026-10-27): read-only Gantt view per project, built on our own timeline (D-031).
 - [x] P4-07 (2026-10-27): Calendar view (month / week, all projects or one).
-- [ ] Close the phase: limitations documented, dependency tests, acceptance check.
+- [x] P4-08 (2026-10-27): phase closed: limitations below, dependency edge cases tested, acceptance checked. The "Risks" panel was dropped by the product owner.
+
+Acceptance (blueprint § 6, Phase 4):
+- *A task can depend on work in another subproject*: task links across subprojects and projects
+  (`task_dependencies` pgTAP, `e2e/task-links.spec.ts`).
+- *Invalid dependency cycles are rejected*: subproject and task circles refused by triggers
+  (pgTAP incl. a two-task circle; E2E "a circle of links is refused").
+- *Changes persist and affect relevant views*: cronograma, project page, Gantt, calendar and
+  Overview read the same saved plan (E2E specs reload and check each view).
+- *The dashboard identifies schedule risks without pretending to calculate a critical path*:
+  the Overview and project page show overlaps, overdue, blocked and milestone-late work; no
+  critical path is claimed.
+- Calendar and Gantt views (Gantt without a library, D-031), milestones (D-030), overdue and
+  blocked warnings (P4-04), planned vs actual dates (Phase 3) and original plan (locked baseline).
+
+Known limitations (by design, for now):
+- Dates are **calendar days**: no weekends, holidays or working hours.
+- **Nothing moves by itself**: a later task never shifts another subproject, linked task or
+  milestone; clashes are shown in red with a preview before saving (D-019).
+- Only **finish-to-start** links; no lags, start-to-start or partial overlaps allowed on purpose.
+- **No critical path** and no automatic rescheduling.
+- The Gantt and calendar are **read-only** (no dragging); dates change in the cronograma.
+- Milestones belong to the organization, not to one project; a task "must be done before" its day.
+- Times of day aren't tracked; a day is the smallest unit.
 
 ## Phases 5–9 ⬜
 See blueprint § 6. They are broken down into backlog items when the preceding phase is complete.

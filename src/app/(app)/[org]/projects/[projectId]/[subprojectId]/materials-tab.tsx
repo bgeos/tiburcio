@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
-import { CircleAlert, Package, Plus, Trash2 } from "lucide-react";
+import { Check, CircleAlert, Package, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { DueNote } from "@/components/due-note";
@@ -111,48 +111,52 @@ function MaterialStatusSelect({ scope, material }: { scope: Scope; material: Mat
 }
 
 /**
- * Saved a moment after the date changes (picked or typed), or at once on Enter or leaving the
- * field; the pause keeps a date typed digit by digit from saving every step.
+ * Never saves while typing (a date typed digit by digit would save half-finished): saved on
+ * Enter, on leaving the field, or with the Save button that appears once the date changes.
+ * The field stays usable while saving.
  */
 function NeededByInput({ scope, material }: { scope: Scope; material: MaterialView }) {
   const [pending, startTransition] = useTransition();
   const [value, setValue] = useState(material.neededBy ?? "");
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => {
-    if (timer.current) clearTimeout(timer.current);
-  }, []);
+  // What the server has (or is saving): stops a blur after Enter from saving twice.
+  const saved = useRef(material.neededBy ?? "");
 
-  const save = (next: string) => {
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = null;
-    if (next === (material.neededBy ?? "")) return;
+  const save = () => {
+    if (value === saved.current) return;
+    const previous = saved.current;
+    saved.current = value;
     startTransition(async () => {
-      const result = await setMaterialNeededBy(scope.orgSlug, scope.projectId, scope.subprojectId, material.id, next);
-      if (result.ok) toast.success(next ? `${material.description}: date saved` : `${material.description}: date cleared`);
+      const result = await setMaterialNeededBy(scope.orgSlug, scope.projectId, scope.subprojectId, material.id, value);
+      if (result.ok) toast.success(value ? `${material.description}: date saved` : `${material.description}: date cleared`);
       else {
         toast.error(result.message);
-        setValue(material.neededBy ?? "");
+        saved.current = previous;
+        setValue(previous);
       }
     });
   };
+  const changed = value !== (material.neededBy ?? "") && !pending;
+
   return (
-    <Input
-      type="date"
-      aria-label={`${material.description} needed by`}
-      className="h-8 w-40"
-      value={value}
-      disabled={pending}
-      onChange={(e) => {
-        const next = e.target.value;
-        setValue(next);
-        if (timer.current) clearTimeout(timer.current);
-        timer.current = setTimeout(() => save(next), 1000);
-      }}
-      onBlur={() => save(value)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") save(value);
-      }}
-    />
+    <div className="flex items-center gap-1">
+      <Input
+        type="date"
+        aria-label={`${material.description} needed by`}
+        className="h-8 w-40"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={save}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") save();
+        }}
+      />
+      {changed ? (
+        // Saving happens on blur too, so pressing the button (which takes the focus) saves.
+        <Button type="button" size="sm" variant="outline" onClick={save}>
+          <Check aria-hidden="true" /> Save<span className="sr-only"> date for {material.description}</span>
+        </Button>
+      ) : null}
+    </div>
   );
 }
 

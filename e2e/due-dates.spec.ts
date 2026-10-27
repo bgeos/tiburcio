@@ -42,10 +42,16 @@ test("a material gets a needed-by day, and shows late once it has passed", async
   const row = materialRow(page);
   await expect(row).toContainText("Needed by 6 May");
 
-  // Changed in the list.
+  // Changed in the list: nothing is saved while the field is being edited, even after a pause,
+  // and the field stays usable; the Save button (or Enter, or leaving the field) saves it.
+  await row.getByLabel(`${PLYWOOD} needed by`).fill("2031-05-08");
+  await page.waitForTimeout(1500);
+  await expect(row).toContainText("Needed by 6 May");
+  await expect(row.getByLabel(`${PLYWOOD} needed by`)).toBeEnabled();
   await row.getByLabel(`${PLYWOOD} needed by`).fill("2031-05-07");
-  await row.getByLabel(`${PLYWOOD} needed by`).press("Enter");
+  await row.getByRole("button", { name: `Save date for ${PLYWOOD}` }).click();
   await expect(row).toContainText("Needed by 7 May");
+  await expect(row.getByRole("button", { name: /^Save date/ })).toHaveCount(0);
   await page.reload();
   // A value typed before the page is interactive would be lost: wait for it to settle.
   await page.waitForLoadState("networkidle");

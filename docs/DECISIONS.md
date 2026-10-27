@@ -271,6 +271,22 @@ Links to tasks in other projects are listed under the chart.
 
 ---
 
+## D-032 · 2026-10-27 · Staging on Vercel + a hosted Supabase project
+Product owner: the laptop can't run Docker, the dev server and the browser tests together, so
+testing moves to a hosted staging environment (answers Q3).
+- App: Vercel (Hobby plan while testing; Pro once the company uses it), project imported from
+  GitHub, redeploys on every push to `main`. Address: https://jupigenio.vercel.app.
+- Database: Supabase project `vuhifzervwszejqdpbnb` (region eu-north-1; production will be its
+  own project, region chosen then). Migrations applied with `supabase db push`; no seed data.
+- Auth settings set in the dashboard (they don't travel with migrations): public sign-up off,
+  Site URL and redirect URLs = the Vercel address.
+- **Invitation emails don't work on staging yet**: hosted Supabase only allows our invite
+  template with a custom SMTP sender, and the default template's link doesn't match
+  `/auth/confirm`. Until Q4 is answered, staging users are added in the dashboard.
+- Staging holds test data only.
+
+---
+
 # Open questions (non-blocking)
 
 Sensible defaults are used until answered.
@@ -279,8 +295,8 @@ Sensible defaults are used until answered.
 | --- | --- | --- |
 | Q1 | UI language(s): English only, or Brazilian Portuguese? The team's spreadsheets are all in pt-BR. | **Answered: English** (D-019) |
 | Q2 | Default currency and timezone? The spreadsheets suggest Brazil. | Per-organization setting. Proposed default changed to `BRL` / `America/Sao_Paulo` (was EUR/Lisbon) |
-| Q3 | Hosted Supabase project now, or local Docker only until Phase 9? | Local Supabase for development; create the hosted staging project when needed |
-| Q4 | Email provider for invitations (Supabase default SMTP is rate-limited)? | Supabase default for dev; choose Resend/Postmark etc. before staging |
+| Q3 | Hosted Supabase project now, or local Docker only until Phase 9? | **Answered: staging now** (D-032) |
+| Q4 | Email provider for invitations (Supabase default SMTP is rate-limited)? | Needed now for invitations on staging (D-032): Gmail app password (staging) or Resend/Postmark with a company domain |
 | Q5 | What can `external` collaborators see: costs, materials, other subprojects? | Only explicitly shared projects; no costs or catalogue |
 | Q6 | Should a subproject owner see sibling subprojects (e.g. DJ owner sees Stage)? | Read-only visibility of siblings is *off*; access flows down from shared ancestors only |
 | Q7 | Product name / branding: "JupiGenio"? | Used as the working name |

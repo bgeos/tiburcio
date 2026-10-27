@@ -104,6 +104,11 @@ No hosted project or secret is needed.
 
 - **Local:** `npm run dev` plus local Supabase (`npx supabase start`) with seed data.
 - **Preview/staging:** Vercel preview deployments plus a separate Supabase project. No real data.
+  Live since 2026-10-27 (D-032): https://jupigenio.vercel.app, Supabase project `vuhifzervwszejqdpbnb`.
+  Every push to `main` redeploys the app. New migrations: `npx supabase db push --dry-run`, then
+  `npx supabase db push` (the repo is linked to staging). First users: Supabase → Authentication →
+  Users → Add user (auto confirm), then `npm run org:create … --yes` with the staging URL and
+  secret key in the environment.
 - **Production:** Vercel plus its own Supabase project. Secrets are set in the hosting dashboards only.
 
 Details: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#environments-and-deployment).

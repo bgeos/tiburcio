@@ -90,7 +90,8 @@ plus the pgTAP RLS tests.
 - [x] P4-03 (2026-10-27): the project status follows the work (D-029).
 - [x] P4-04 (2026-10-27): overdue and blocked indicators on the cronograma, project page and Overview.
 - [x] P4-05 (2026-10-27): organization-wide milestones; tasks must be done before them (D-030).
-- [ ] Gantt view (no dragging), calendar view, close the phase: see BACKLOG.
+- [x] P4-06 (2026-10-27): read-only Gantt view per project, built on our own timeline (D-031).
+- [ ] Calendar view (no dragging), calendar view, close the phase: see BACKLOG.
 
 ## Phases 5–9 ⬜
 See blueprint § 6. They are broken down into backlog items when the preceding phase is complete.

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { ArrowLeft, Archive, CalendarClock, CalendarRange, ClipboardCheck, Flag, Hourglass, OctagonAlert, Pencil, Plus } from "lucide-react";
+import { ArrowLeft, Archive, CalendarClock, CalendarRange, ChartGantt, ClipboardCheck, Flag, Hourglass, OctagonAlert, Pencil, Plus } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { HistoryList } from "@/components/history-list";
 import { OrgLink } from "@/components/org-link";
@@ -109,43 +109,52 @@ async function ProjectContent({ params }: { params: Params }) {
           </span>
         }
         actions={
-          canEdit ? (
-            <>
-              {plan.length ? (
-                <>
-                  <Button variant="outline" asChild>
-                    <OrgLink href={`/projects/${project.id}/${plan[0].id}?checkin=1`}>
-                      <ClipboardCheck aria-hidden="true" /> Start daily check-in
-                    </OrgLink>
-                  </Button>
-                  <LockPlanButton orgSlug={org.slug} projectId={project.id} relock={Boolean(project.baseline)} />
-                </>
-              ) : null}
-              <ProjectFormDialog
-                orgSlug={org.slug}
-                project={project}
-                trigger={
-                  <Button variant="outline">
-                    <Pencil aria-hidden="true" /> Edit project
-                  </Button>
-                }
-              />
-              <SubprojectFormDialog
-                orgSlug={org.slug}
-                projectId={project.id}
-                plan={plan}
-                dependencies={project.dependencies}
-                taskLinks={project.taskLinks}
-                milestoneLinks={project.milestoneLinks}
-                usedColors={plan.map((s) => s.color)}
-                trigger={
-                  <Button>
-                    <Plus aria-hidden="true" /> Add subproject
-                  </Button>
-                }
-              />
-            </>
-          ) : null
+          <>
+            {plan.some((sub) => sub.tasks.length) ? (
+              <Button variant="outline" asChild>
+                <OrgLink href={`/projects/${project.id}/gantt`}>
+                  <ChartGantt aria-hidden="true" /> Gantt
+                </OrgLink>
+              </Button>
+            ) : null}
+            {canEdit ? (
+              <>
+                {plan.length ? (
+                  <>
+                    <Button variant="outline" asChild>
+                      <OrgLink href={`/projects/${project.id}/${plan[0].id}?checkin=1`}>
+                        <ClipboardCheck aria-hidden="true" /> Start daily check-in
+                      </OrgLink>
+                    </Button>
+                    <LockPlanButton orgSlug={org.slug} projectId={project.id} relock={Boolean(project.baseline)} />
+                  </>
+                ) : null}
+                <ProjectFormDialog
+                  orgSlug={org.slug}
+                  project={project}
+                  trigger={
+                    <Button variant="outline">
+                      <Pencil aria-hidden="true" /> Edit project
+                    </Button>
+                  }
+                />
+                <SubprojectFormDialog
+                  orgSlug={org.slug}
+                  projectId={project.id}
+                  plan={plan}
+                  dependencies={project.dependencies}
+                  taskLinks={project.taskLinks}
+                  milestoneLinks={project.milestoneLinks}
+                  usedColors={plan.map((s) => s.color)}
+                  trigger={
+                    <Button>
+                      <Plus aria-hidden="true" /> Add subproject
+                    </Button>
+                  }
+                />
+              </>
+            ) : null}
+          </>
         }
       />
 

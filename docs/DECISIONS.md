@@ -252,6 +252,23 @@ Product owner: milestones are useful "if they show in all projects".
 - Deleting a milestone removes its links (not archived: milestones aren't project history);
   adding or removing a task's link is in the project history.
 
+## D-031 · 2026-10-27 · The Gantt extends our own timeline (no library), read-only
+The blueprint asked for "a suitable maintained library". Compared (2026-10-27):
+| Option | Licence / upkeep | Why not |
+| --- | --- | --- |
+| Frappe Gantt 1.2.x | MIT, active | No original-plan bars, no partial red days on a bar, no milestone lines, own CSS, SVG without text for screen readers |
+| SVAR React Gantt 2.x | MIT core + paid PRO, React 19, active | Editor-oriented (grid, editor, dragging); read-only and screen-reader support unverified; heavy for a view; own theme |
+| DHTMLX Gantt | GPL / commercial | Licence unsuitable for a closed product |
+| gantt-task-react | MIT, no commits since ~2023 | Not maintained |
+Product owner chose to **extend our own timeline** (and said: **no dragging**). Dates still come
+from durations and are changed in the cronograma. The Gantt (`/<org>/projects/<id>/gantt`):
+subproject summary rows + task rows in subproject colours, Days / Weeks zoom, finish-to-start
+arrows (subproject links and task links inside the project; red when the successor starts too
+early), today line, milestone flags, original plan (dashed), red overlap / late days. Every row
+states its dates, links and warnings in words; the chart scrolls inside its own region with the
+names pinned. Layout maths in `lib/domain/gantt.ts` (unit-tested). No new dependency.
+Links to tasks in other projects are listed under the chart.
+
 ---
 
 # Open questions (non-blocking)

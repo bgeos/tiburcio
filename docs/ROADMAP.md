@@ -10,7 +10,7 @@ Full acceptance criteria are in `PROJECT_BLUEPRINT.md` § 6.
 | 2 | Database, auth, authorization | ✅ |
 | 3 | Project hierarchy and tasks | ✅ |
 | 4 | Scheduling and dependencies | ✅ |
-| 5 | Materials and inventory | ⬜ |
+| 5 | Materials and inventory | ✖ dropped |
 | 6 | Budgets, analytics, reports | ⬜ |
 | 7 | Customization and templates | ⬜ |
 | 8 | PWA and field operations | ⬜ |
@@ -117,5 +117,13 @@ Known limitations (by design, for now):
 - Milestones belong to the organization, not to one project; a task "must be done before" its day.
 - Times of day aren't tracked; a day is the smallest unit.
 
-## Phases 5–9 ⬜
-See blueprint § 6. They are broken down into backlog items when the preceding phase is complete.
+## Phase 5: Materials and inventory ✖ (dropped 2026-10-27)
+The product owner doesn't want a stock catalogue, locations, movements or reservations. Each
+subproject keeps its simple materials list from Phase 3.
+
+## Between phases
+- [x] ORG-01 (2026-10-27): admins and production managers create organizations, e.g. one per
+  festival, and switch between them (D-033).
+
+## Phases 6–9 ⬜
+See blueprint § 6. They are broken down into backlog items when the next one is chosen.

@@ -285,6 +285,23 @@ testing moves to a hosted staging environment (answers Q3).
   `/auth/confirm`. Until Q4 is answered, staging users are added in the dashboard.
 - Staging holds test data only.
 
+## D-033 · 2026-10-27 · Admins and production managers start new organizations
+Product owner's request: a production manager working on two festivals keeps each one as a
+separate organization (own projects, team, milestones, calendar) and switches between them.
+Amends D-021: accounts stay invitation-only, but an operator no longer has to create every
+organization.
+- Anyone who is an **admin or production manager in at least one organization** can create one
+  ("New organization" in the sidebar's organization menu, or on the profile page). They become
+  its admin and only member; others join by invitation. Members and external collaborators can't.
+- The rule lives in the database: `public.create_my_organization(name, slug)` (SECURITY DEFINER)
+  checks the caller's roles; the table's checks still enforce the name, address format,
+  reserved words and uniqueness (+13 pgTAP). The operator script `org:create` still works.
+- Switching: the sidebar menu (shown whenever someone has several organizations or may create one)
+  and a "Your organizations" list on the profile page. After sign-in people still land in their
+  first organization by name.
+- Not done: deleting or renaming an organization's address from the app; no limit on how many
+  organizations one person creates.
+
 ---
 
 # Open questions (non-blocking)

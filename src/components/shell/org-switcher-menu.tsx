@@ -1,19 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import type { Membership } from "@/lib/dal/organizations";
+import { CAN_CREATE_ORGANIZATION } from "@/lib/domain/organizations";
 import { ORG_ROLE_LABELS } from "@/lib/domain/roles";
 import { DEFAULT_SECTION, orgHref } from "@/lib/navigation";
+import { NewOrganizationDialog } from "./new-organization-dialog";
 
 function OrgBadge({ name }: { name: string }) {
   return (
@@ -30,6 +34,7 @@ export function OrgSwitcherMenu({ memberships }: { memberships: Membership[] }) 
   const { org } = useParams<{ org?: string }>();
   // Outside an organization (e.g. /design), show the first one; links still work.
   const current = memberships.find((m) => m.slug === org) ?? memberships[0];
+  const [creating, setCreating] = useState(false);
 
   if (!current) {
     return (
@@ -59,10 +64,13 @@ export function OrgSwitcherMenu({ memberships }: { memberships: Membership[] }) 
     </>
   );
 
+  // Admins and production managers (in any organization) can start a new one (D-033).
+  const canCreate = memberships.some((m) => (CAN_CREATE_ORGANIZATION as readonly string[]).includes(m.role));
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        {memberships.length === 1 ? (
+        {memberships.length === 1 && !canCreate ? (
           <SidebarMenuButton size="lg" asChild tooltip={current.name}>
             <Link href={orgHref(current.slug, DEFAULT_SECTION)}>{label}</Link>
           </SidebarMenuButton>
@@ -89,9 +97,19 @@ export function OrgSwitcherMenu({ memberships }: { memberships: Membership[] }) 
                   </Link>
                 </DropdownMenuItem>
               ))}
+              {canCreate ? (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => setCreating(true)}>
+                    <Plus aria-hidden="true" />
+                    New organization
+                  </DropdownMenuItem>
+                </>
+              ) : null}
             </DropdownMenuContent>
           </DropdownMenu>
         )}
+        {canCreate ? <NewOrganizationDialog open={creating} onOpenChange={setCreating} /> : null}
       </SidebarMenuItem>
     </SidebarMenu>
   );

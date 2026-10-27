@@ -63,7 +63,8 @@ Broken down when Phase 3 is complete. Known early items:
 - ✅ P4-06 (2026-10-27, D-031): Gantt view per project, extending our own timeline (libraries compared, none fit); read-only, Days / Weeks zoom, arrows, today, milestones, original plan, red days, text for screen readers, phone layout. `lib/domain/gantt.ts` + `components/gantt.tsx`. 3 E2E incl. dark/phone axe.
 - ✅ P4-07 (2026-10-27): Calendar (`/[org]/calendar`, in the sidebar): Month grid and Week list of every current task on the days it runs, plus milestones; previous / today / next; filter by project (kept in the address); phones get the month as a list of the days with something on. Tasks link to their subproject. Not for external collaborators. `lib/domain/calendar.ts` (unit-tested). 3 E2E incl. axe and phone width.
 - ✅ P4-08 (2026-10-27): Phase 4 closed. Acceptance and known limitations in ROADMAP; +3 pgTAP for dependency edge cases (two-task circle, archiving keeps links, deleting a task removes them).
-- P5: materials, locations, ledger, `post_material_movement` / `reserve_material` with concurrency tests, the "12 plywood sheets for DJ task" scenario.
+- ~~P5: materials, locations, ledger, reservations~~: dropped by the product owner (2026-10-27).
+- ✅ ORG-01 (2026-10-27, D-033): admins and production managers create organizations (one per festival) and switch between them. Migration `create_my_organization` (+13 pgTAP), `lib/organizations/actions.ts`, `lib/validation/organizations.ts` (unit-tested; address suggested from the name), "New organization" in the sidebar menu, "Your organizations" on the profile page. 4 E2E incl. a taken address, switching, members can't, axe.
 - P6: budgets/expenses, Recharts dashboard from real queries, drill-down, CSV export via RLS-scoped route.
 
 ### Requirements observed in the team's own spreadsheets (2026-10-26)

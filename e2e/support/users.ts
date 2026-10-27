@@ -184,6 +184,14 @@ export async function deleteE2eMyTasks(prefix: string): Promise<void> {
   );
 }
 
+/** Remove the E2E organization's milestones whose name starts with `prefix`. */
+export async function deleteE2eMilestones(prefix: string): Promise<void> {
+  await admin()(
+    `/rest/v1/milestones?organization_id=eq.${await orgId(E2E_ORG.slug)}&name=like.${encodeURIComponent(`${prefix}*`)}`,
+    { method: "DELETE" },
+  );
+}
+
 /** Remove every project of the E2E organization (subprojects, tasks… cascade). Setup only. */
 export async function resetE2eProjects(): Promise<void> {
   await admin()(`/rest/v1/projects?organization_id=eq.${await orgId(E2E_ORG.slug)}`, { method: "DELETE" });

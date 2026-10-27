@@ -4,8 +4,10 @@ import type { ProjectStatus } from "@/lib/domain/projects";
 import { scheduleSubproject, type DateRange, type IsoDate } from "@/lib/domain/schedule";
 import { isSubprojectColor, type SubprojectColor } from "@/lib/domain/subproject-colors";
 import type { TaskStatus } from "@/lib/domain/tasks";
+import type { MilestoneLink } from "@/lib/domain/milestones";
 import type { LinkedTask, TaskLink } from "@/lib/domain/task-links";
 import { createClient } from "@/lib/supabase/server";
+import { loadMilestoneLinks } from "./milestones";
 import { loadTaskLinks } from "./task-links";
 import type { Membership } from "./organizations";
 
@@ -52,6 +54,8 @@ export type ProjectDetail = {
   dependencies: { id: string; predecessorId: string; successorId: string }[];
   /** Task links touching this project's tasks; the other end may be in another project. */
   taskLinks: TaskLink[];
+  /** "Must be done before" links of this project's tasks (D-030). */
+  milestoneLinks: MilestoneLink[];
   baseline: { lockedAt: string; ranges: Record<string, DateRange> } | null;
 };
 
@@ -173,6 +177,7 @@ export async function getProjectDetail(org: Membership, projectId: string): Prom
       .filter((d) => active.has(d.predecessor_id) && active.has(d.successor_id))
       .map((d) => ({ id: d.id, predecessorId: d.predecessor_id, successorId: d.successor_id })),
     taskLinks: await loadTaskLinks(supabase, org.id, own),
+    milestoneLinks: await loadMilestoneLinks(supabase, own),
     baseline: baseline.data
       ? { lockedAt: baseline.data.locked_at, ranges: baseline.data.snapshot as Record<string, DateRange> }
       : null,

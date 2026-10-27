@@ -89,7 +89,8 @@ plus the pgTAP RLS tests.
 - [x] P4-02 (2026-10-27): "My tasks" (personal to-dos and reminders) replaces the Tasks placeholder; Reports removed from the navigation (D-028).
 - [x] P4-03 (2026-10-27): the project status follows the work (D-029).
 - [x] P4-04 (2026-10-27): overdue and blocked indicators on the cronograma, project page and Overview.
-- [ ] Milestones (organization-wide), Gantt view (no dragging), calendar view, close the phase: see BACKLOG.
+- [x] P4-05 (2026-10-27): organization-wide milestones; tasks must be done before them (D-030).
+- [ ] Gantt view (no dragging), calendar view, close the phase: see BACKLOG.
 
 ## Phases 5–9 ⬜
 See blueprint § 6. They are broken down into backlog items when the preceding phase is complete.

@@ -33,7 +33,12 @@ export type ProjectHealth = {
   overdueCount: number;
   /** Marked Blocked, or due to start while a task it waits for isn't done (P4-04). */
   blockedCount: number;
+  /** Tasks whose planned end reaches a milestone they must be done before (D-030). */
+  lateCount: number;
 };
+
+/** "Task must be done before this day" (a task's link to a milestone). */
+export type Deadline = { taskId: string; date: IsoDate };
 
 export type DashboardSummary = {
   activeProjects: number;
@@ -57,6 +62,7 @@ export function summarizeDashboard(
   projects: DashboardProject[],
   today: IsoDate,
   taskLinks: Dependency[] = [],
+  deadlines: Deadline[] = [],
 ): DashboardSummary {
   const current = projects.filter((p) => p.status !== "finished");
   const tasksByStatus = Object.fromEntries(TASK_STATUSES.map((s) => [s, 0])) as Record<TaskStatus, number>;
@@ -93,6 +99,7 @@ export function summarizeDashboard(
     const tasks = project.subprojects.flatMap((s) => s.tasks);
     let overdueCount = 0;
     let blockedCount = 0;
+    let lateCount = 0;
     for (const sub of project.subprojects) {
       const ranges = new Map(schedules[sub.id].tasks.map((t) => [t.id, t]));
       for (const task of sub.tasks) {
@@ -100,6 +107,7 @@ export function summarizeDashboard(
         const range = ranges.get(task.id);
         if (overdueDays(task.status, range?.end, today) !== null) overdueCount += 1;
         if (task.status === "blocked" || isWaiting(task.status, range?.start, today, waitsFor(task.id))) blockedCount += 1;
+        if (range && deadlines.some((d) => d.taskId === task.id && range.end >= d.date)) lateCount += 1;
       }
     }
     taskCount += tasks.length;
@@ -118,6 +126,7 @@ export function summarizeDashboard(
         ).length,
       overdueCount,
       blockedCount,
+      lateCount,
     };
   });
 

@@ -1,5 +1,5 @@
 import "server-only";
-import type { DashboardProject } from "@/lib/domain/dashboard";
+import type { DashboardProject, Deadline } from "@/lib/domain/dashboard";
 import type { MaterialStatus } from "@/lib/domain/materials";
 import type { ProjectStatus } from "@/lib/domain/projects";
 import type { Dependency } from "@/lib/domain/schedule";
@@ -16,6 +16,18 @@ export async function getTaskLinkIds(org: Membership): Promise<Dependency[]> {
     .eq("organization_id", org.id);
   if (error) throw new Error(`Could not load the overview: ${error.message}`);
   return data.map((d) => ({ predecessorId: d.predecessor_task_id, successorId: d.successor_task_id }));
+}
+
+/** Every task's "must be done before" milestone date (the Overview counts late tasks). */
+export async function getDeadlines(org: Membership): Promise<Deadline[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("task_milestones")
+    .select("task_id, milestones(date)")
+    .eq("organization_id", org.id)
+    .returns<{ task_id: string; milestones: { date: string } | null }[]>();
+  if (error) throw new Error(`Could not load the overview: ${error.message}`);
+  return data.flatMap((d) => (d.milestones ? [{ taskId: d.task_id, date: d.milestones.date }] : []));
 }
 
 /** Current projects (not archived, planning or active) with what the Overview counts, read as the user (RLS). */

@@ -18,6 +18,7 @@ import {
   canViewProjects,
 } from "@/lib/domain/projects";
 import { ArchiveProjectButton, RestoreProjectButton } from "./archive-project-button";
+import { MilestonesSection } from "./milestones-section";
 import { ProjectFormDialog } from "./project-form-dialog";
 
 export const metadata: Metadata = { title: "Projects" };
@@ -125,6 +126,8 @@ async function ProjectsContent({
           ))}
         </ul>
       )}
+
+      {showArchived ? null : <MilestonesSection org={org} />}
     </>
   );
 }

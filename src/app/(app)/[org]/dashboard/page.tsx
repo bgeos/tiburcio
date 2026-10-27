@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { CalendarClock, EyeOff, FolderPlus, Hourglass, ListChecks, TriangleAlert } from "lucide-react";
+import { CalendarClock, EyeOff, Flag, FolderPlus, Hourglass, ListChecks, TriangleAlert } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { OrgLink } from "@/components/org-link";
 import { PageHeader } from "@/components/page-header";
@@ -9,10 +9,12 @@ import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getDashboardProjects, getTaskLinkIds } from "@/lib/dal/dashboard";
+import { getDashboardProjects, getDeadlines, getTaskLinkIds } from "@/lib/dal/dashboard";
+import { listMilestones } from "@/lib/dal/milestones";
 import { requireMembership } from "@/lib/dal/organizations";
 import { todayIn } from "@/lib/dates";
 import { summarizeDashboard, type DashboardSummary, type ProjectHealth } from "@/lib/domain/dashboard";
+import { upcomingMilestones } from "@/lib/domain/milestones";
 import {
   EXTERNAL_NO_PROJECTS,
   PROJECT_STATUS_CATEGORY,
@@ -21,6 +23,7 @@ import {
   canViewProjects,
 } from "@/lib/domain/projects";
 import { TASK_STATUSES, type TaskStatus } from "@/lib/domain/tasks";
+import { formatDate, pluralDays } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Overview" };
 
@@ -48,8 +51,15 @@ async function DashboardContent({ params }: { params: PageProps<"/[org]/dashboar
   if (!canViewProjects(org.role)) {
     return <EmptyState icon={EyeOff} title="Nothing to show yet" description={EXTERNAL_NO_PROJECTS} />;
   }
-  const [projects, taskLinks] = await Promise.all([getDashboardProjects(org), getTaskLinkIds(org)]);
-  const summary = summarizeDashboard(projects, todayIn(org.timezone), taskLinks);
+  const [projects, taskLinks, deadlines, milestones] = await Promise.all([
+    getDashboardProjects(org),
+    getTaskLinkIds(org),
+    getDeadlines(org),
+    listMilestones(org),
+  ]);
+  const today = todayIn(org.timezone);
+  const summary = summarizeDashboard(projects, today, taskLinks, deadlines);
+  const upcoming = upcomingMilestones(milestones, today);
   const noProjects = summary.projects.length === 0;
 
   return (
@@ -135,6 +145,37 @@ async function DashboardContent({ params }: { params: PageProps<"/[org]/dashboar
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">
+            <h2 className="flex items-center gap-2">
+              <Flag aria-hidden="true" className="size-4" /> Upcoming milestones
+            </h2>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {upcoming.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No upcoming milestones. Key dates like “Festival opens” are added on the{" "}
+              <OrgLink href="/projects" className="text-primary underline underline-offset-4">
+                Projects
+              </OrgLink>{" "}
+              page.
+            </p>
+          ) : (
+            <ul aria-label="Upcoming milestones" className="divide-y">
+              {upcoming.map((m) => (
+                <li key={m.id} className="flex items-center gap-3 py-2 first:pt-0 last:pb-0">
+                  <span className="w-16 shrink-0 text-sm font-medium tabular-nums">{formatDate(m.date)}</span>
+                  <span className="min-w-0 flex-1 font-medium">{m.name}</span>
+                  <span className="text-sm text-muted-foreground">{m.daysLeft === 0 ? "Today" : `In ${pluralDays(m.daysLeft)}`}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
     </>
   );
 }
@@ -188,6 +229,12 @@ function ProjectRow({ project }: { project: ProjectHealth }) {
           <span className="flex items-center gap-1 text-warning">
             <CalendarClock aria-hidden="true" className="size-3.5" />
             {project.overdueCount} overdue
+          </span>
+        ) : null}
+        {project.lateCount ? (
+          <span className="flex items-center gap-1 text-destructive">
+            <Flag aria-hidden="true" className="size-3.5" />
+            {project.lateCount} late for a milestone
           </span>
         ) : null}
         {project.blockedCount ? (

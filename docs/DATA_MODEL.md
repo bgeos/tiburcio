@@ -158,6 +158,12 @@ links are deleted (the history keeps who removed what). Links to archived tasks 
 only by `user_id`, while a member of the organization (not even admins). Not linked to
 projects; deleted, not archived.
 
+### `milestones` and `task_milestones` (P4-05, D-030)
+`milestones`: `organization_id`, `name`, `date`. Key dates for every project of the organization.
+`task_milestones`: `task_id`, `milestone_id` (same organization, unique pair): the task must be
+done before the milestone's day. A task ending on or after it is late (red). Deleting a
+milestone deletes its links. Members read; admins and production managers write.
+
 ### `plan_baselines`
 One per project (`project_id` unique): `locked_at`, `locked_by`, `snapshot jsonb`
 (`{ id: { start, end } }` for every subproject and task at lock time). "Lock plan" replaces it.

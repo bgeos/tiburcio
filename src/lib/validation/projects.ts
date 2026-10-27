@@ -65,3 +65,11 @@ export const crewSchema = z.object({
   name: z.string().trim().min(1, "Enter a name.").max(120, "Use at most 120 characters."),
   role: z.string().trim().max(80, "Use at most 80 characters.").default(""),
 });
+
+/** Milestone form (create and edit, D-030). Same limits as the milestones table. */
+export const milestoneSchema = z.object({
+  name: z.string().trim().min(1, "Enter a name.").max(120, "Use at most 120 characters."),
+  date: isoDate,
+});
+
+export type MilestoneInput = z.input<typeof milestoneSchema>;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CircleCheck, Link2, OctagonAlert, X } from "lucide-react";
+import { CircleCheck, Flag, Link2, OctagonAlert, X } from "lucide-react";
 import { toast } from "sonner";
 import { SubprojectDot } from "@/components/subproject-color";
 import { Button } from "@/components/ui/button";
@@ -17,8 +17,10 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { milestoneMissMessage, milestoneMisses, type Milestone, type MilestoneLink } from "@/lib/domain/milestones";
 import { taskOverlapMessage, taskOverlaps, taskPlace, type LinkedTask, type TaskLink } from "@/lib/domain/task-links";
 import { formatDate, formatRange } from "@/lib/format";
+import { addMilestoneLink, removeMilestoneLink } from "@/lib/projects/milestone-actions";
 import { addTaskLink, removeTaskLink } from "@/lib/projects/task-link-actions";
 
 /**
@@ -30,6 +32,8 @@ export function TaskLinksButton({
   task,
   links,
   candidates,
+  milestones,
+  milestoneLinks,
 }: {
   orgSlug: string;
   task: LinkedTask;
@@ -37,9 +41,14 @@ export function TaskLinksButton({
   links: TaskLink[];
   /** Every current task of the organization. */
   candidates: LinkedTask[];
+  /** The organization's milestones (D-030). */
+  milestones: Milestone[];
+  /** This task's "must be done before" links. */
+  milestoneLinks: MilestoneLink[];
 }) {
   const [open, setOpen] = useState(false);
   const [choice, setChoice] = useState("");
+  const [milestoneChoice, setMilestoneChoice] = useState("");
   const [pending, startTransition] = useTransition();
 
   const waitsFor = links.filter((l) => l.successor.id === task.id);
@@ -51,6 +60,10 @@ export function TaskLinksButton({
   const chosen = options.find((c) => c.id === choice);
   const previewLink: TaskLink | null = chosen ? { id: "preview", predecessor: chosen, successor: task } : null;
   const previewOverlap = previewLink ? taskOverlaps([previewLink])[0] : undefined;
+  const linkedMilestones = new Set(milestoneLinks.map((l) => l.milestone.id));
+  const milestoneOptions = milestones.filter((m) => !linkedMilestones.has(m.id));
+  const chosenMilestone = milestoneOptions.find((m) => m.id === milestoneChoice);
+  const milestonePreview = chosenMilestone ? milestoneMisses([{ id: "preview", milestone: chosenMilestone, task }])[0] : undefined;
 
   function run(action: () => Promise<{ ok: true } | { ok: false; message: string }>, done: string) {
     startTransition(async () => {
@@ -58,6 +71,7 @@ export function TaskLinksButton({
       if (result.ok) {
         toast.success(done);
         setChoice("");
+        setMilestoneChoice("");
       } else toast.error(result.message);
     });
   }
@@ -67,6 +81,7 @@ export function TaskLinksButton({
       open={open}
       onOpenChange={(next) => {
         setChoice("");
+        setMilestoneChoice("");
         setOpen(next);
       }}
     >
@@ -74,7 +89,9 @@ export function TaskLinksButton({
         <Button size="sm" variant="outline">
           <Link2 aria-hidden="true" /> Links<span className="sr-only"> for {task.name}</span>
           {/* The row lists the links as text; the count is a visual summary. */}
-          {waitsFor.length + neededBy.length ? <span aria-hidden="true">({waitsFor.length + neededBy.length})</span> : null}
+          {waitsFor.length + neededBy.length + milestoneLinks.length ? (
+            <span aria-hidden="true">({waitsFor.length + neededBy.length + milestoneLinks.length})</span>
+          ) : null}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
@@ -157,6 +174,89 @@ export function TaskLinksButton({
           onRemove={(l) => run(() => removeTaskLink(orgSlug, task.projectId, l.id), "Link removed")}
           pending={pending}
         />
+
+        <section className="space-y-2">
+          <h3 className="text-sm font-semibold">Must be done before</h3>
+          {milestoneLinks.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No milestone.</p>
+          ) : (
+            <ul aria-label="Must be done before" className="divide-y rounded-lg border">
+              {milestoneLinks.map((link) => {
+                const miss = milestoneMisses([link])[0];
+                return (
+                  <li key={link.id} className="flex items-start gap-2 px-3 py-2 text-sm">
+                    <Flag aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
+                    <span className="min-w-0 flex-1">
+                      <span className="font-medium">{link.milestone.name}</span>
+                      <span className="block text-xs text-muted-foreground">{formatDate(link.milestone.date)}</span>
+                      {miss ? (
+                        <span className="mt-1 flex gap-1.5 text-destructive">
+                          <OctagonAlert aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
+                          {milestoneMissMessage(miss, task.projectId)}
+                        </span>
+                      ) : null}
+                    </span>
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      disabled={pending}
+                      aria-label={`Remove milestone: ${task.name} must be done before ${link.milestone.name}`}
+                      onClick={() => run(() => removeMilestoneLink(orgSlug, task.projectId, link.id), "Milestone removed")}
+                    >
+                      <X aria-hidden="true" />
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {milestones.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Add milestones on the Projects page to link tasks to them.</p>
+          ) : milestoneOptions.length ? (
+            <div className="space-y-2 rounded-lg border p-3">
+              <Label htmlFor={`milestone-for-${task.id}`}>Add: {task.name} must be done before…</Label>
+              <Select value={milestoneChoice} onValueChange={setMilestoneChoice}>
+                <SelectTrigger id={`milestone-for-${task.id}`} className="w-full">
+                  <SelectValue placeholder="Choose a milestone" />
+                </SelectTrigger>
+                <SelectContent>
+                  {milestoneOptions.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.name}
+                      <span className="text-muted-foreground"> · {formatDate(m.date)}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {chosenMilestone ? (
+                <section aria-label="Milestone preview" aria-live="polite">
+                  {milestonePreview ? (
+                    <p className="flex gap-2 rounded-md bg-destructive/10 p-2 text-sm text-destructive">
+                      <OctagonAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+                      <span>
+                        <span className="font-medium">Late: </span>
+                        {milestoneMissMessage(milestonePreview, task.projectId)} It won&apos;t be moved automatically.
+                      </span>
+                    </p>
+                  ) : (
+                    <p className="flex gap-2 text-sm text-status-done">
+                      <CircleCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+                      In time: {task.name} finishes {formatDate(task.range?.end ?? null)}, before {chosenMilestone.name} (
+                      {formatDate(chosenMilestone.date)}).
+                    </p>
+                  )}
+                </section>
+              ) : null}
+              <Button
+                type="button"
+                disabled={!chosenMilestone || pending}
+                onClick={() => run(() => addMilestoneLink(orgSlug, task.projectId, task.id, milestoneChoice), "Milestone added")}
+              >
+                {pending ? "Saving…" : "Add milestone"}
+              </Button>
+            </div>
+          ) : null}
+        </section>
 
         <DialogFooter>
           <DialogClose asChild>

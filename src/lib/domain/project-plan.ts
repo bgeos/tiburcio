@@ -14,6 +14,7 @@ import {
   type Overlap,
   type SubprojectSchedule,
 } from "./schedule";
+import { milestoneMissMessage, milestoneMisses, type MilestoneLink } from "./milestones";
 import { taskOverlapMessage, taskOverlaps, taskPlace, type TaskLink } from "./task-links";
 
 export type PlanTask = { id: string; name: string; durationDays: number; delayDays: number };
@@ -79,6 +80,7 @@ export type PlanChange = {
 /**
  * What replacing the plan `before` with `after` changes. Nothing else ever moves.
  * `taskLinks` touching this project are checked too; tasks of other projects keep their dates.
+ * `milestoneLinks` of this project's tasks report tasks that run into their milestone (D-030).
  */
 export function describePlanChange(
   before: PlanSubproject[],
@@ -86,6 +88,7 @@ export function describePlanChange(
   dependencies: Dependency[],
   taskLinks: TaskLink[] = [],
   projectId?: string,
+  milestoneLinks: MilestoneLink[] = [],
 ): PlanChange {
   const names = new Map<string, string>();
   for (const s of [...before, ...after]) {
@@ -116,6 +119,10 @@ export function describePlanChange(
     new Map(taskOverlaps(taskLinks.filter(inPlan(ranges)), ranges).map((o) => [o.link.id, o]));
   const oldTask = taskOverlapsIn(rangesBefore);
   const nowTask = taskOverlapsIn(rangesAfter);
+  const missesIn = (ranges: Record<string, DateRange>) =>
+    new Map(milestoneMisses(milestoneLinks.filter((l) => l.task.id in ranges), ranges).map((m) => [m.link.id, m]));
+  const oldMiss = missesIn(rangesBefore);
+  const nowMiss = missesIn(rangesAfter);
 
   return {
     lines,
@@ -124,6 +131,9 @@ export function describePlanChange(
       ...[...nowTask.entries()]
         .filter(([k, o]) => oldTask.get(k)?.days !== o.days)
         .map(([, o]) => taskOverlapMessage(o, projectId, rangesAfter)),
+      ...[...nowMiss.entries()]
+        .filter(([k, m]) => oldMiss.get(k)?.days !== m.days)
+        .map(([, m]) => milestoneMissMessage(m, projectId, rangesAfter)),
     ],
     resolvedOverlaps: [
       ...[...old.entries()]
@@ -132,6 +142,9 @@ export function describePlanChange(
       ...[...oldTask.entries()]
         .filter(([k]) => !nowTask.has(k))
         .map(([, o]) => `${taskPlace(o.link.successor, projectId)} no longer overlaps ${taskPlace(o.link.predecessor, projectId)}.`),
+      ...[...oldMiss.entries()]
+        .filter(([k]) => !nowMiss.has(k))
+        .map(([, m]) => `${taskPlace(m.link.task, projectId)} is done before ${m.link.milestone.name} again.`),
     ],
   };
 }

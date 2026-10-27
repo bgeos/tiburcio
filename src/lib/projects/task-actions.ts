@@ -34,7 +34,7 @@ async function load(orgSlug: string, projectId: string, subprojectId: string): P
 
 /** History lines for a schedule change: which dates moved and which overlaps appeared. */
 function scheduleDetails(ctx: Context, after: PlanSubproject[]): string[] {
-  const change = describePlanChange(ctx.plan, after, ctx.project.dependencies, ctx.project.taskLinks, ctx.project.id);
+  const change = describePlanChange(ctx.plan, after, ctx.project.dependencies, ctx.project.taskLinks, ctx.project.id, ctx.project.milestoneLinks);
   return [...change.lines, ...change.newOverlaps.map((o) => `Overlap: ${o}`)];
 }
 

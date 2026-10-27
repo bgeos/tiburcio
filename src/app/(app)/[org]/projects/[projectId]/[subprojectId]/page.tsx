@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { ArrowLeft, ArrowRight, CalendarClock, ClipboardCheck, Hourglass, Link2, ListChecks, OctagonAlert, Pencil, TriangleAlert } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarClock, ClipboardCheck, Flag, Hourglass, Link2, ListChecks, OctagonAlert, Pencil, TriangleAlert } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { HistoryList } from "@/components/history-list";
 import { OrgLink } from "@/components/org-link";
@@ -16,9 +16,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { todayIn } from "@/lib/dates";
 import { listActivity } from "@/lib/dal/activity";
+import { listMilestones } from "@/lib/dal/milestones";
 import { requireMembership } from "@/lib/dal/organizations";
 import { getProjectDetail, type ProjectDetail, type SubprojectView } from "@/lib/dal/project-detail";
 import { listLinkableTasks } from "@/lib/dal/task-links";
+import {
+  milestoneMissMessage,
+  milestoneMissWindows,
+  milestoneMisses,
+  milestonesOnTimeline,
+  type Milestone,
+  type MilestoneLink,
+  type MilestoneMiss,
+} from "@/lib/domain/milestones";
 import { itemProgress, rollupProgress } from "@/lib/domain/progress";
 import { overlapMessage, overlapsFor, schedulesFor } from "@/lib/domain/project-plan";
 import { canEditProjects } from "@/lib/domain/projects";
@@ -77,6 +87,9 @@ async function SubprojectContent({ params, searchParams }: { params: Props["para
   const overlaps = overlapsFor(plan, project.dependencies).filter((o) => o.predecessorId === sub.id || o.successorId === sub.id);
   const taskLinks = linksTouching(project.taskLinks, sub.tasks.map((t) => t.id));
   const linkOverlaps = taskOverlaps(taskLinks);
+  const milestones = await listMilestones(org);
+  const milestoneLinks = project.milestoneLinks.filter((l) => l.task.subprojectId === sub.id);
+  const misses = milestoneMisses(milestoneLinks);
   // The choices for "waits for…" (editors only): every current task of the organization.
   const candidates = canEdit ? await listLinkableTasks(org) : [];
   const after = project.dependencies.filter((d) => d.successorId === sub.id).map((d) => name(d.predecessorId));
@@ -88,6 +101,7 @@ async function SubprojectContent({ params, searchParams }: { params: Props["para
     plan,
     dependencies: project.dependencies,
     taskLinks: project.taskLinks,
+    milestoneLinks: project.milestoneLinks,
   };
 
   return (
@@ -118,6 +132,7 @@ async function SubprojectContent({ params, searchParams }: { params: Props["para
                 plan={plan}
                 dependencies={project.dependencies}
                 taskLinks={project.taskLinks}
+                milestoneLinks={project.milestoneLinks}
                 usedColors={plan.map((s) => s.color)}
                 subproject={{ id: sub.id, name: sub.name, startDate: sub.startDate, color: sub.color }}
                 trigger={
@@ -132,7 +147,7 @@ async function SubprojectContent({ params, searchParams }: { params: Props["para
         }
       />
 
-      {overlaps.length || linkOverlaps.length ? (
+      {overlaps.length || linkOverlaps.length || misses.length ? (
         <section aria-label="Warnings" className="space-y-2">
           {overlaps.map((o) => (
             <p
@@ -158,6 +173,9 @@ async function SubprojectContent({ params, searchParams }: { params: Props["para
               </span>
             </p>
           ))}
+          {misses.map((m) => (
+            <MissWarning key={m.link.id} miss={m} projectId={project.id} />
+          ))}
         </section>
       ) : null}
 
@@ -177,6 +195,8 @@ async function SubprojectContent({ params, searchParams }: { params: Props["para
             today={todayIn(org.timezone)}
             links={taskLinks}
             candidates={candidates}
+            milestones={milestones}
+            milestoneLinks={milestoneLinks}
           />
         </TabsContent>
         <TabsContent value="materials">
@@ -254,6 +274,8 @@ function Cronograma({
   today,
   links,
   candidates,
+  milestones,
+  milestoneLinks,
 }: {
   project: ProjectDetail;
   sub: SubprojectView;
@@ -263,10 +285,14 @@ function Cronograma({
   /** Task links touching this subproject's tasks. */
   links: TaskLink[];
   candidates: LinkedTask[];
+  /** The organization's milestones, and this subproject's tasks' links to them (D-030). */
+  milestones: Milestone[];
+  milestoneLinks: MilestoneLink[];
 }) {
   const schedule = schedulesFor([sub])[sub.id];
   const baseline = project.baseline?.ranges ?? {};
   const overlaps = taskOverlaps(links);
+  const misses = milestoneMisses(milestoneLinks);
   const flags = sub.tasks.map((task, i) => flagTask({ id: task.id, status: task.status, range: schedule.tasks[i] }, links, today));
   const overdue = flags.filter((f) => f.overdueDays !== null).length;
   const blocked = flags.filter(isBlocked).length;
@@ -349,6 +375,7 @@ function Cronograma({
                         ) : null}
                         <TaskFlagNotes flags={flags[i]} projectId={project.id} />
                         <TaskLinkNotes taskId={task.id} links={links} overlaps={overlaps} projectId={project.id} />
+                        <MilestoneNotes links={milestoneLinks.filter((l) => l.task.id === task.id)} misses={misses} />
                       </TableCell>
                       <TableCell className="whitespace-nowrap tabular-nums">{formatRange(planned)}</TableCell>
                       <TableCell className="text-right tabular-nums">{task.durationDays}</TableCell>
@@ -393,6 +420,8 @@ function Cronograma({
                               task={asLinked(i)}
                               links={links.filter((l) => l.predecessor.id === task.id || l.successor.id === task.id)}
                               candidates={candidates}
+                              milestones={milestones}
+                              milestoneLinks={milestoneLinks.filter((l) => l.task.id === task.id)}
                             />
                             <RemoveTaskButton scope={scope} task={task} />
                           </div>
@@ -416,13 +445,16 @@ function Cronograma({
               baseline: baseline[task.id] ?? null,
               done: task.status === "done",
               warning:
-                overlaps
-                  .filter((o) => o.link.predecessor.id === task.id || o.link.successor.id === task.id)
-                  .map((o) => taskOverlapMessage(o, project.id))
-                  .join(" ") || null,
-              overlaps: taskOverlapWindows(overlaps, task.id),
+                [
+                  ...overlaps
+                    .filter((o) => o.link.predecessor.id === task.id || o.link.successor.id === task.id)
+                    .map((o) => taskOverlapMessage(o, project.id)),
+                  ...misses.filter((m) => m.link.task.id === task.id).map((m) => milestoneMissMessage(m, project.id)),
+                ].join(" ") || null,
+              overlaps: [...taskOverlapWindows(overlaps, task.id), ...milestoneMissWindows(misses, task.id)],
             }))}
-            showOverlapKey={overlaps.length > 0}
+            showOverlapKey={overlaps.length > 0 || misses.length > 0}
+            milestones={milestonesOnTimeline(milestones, schedule.end ? { start: schedule.start, end: schedule.end } : null, milestoneLinks)}
           />
         </>
       )}
@@ -450,6 +482,40 @@ function TaskFlagNotes({ flags, projectId }: { flags: TaskFlags; projectId: stri
         </li>
       ))}
     </ul>
+  );
+}
+
+/** "Must be done before Festival opens (20 Jan)"; red with the days late when it runs into it (D-030). */
+function MilestoneNotes({ links, misses }: { links: MilestoneLink[]; misses: MilestoneMiss[] }) {
+  if (links.length === 0) return null;
+  return (
+    <ul className="mt-0.5 space-y-0.5 text-xs">
+      {links.map((link) => {
+        const miss = misses.find((m) => m.link.id === link.id);
+        return (
+          <li
+            key={link.id}
+            className={miss ? "flex items-center gap-1 font-medium text-destructive" : "flex items-center gap-1 text-muted-foreground"}
+          >
+            {miss ? <OctagonAlert aria-hidden="true" className="size-3 shrink-0" /> : <Flag aria-hidden="true" className="size-3 shrink-0" />}
+            Must be done before {link.milestone.name} ({formatDate(link.milestone.date)})
+            {miss ? ` (${pluralDays(miss.days)} late)` : ""}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function MissWarning({ miss, projectId }: { miss: MilestoneMiss; projectId: string }) {
+  return (
+    <p className="flex gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+      <OctagonAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+      <span>
+        <span className="font-semibold">Late for a milestone: </span>
+        {milestoneMissMessage(miss, projectId)} Shorten the work, or move the milestone.
+      </span>
+    </p>
   );
 }
 

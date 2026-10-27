@@ -20,6 +20,7 @@ import {
 import { FieldGroup } from "@/components/ui/field";
 import { describePlanChange, type PlanSubproject } from "@/lib/domain/project-plan";
 import type { Dependency } from "@/lib/domain/schedule";
+import type { MilestoneLink } from "@/lib/domain/milestones";
 import type { TaskLink } from "@/lib/domain/task-links";
 import {
   SUBPROJECT_COLORS,
@@ -38,6 +39,8 @@ type Props = {
   dependencies: Dependency[];
   /** Task links touching this project, for overlap previews. */
   taskLinks: TaskLink[];
+  /** "Must be done before" links of this project's tasks, for previews (D-030). */
+  milestoneLinks?: MilestoneLink[];
   /** Colours already used in the project: a new subproject gets the least-used one. */
   usedColors: SubprojectColor[];
   /** Omit to create a subproject. */
@@ -79,7 +82,7 @@ export function SubprojectFormDialog(props: Props) {
   );
 }
 
-function SubprojectForm({ orgSlug, projectId, plan, dependencies, taskLinks, usedColors, subproject, onSaved }: Props & { onSaved: () => void }) {
+function SubprojectForm({ orgSlug, projectId, plan, dependencies, taskLinks, milestoneLinks = [], usedColors, subproject, onSaved }: Props & { onSaved: () => void }) {
   const action = subproject
     ? updateSubproject.bind(null, orgSlug, projectId, subproject.id)
     : createSubproject.bind(null, orgSlug, projectId);
@@ -107,6 +110,7 @@ function SubprojectForm({ orgSlug, projectId, plan, dependencies, taskLinks, use
           dependencies,
           taskLinks,
           projectId,
+          milestoneLinks,
         )
       : null;
 

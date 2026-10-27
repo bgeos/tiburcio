@@ -239,6 +239,19 @@ People can still set any status in "Edit project"; the rule runs again on the ne
 Rule: `statusFromTasks` (`lib/domain/projects.ts`, unit-tested); applied by
 `followTaskStatuses` (`lib/projects/guards.ts`).
 
+## D-030 · 2026-10-27 · Milestones belong to the organization
+Product owner: milestones are useful "if they show in all projects".
+- A milestone is a name and a date of the **organization** (e.g. "Festival opens"). Editors manage
+  them on the Projects page; members see them; external collaborators don't (D-025).
+- Every project page lists all milestones under its timeline. Timelines draw a flag line for the
+  milestones inside their dates or linked to their tasks (others would squeeze the scale).
+  The Overview lists the next five.
+- A task can be linked to milestones ("must be done before"). The milestone's day itself is
+  already late: a task ending on or after it shows the late days in red (like overlaps), with
+  the warning, the row note and the plan preview before saving. Nothing moves by itself.
+- Deleting a milestone removes its links (not archived: milestones aren't project history);
+  adding or removing a task's link is in the project history.
+
 ---
 
 # Open questions (non-blocking)

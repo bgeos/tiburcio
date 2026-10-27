@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { ArrowLeft, Archive, CalendarClock, CalendarRange, ClipboardCheck, Hourglass, OctagonAlert, Pencil, Plus } from "lucide-react";
+import { ArrowLeft, Archive, CalendarClock, CalendarRange, ClipboardCheck, Flag, Hourglass, OctagonAlert, Pencil, Plus } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { HistoryList } from "@/components/history-list";
 import { OrgLink } from "@/components/org-link";
@@ -14,8 +14,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listActivity } from "@/lib/dal/activity";
+import { listMilestones } from "@/lib/dal/milestones";
 import { requireMembership } from "@/lib/dal/organizations";
 import { getProjectDetail, type ProjectDetail, type SubprojectView } from "@/lib/dal/project-detail";
+import {
+  milestoneMissMessage,
+  milestoneMissWindows,
+  milestoneMisses,
+  milestonesOnTimeline,
+  type MilestoneMiss,
+} from "@/lib/domain/milestones";
 import { rollupProgress } from "@/lib/domain/progress";
 import { overlapMessage, overlapWindows, overlapsFor, schedulesFor } from "@/lib/domain/project-plan";
 import { PROJECT_STATUS_CATEGORY, PROJECT_STATUS_LABELS, canEditProjects } from "@/lib/domain/projects";
@@ -63,6 +71,8 @@ async function ProjectContent({ params }: { params: Params }) {
   const overlaps = overlapsFor(plan, project.dependencies);
   // Task links all touch this project (the other end may be in another project).
   const linkOverlaps = taskOverlaps(project.taskLinks);
+  const milestones = await listMilestones(org);
+  const misses = milestoneMisses(project.milestoneLinks);
   const allTasks = plan.flatMap((s) => s.tasks);
   const doneTasks = allTasks.filter((t) => t.status === "done").length;
   const baseline = project.baseline?.ranges ?? {};
@@ -80,6 +90,10 @@ async function ProjectContent({ params }: { params: Params }) {
       today,
     );
   const attention = flagged(plan);
+  const ends = plan.flatMap((s) => (schedules[s.id].end ? [{ start: schedules[s.id].start, end: schedules[s.id].end! }] : []));
+  const projectRange = ends.length
+    ? { start: ends.map((r) => r.start).sort()[0], end: ends.map((r) => r.end).sort().at(-1)! }
+    : null;
 
   return (
     <>
@@ -122,6 +136,7 @@ async function ProjectContent({ params }: { params: Params }) {
                 plan={plan}
                 dependencies={project.dependencies}
                 taskLinks={project.taskLinks}
+                milestoneLinks={project.milestoneLinks}
                 usedColors={plan.map((s) => s.color)}
                 trigger={
                   <Button>
@@ -186,10 +201,16 @@ async function ProjectContent({ params }: { params: Params }) {
                   {linkOverlaps.length} {linkOverlaps.length === 1 ? "overlap" : "overlaps"} between linked tasks
                 </p>
               ) : null}
+              {misses.length ? (
+                <p className="flex items-center gap-1.5 text-sm font-medium text-destructive">
+                  <OctagonAlert aria-hidden="true" className="size-4 shrink-0" />
+                  {misses.length} {misses.length === 1 ? "task is" : "tasks are"} late for a milestone
+                </p>
+              ) : null}
             </div>
           </section>
 
-          <OverlapWarnings plan={plan} overlaps={overlaps} linkOverlaps={linkOverlaps} projectId={project.id} />
+          <OverlapWarnings plan={plan} overlaps={overlaps} linkOverlaps={linkOverlaps} misses={misses} projectId={project.id} />
 
           <section aria-labelledby="timeline-heading" className="space-y-3 rounded-xl border bg-card p-4">
             <h2 id="timeline-heading" className="text-lg font-semibold">
@@ -211,9 +232,11 @@ async function ProjectContent({ params }: { params: Params }) {
                   // Overlapping linked tasks also turn their days red on their subproject's bar.
                   const ownTaskIds = sub.tasks.map((t) => t.id);
                   const mineLinked = linkOverlaps.filter(({ link }) => ownTaskIds.includes(link.predecessor.id) || ownTaskIds.includes(link.successor.id));
+                  const mineLate = misses.filter((m) => ownTaskIds.includes(m.link.task.id));
                   const warnings = [
                     ...mine.map((o) => overlapMessage(plan, o)),
                     ...mineLinked.map((o) => taskOverlapMessage(o, project.id)),
+                    ...mineLate.map((m) => milestoneMissMessage(m, project.id)),
                   ];
                   return {
                     id: sub.id,
@@ -227,12 +250,15 @@ async function ProjectContent({ params }: { params: Params }) {
                     overlaps: [
                       ...overlapWindows(plan, overlaps, sub.id),
                       ...ownTaskIds.flatMap((id) => taskOverlapWindows(mineLinked, id)),
+                      ...ownTaskIds.flatMap((id) => milestoneMissWindows(mineLate, id)),
                     ],
                     done: sub.tasks.length > 0 && sub.tasks.every((t) => t.status === "done"),
                   };
                 })}
+                milestones={milestonesOnTimeline(milestones, projectRange, project.milestoneLinks)}
               />
             )}
+            <MilestoneList milestones={milestones} today={today} />
           </section>
 
           <section aria-labelledby="subprojects-heading" className="space-y-3">
@@ -247,6 +273,7 @@ async function ProjectContent({ params }: { params: Params }) {
                     project={project}
                     overlaps={overlaps}
                     linkOverlaps={linkOverlaps}
+                    misses={misses}
                     orgSlug={org.slug}
                     canEdit={canEdit}
                     attention={flagged([sub])}
@@ -286,14 +313,16 @@ function OverlapWarnings({
   plan,
   overlaps,
   linkOverlaps,
+  misses,
   projectId,
 }: {
   plan: SubprojectView[];
   overlaps: Overlap[];
   linkOverlaps: TaskOverlap[];
+  misses: MilestoneMiss[];
   projectId: string;
 }) {
-  if (overlaps.length === 0 && linkOverlaps.length === 0) return null;
+  if (overlaps.length === 0 && linkOverlaps.length === 0 && misses.length === 0) return null;
   return (
     <section aria-label="Warnings" className="space-y-2">
       {overlaps.map((o) => (
@@ -320,6 +349,15 @@ function OverlapWarnings({
           </span>
         </p>
       ))}
+      {misses.map((m) => (
+        <p key={m.link.id} className="flex gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+          <OctagonAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+          <span>
+            <span className="font-semibold">Late for a milestone: </span>
+            {milestoneMissMessage(m, projectId)} Shorten the work, or move the milestone.
+          </span>
+        </p>
+      ))}
     </section>
   );
 }
@@ -329,6 +367,7 @@ function SubprojectCard({
   project,
   overlaps,
   linkOverlaps,
+  misses,
   orgSlug,
   canEdit,
   attention,
@@ -338,6 +377,7 @@ function SubprojectCard({
   project: ProjectDetail;
   overlaps: Overlap[];
   linkOverlaps: TaskOverlap[];
+  misses: MilestoneMiss[];
   orgSlug: string;
   canEdit: boolean;
   attention: { overdue: number; blocked: number };
@@ -355,6 +395,9 @@ function SubprojectCard({
         ? [`Runs ${pluralDays(o.days)} into ${name(o.successorId)}`]
         : [],
   );
+  for (const { link, days } of misses) {
+    if (link.task.subprojectId === sub.id) notes.push(`${link.task.name} is ${pluralDays(days)} late for ${link.milestone.name}`);
+  }
   for (const { link, days } of linkOverlaps) {
     if (link.successor.subprojectId === sub.id) {
       notes.push(`${link.successor.name} overlaps ${taskPlace(link.predecessor, project.id)} by ${pluralDays(days)}`);
@@ -435,6 +478,7 @@ function SubprojectCard({
             plan={project.subprojects}
             dependencies={project.dependencies}
             taskLinks={project.taskLinks}
+            milestoneLinks={project.milestoneLinks}
             usedColors={project.subprojects.map((s) => s.color)}
             subproject={{ id: sub.id, name: sub.name, startDate: sub.startDate, color: sub.color }}
             trigger={
@@ -478,5 +522,27 @@ function AttentionLine({ overdue, blocked }: { overdue: number; blocked: number 
         </span>
       ) : null}
     </p>
+  );
+}
+
+/** Every milestone of the organization, in words: they apply to all projects (D-030). */
+function MilestoneList({ milestones, today }: { milestones: { id: string; name: string; date: string }[]; today: string }) {
+  if (milestones.length === 0) return null;
+  return (
+    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm">
+      <span className="inline-flex items-center gap-1.5 font-medium">
+        <Flag aria-hidden="true" className="size-3.5" /> Milestones:
+      </span>
+      <ul aria-label="Milestones" className="contents">
+        {milestones.map((m, i) => (
+          <li key={m.id} className={m.date < today ? "text-muted-foreground" : undefined}>
+            {m.name} ({formatDate(m.date)}){i < milestones.length - 1 ? " ·" : ""}
+          </li>
+        ))}
+      </ul>
+      <OrgLink href="/projects" className="text-primary underline underline-offset-4">
+        Manage<span className="sr-only"> milestones</span>
+      </OrgLink>
+    </div>
   );
 }

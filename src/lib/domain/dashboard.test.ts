@@ -38,7 +38,7 @@ describe("summarizeDashboard", () => {
     expect(summary.materialsNotOnSite).toBe(2);
     expect(summary.materialsToRequest).toBe(1);
     expect(summary.projects).toEqual([
-      { id: "p1", name: "Main Stage", status: "active", progress: 37.5, taskCount: 4, overlapCount: 1, overdueCount: 0, blockedCount: 1 },
+      { id: "p1", name: "Main Stage", status: "active", progress: 37.5, taskCount: 4, overlapCount: 1, overdueCount: 0, blockedCount: 1, lateCount: 0 },
     ]);
   });
 
@@ -56,6 +56,13 @@ describe("summarizeDashboard", () => {
     const linked = (today: string) => summarizeDashboard([stage], today, [{ predecessorId: "t4", successorId: "t3" }]).blockedTasks;
     expect(linked("2027-01-10")).toBe(1); // t3 starts tomorrow: that's just the plan
     expect(linked("2027-01-11")).toBe(2); // t3 is due to start and still waits
+  });
+
+  it("counts tasks that reach a milestone they must be done before", () => {
+    // t3 ends 13 Jan: late for a milestone on the 13th, in time for one on the 14th.
+    const late = (date: string) => summarizeDashboard([stage], "2027-01-01", [], [{ taskId: "t3", date }]).projects[0].lateCount;
+    expect(late("2027-01-13")).toBe(1);
+    expect(late("2027-01-14")).toBe(0);
   });
 
   it("marks unfinished tasks whose planned last day has passed as overdue", () => {

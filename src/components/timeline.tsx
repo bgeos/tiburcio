@@ -1,3 +1,5 @@
+import { Flag } from "lucide-react";
+import type { Milestone } from "@/lib/domain/milestones";
 import { addDays, daysBetween, type DateRange, type IsoDate } from "@/lib/domain/schedule";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -28,8 +30,8 @@ export type TimelineRow = {
  * The days to draw: the plan's own dates. Today stretches the scale only when it falls
  * inside the plan; a plan months away would otherwise be squeezed against one edge.
  */
-function span(rows: TimelineRow[], today: IsoDate) {
-  const dates: IsoDate[] = [];
+function span(rows: TimelineRow[], today: IsoDate, milestones: Milestone[]) {
+  const dates: IsoDate[] = milestones.map((m) => m.date);
   for (const row of rows) {
     for (const r of [row.range, row.baseline]) if (r) dates.push(r.start, r.end);
   }
@@ -50,6 +52,7 @@ export function Timeline({
   label,
   showOverlapKey = false,
   color,
+  milestones = [],
 }: {
   rows: TimelineRow[];
   today: IsoDate;
@@ -58,10 +61,12 @@ export function Timeline({
   showOverlapKey?: boolean;
   /** One colour for every bar (a subproject's tasks take their subproject's colour). */
   color?: SubprojectColor;
+  /** Drawn as a flag line on their day; the scale stretches to include them (D-030). */
+  milestones?: Milestone[];
 }) {
   const barColor = (row: TimelineRow) => row.color ?? color;
   const legendColor = rows.map(barColor).find(Boolean);
-  const { first, last, todayInside, todayBefore } = span(rows, today);
+  const { first, last, todayInside, todayBefore } = span(rows, today, milestones);
   const total = daysBetween(first, last) + 1;
   const pos = (date: IsoDate) => (daysBetween(first, date) / total) * 100;
   const width = (r: DateRange) => ((daysBetween(r.start, r.end) + 1) / total) * 100;
@@ -88,6 +93,28 @@ export function Timeline({
               ))}
             </div>
           </div>
+          {milestones.length ? (
+            <div className="flex text-xs font-medium text-foreground" aria-hidden="true">
+              <div className="w-40 shrink-0" />
+              <div className="relative h-5 flex-1">
+                {milestones.map((m) => (
+                  <span
+                    key={m.id}
+                    // Labels near the right end grow leftwards, so they stay on screen.
+                    className={cn(
+                      "absolute top-0 inline-flex items-center gap-0.5 whitespace-nowrap",
+                      pos(m.date) > 60 && "-translate-x-full flex-row-reverse",
+                    )}
+                    style={{ left: `${pos(m.date)}%` }}
+                    title={`${m.name} · ${formatDate(m.date)}`}
+                  >
+                    <Flag className="size-3" />
+                    <span className="max-w-28 truncate">{m.name}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
           <ul aria-label={label} className="divide-y">
             {rows.map((row) => (
               <li key={row.id} className="flex items-center py-2">
@@ -121,6 +148,13 @@ export function Timeline({
                   </span>
                 </div>
                 <div className="relative h-8 flex-1" aria-hidden="true">
+                  {milestones.map((m) => (
+                    <div
+                      key={m.id}
+                      className="absolute inset-y-0 border-l-2 border-dotted border-foreground/50"
+                      style={{ left: `${pos(m.date)}%` }}
+                    />
+                  ))}
                   {todayInside ? (
                     <div
                       className="absolute inset-y-0 w-px bg-destructive/60"
@@ -165,6 +199,11 @@ export function Timeline({
         <span className="inline-flex items-center gap-1.5">
           <span className="h-1.5 w-5 rounded-sm border border-dashed border-muted-foreground" /> Original plan
         </span>
+        {milestones.length ? (
+          <span className="inline-flex items-center gap-1.5">
+            <Flag className="size-3" /> Milestone (work must be done before its day)
+          </span>
+        ) : null}
         {showOverlapKey ? (
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2.5 w-5 rounded-sm bg-destructive" /> Overlapping days

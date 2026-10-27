@@ -81,11 +81,11 @@ async function ensureMember(orgSlug: string, userId: string, role: string): Prom
 }
 
 /** Create a project in the E2E organization directly (for tests about other screens). */
-export async function createE2eProject(name: string): Promise<string> {
+export async function createE2eProject(name: string, status: "planning" | "active" | "finished" = "active"): Promise<string> {
   const [row] = await admin()<{ id: string }[]>("/rest/v1/projects", {
     method: "POST",
     headers: { prefer: "return=representation" },
-    body: JSON.stringify({ organization_id: await orgId(E2E_ORG.slug), name, status: "active" }),
+    body: JSON.stringify({ organization_id: await orgId(E2E_ORG.slug), name, status }),
   });
   return row.id;
 }
@@ -153,6 +153,14 @@ export async function addE2eTasks(projectId: string, subprojectName: string, dur
 export async function deleteE2eProjects(name: string): Promise<void> {
   await admin()(
     `/rest/v1/projects?organization_id=eq.${await orgId(E2E_ORG.slug)}&name=eq.${encodeURIComponent(name)}`,
+    { method: "DELETE" },
+  );
+}
+
+/** Remove the E2E organization's personal tasks whose name starts with `prefix` (anyone's). */
+export async function deleteE2eMyTasks(prefix: string): Promise<void> {
+  await admin()(
+    `/rest/v1/personal_tasks?organization_id=eq.${await orgId(E2E_ORG.slug)}&name=like.${encodeURIComponent(`${prefix}*`)}`,
     { method: "DELETE" },
   );
 }

@@ -215,6 +215,30 @@ Product owner's answers:
    next to the existing subproject links. Overlaps show in red and nothing moves by itself,
    with a preview before saving (D-019). This is the first Phase 4 item (P4-01).
 
+## D-028 · 2026-10-27 · "My tasks" replaces the Tasks section; Reports removed
+Product owner: the Tasks section is for a person to write their own tasks, like reminders.
+- **My tasks** (`/<org>/tasks`, nav "My tasks"): name, description (optional), status
+  (To do / In progress / Done) and a tag (**To do** or **Reminder**). Filter by tag; finished
+  ones are listed apart. Project tasks stay in each subproject's cronograma.
+- **Private:** only the person who wrote a task sees or changes it, not even admins (RLS on
+  `personal_tasks`). Every member has their own, external collaborators too.
+- Not part of any plan or history, so deleting one removes it (not archived).
+- No dates or notifications yet; a due date / reminder time can be added later if asked.
+- **Reports removed** from the navigation (it was a placeholder); `/<org>/reports` is a 404.
+  Budgets and reports (Phase 6) will decide where they live when built.
+
+## D-029 · 2026-10-27 · The project status follows the work
+Product owner: yes, the status should update by itself. After any task change (add, update,
+status, remove) or a subproject archived / restored, the project's current tasks decide:
+- **Planning → Active** when a task is In progress, Blocked or Done.
+- **→ Finished** when every task is Done.
+- **Finished → Active** when a task re-opens or a new one is added.
+- Never back to Planning; a project without tasks keeps its status; archived projects are left alone.
+Each automatic change is in the project's history ("Changed automatically. Every task is done.").
+People can still set any status in "Edit project"; the rule runs again on the next task change.
+Rule: `statusFromTasks` (`lib/domain/projects.ts`, unit-tested); applied by
+`followTaskStatuses` (`lib/projects/guards.ts`).
+
 ---
 
 # Open questions (non-blocking)

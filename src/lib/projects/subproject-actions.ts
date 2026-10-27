@@ -8,7 +8,7 @@ import { formatDate } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { formDataToObject, parseForm, type FieldErrors } from "@/lib/validation/form";
 import { dependencySchema, subprojectSchema } from "@/lib/validation/projects";
-import { NOT_ALLOWED, editableOrganization, logActivity } from "./guards";
+import { NOT_ALLOWED, editableOrganization, followTaskStatuses, logActivity } from "./guards";
 
 export type SubprojectFormState =
   | { status: "idle" }
@@ -130,6 +130,8 @@ export async function setSubprojectArchived(
     subprojectId,
     summary: `${archived ? "Subproject archived" : "Subproject restored"}: ${data.name}`,
   });
+  // Its tasks leave or rejoin the project's work.
+  await followTaskStatuses(supabase, org, projectId);
   refresh();
   return { ok: true };
 }

@@ -4,9 +4,8 @@ import { E2E_OTHER_ORG, E2E_OUTSIDER, orgPath } from "./support/users";
 const ROUTES = [
   { path: orgPath("/dashboard"), heading: "Overview" },
   { path: orgPath("/projects"), heading: "Projects" },
-  { path: orgPath("/tasks"), heading: "Tasks" },
+  { path: orgPath("/tasks"), heading: "My tasks" },
   { path: orgPath("/materials"), heading: "Materials" },
-  { path: orgPath("/reports"), heading: "Reports" },
   { path: orgPath("/team"), heading: "Team" },
   { path: orgPath("/settings"), heading: "Settings" },
 ];
@@ -24,6 +23,12 @@ for (const route of ROUTES) {
     await expect(page).toHaveTitle(new RegExp(`${route.heading} · JupiGenio`));
   });
 }
+
+test("the removed Reports section is not found", async ({ page }) => {
+  const response = await page.goto(orgPath("/reports"));
+  expect(response?.status()).toBe(404);
+  await expect(page.getByRole("link", { name: "Reports", exact: true })).toHaveCount(0);
+});
 
 test("an organization without projects sees dashes on the Overview, never fake zeros", async ({ browser }) => {
   // The other organization has no projects (the E2E organization's change as tests run).

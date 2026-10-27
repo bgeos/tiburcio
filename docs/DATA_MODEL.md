@@ -152,6 +152,12 @@ no self-links, no cycles (trigger, organization-wide advisory lock). Same meanin
 links: nothing moves; an overlap is reported in red, with a preview before saving. Removed
 links are deleted (the history keeps who removed what). Links to archived tasks are ignored.
 
+### `personal_tasks` (P4-02, D-028)
+"My tasks": `organization_id`, `user_id` (default `auth.uid()`), `name`, `description`,
+`status` (`todo` / `in_progress` / `done`), `tag` (`todo` / `reminder`). Visible and editable
+only by `user_id`, while a member of the organization (not even admins). Not linked to
+projects; deleted, not archived.
+
 ### `plan_baselines`
 One per project (`project_id` unique): `locked_at`, `locked_by`, `snapshot jsonb`
 (`{ id: { start, end } }` for every subproject and task at lock time). "Lock plan" replaces it.

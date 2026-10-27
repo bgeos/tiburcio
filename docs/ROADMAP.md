@@ -86,6 +86,8 @@ plus the pgTAP RLS tests.
 
 ## Phase 4: Planning views 🟡
 - [x] P4-01 (2026-10-26): task dependencies across subprojects and projects (D-027).
+- [x] P4-02 (2026-10-27): "My tasks" (personal to-dos and reminders) replaces the Tasks placeholder; Reports removed from the navigation (D-028).
+- [x] P4-03 (2026-10-27): the project status follows the work (D-029).
 - [ ] Rest of the phase (Gantt library evaluation, overdue/blocked indicators): broken down in BACKLOG when started.
 
 ## Phases 5–9 ⬜

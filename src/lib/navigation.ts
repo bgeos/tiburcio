@@ -1,5 +1,4 @@
 import {
-  BarChart3,
   FolderKanban,
   LayoutDashboard,
   ListChecks,
@@ -35,22 +34,16 @@ export const PRIMARY_NAV: NavItem[] = [
     description: "Festivals, areas, structures and every nested subproject.",
   },
   {
-    title: "Tasks",
+    title: "My tasks",
     section: "tasks",
     icon: ListChecks,
-    description: "Your work queue across all projects.",
+    description: "Your own to-dos and reminders. Only you can see them.",
   },
   {
     title: "Materials",
     section: "materials",
     icon: Package,
     description: "Catalogue, stock, reservations and consumption.",
-  },
-  {
-    title: "Reports",
-    section: "reports",
-    icon: BarChart3,
-    description: "Budgets, costs and exports.",
   },
   {
     title: "Team",

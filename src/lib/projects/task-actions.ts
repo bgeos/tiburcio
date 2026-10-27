@@ -11,7 +11,7 @@ import { formatDate, pluralDays } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { formDataToObject, parseForm, type FieldErrors } from "@/lib/validation/form";
 import { progressSchema, taskSchema } from "@/lib/validation/projects";
-import { NOT_ALLOWED, editableOrganization, logActivity } from "./guards";
+import { NOT_ALLOWED, editableOrganization, followTaskStatuses, logActivity } from "./guards";
 
 export type TaskFormState =
   | { status: "idle" }
@@ -89,6 +89,7 @@ export async function addTask(
     details: scheduleDetails(ctx, after),
     reason,
   });
+  await followTaskStatuses(supabase, ctx.org, projectId);
   refresh();
   return { status: "saved", savedAt: Date.now() };
 }
@@ -155,6 +156,7 @@ export async function updateTask(
     details: [...actualDetails(task, state), ...scheduleDetails(ctx, after)],
     reason,
   });
+  await followTaskStatuses(supabase, ctx.org, projectId);
   refresh();
   return { status: "saved", savedAt: Date.now() };
 }
@@ -196,6 +198,7 @@ export async function setTaskStatus(
     summary: `${task.name}: ${STATUS_CATEGORY_LABELS[task.status]} → ${STATUS_CATEGORY_LABELS[status]}`,
     details: actualDetails(task, next),
   });
+  await followTaskStatuses(supabase, ctx.org, projectId);
   refresh();
   return { ok: true };
 }
@@ -229,6 +232,7 @@ export async function archiveTask(
     details: scheduleDetails(ctx, replaceTasks(ctx.plan, subprojectId, sub.tasks.filter((t) => t.id !== taskId))),
     reason: reason.slice(0, 1000),
   });
+  await followTaskStatuses(supabase, ctx.org, projectId);
   refresh();
   return { ok: true };
 }

@@ -19,7 +19,7 @@ import { getProjectDetail, type ProjectDetail, type SubprojectView } from "@/lib
 import { rollupProgress } from "@/lib/domain/progress";
 import { overlapMessage, overlapWindows, overlapsFor, schedulesFor } from "@/lib/domain/project-plan";
 import { PROJECT_STATUS_CATEGORY, PROJECT_STATUS_LABELS, canEditProjects } from "@/lib/domain/projects";
-import { taskOverlapMessage, taskOverlaps, taskPlace, type TaskOverlap } from "@/lib/domain/task-links";
+import { taskOverlapMessage, taskOverlapWindows, taskOverlaps, taskPlace, type TaskOverlap } from "@/lib/domain/task-links";
 import { daysBetween, type Overlap } from "@/lib/domain/schedule";
 import { formatDate, formatRange, pluralDays } from "@/lib/format";
 import { ProjectFormDialog } from "../project-form-dialog";
@@ -198,6 +198,13 @@ async function ProjectContent({ params }: { params: Params }) {
                 rows={plan.map((sub) => {
                   const s = schedules[sub.id];
                   const mine = overlaps.filter((o) => o.predecessorId === sub.id || o.successorId === sub.id);
+                  // Overlapping linked tasks also turn their days red on their subproject's bar.
+                  const ownTaskIds = sub.tasks.map((t) => t.id);
+                  const mineLinked = linkOverlaps.filter(({ link }) => ownTaskIds.includes(link.predecessor.id) || ownTaskIds.includes(link.successor.id));
+                  const warnings = [
+                    ...mine.map((o) => overlapMessage(plan, o)),
+                    ...mineLinked.map((o) => taskOverlapMessage(o, project.id)),
+                  ];
                   return {
                     id: sub.id,
                     label: sub.name,
@@ -206,8 +213,11 @@ async function ProjectContent({ params }: { params: Params }) {
                     sublabel: sub.ownerName ?? undefined,
                     range: s.end ? { start: s.start, end: s.end } : null,
                     baseline: baseline[sub.id] ?? null,
-                    warning: mine.length ? mine.map((o) => overlapMessage(plan, o)).join(" ") : null,
-                    overlaps: overlapWindows(plan, overlaps, sub.id),
+                    warning: warnings.length ? warnings.join(" ") : null,
+                    overlaps: [
+                      ...overlapWindows(plan, overlaps, sub.id),
+                      ...ownTaskIds.flatMap((id) => taskOverlapWindows(mineLinked, id)),
+                    ],
                     done: sub.tasks.length > 0 && sub.tasks.every((t) => t.status === "done"),
                   };
                 })}

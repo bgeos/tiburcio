@@ -129,6 +129,11 @@ test("a delay previews the red overlap with the linked task, and nothing else mo
   await page.goto(orgPath(`/projects/${ids.stage}`));
   await expect(page.getByRole("region", { name: "Warnings" })).toContainText(warning);
   await expect(page.getByText("1 overlap between linked tasks")).toBeVisible();
+  // The project timeline turns those days red on both subprojects' bars (and says so to screen readers).
+  const timeline = page.getByRole("list", { name: "Subprojects timeline" });
+  for (const name of ["Structure", "Shade Sail"]) {
+    await expect(timeline.getByRole("listitem").filter({ has: page.getByRole("link", { name, exact: true }) })).toContainText(`Warning: ${warning}`);
+  }
 
   await page.goto(sub("Shade Sail"));
   await expect(page.getByRole("region", { name: "Warnings" })).toContainText(warning);

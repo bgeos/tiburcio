@@ -138,9 +138,9 @@ export function Timeline({
                       style={{ left: `${pos(row.range.start)}%`, width: `${width(row.range)}%` }}
                     />
                   ) : null}
-                  {row.overlaps?.map((o) => (
+                  {row.overlaps?.map((o, i) => (
                     <div
-                      key={o.start}
+                      key={`${o.start}-${i}`}
                       className="absolute top-0.5 h-5 rounded-sm bg-destructive"
                       style={{ left: `${pos(o.start)}%`, width: `${width(o)}%` }}
                     />

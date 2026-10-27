@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MY_TASK_STATUSES, MY_TASK_TAGS } from "@/lib/domain/my-tasks";
+import { optionalIsoDate } from "./projects";
 
 /** My task form (create and edit). Same limits as the personal_tasks table. */
 export const myTaskSchema = z.object({
@@ -7,6 +8,7 @@ export const myTaskSchema = z.object({
   description: z.string().trim().max(2000, "Use at most 2000 characters.").default(""),
   status: z.enum(MY_TASK_STATUSES, "Choose a status."),
   tag: z.enum(MY_TASK_TAGS, "Choose a tag."),
+  dueDate: optionalIsoDate,
 });
 
 export type MyTaskInput = z.input<typeof myTaskSchema>;

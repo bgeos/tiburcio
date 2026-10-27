@@ -3,9 +3,10 @@
 import { refresh } from "next/cache";
 import { getProjectDetail } from "@/lib/dal/project-detail";
 import { MATERIAL_STATUSES, MATERIAL_STATUS_LABELS, type MaterialStatus } from "@/lib/domain/materials";
+import { formatDate } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { formDataToObject, parseForm, type FieldErrors } from "@/lib/validation/form";
-import { materialSchema } from "@/lib/validation/projects";
+import { materialSchema, optionalIsoDate } from "@/lib/validation/projects";
 import { NOT_ALLOWED, editableOrganization, logActivity } from "./guards";
 
 export type MaterialFormState =
@@ -47,6 +48,7 @@ export async function addMaterial(
     organization_id: ctx.org.id,
     subproject_id: subprojectId,
     description: parsed.data.description,
+    needed_by: parsed.data.neededBy,
     sort_order: ctx.sub.materials.length,
   });
   if (error) return { status: "error", message: "Couldn't add the material. Try again.", values };
@@ -81,6 +83,38 @@ export async function setMaterialStatus(
     projectId,
     subprojectId,
     summary: `${material.description}: ${MATERIAL_STATUS_LABELS[material.status]} → ${MATERIAL_STATUS_LABELS[status]}`,
+  });
+  refresh();
+  return { ok: true };
+}
+
+/** When the material must be on site (D-034); empty clears it. Logged in the history. */
+export async function setMaterialNeededBy(
+  orgSlug: string,
+  projectId: string,
+  subprojectId: string,
+  materialId: string,
+  date: string,
+): Promise<Result> {
+  const parsed = optionalIsoDate.safeParse(date);
+  if (!parsed.success) return { ok: false, message: "Choose a valid date." };
+  const ctx = await load(orgSlug, projectId, subprojectId, materialId);
+  if (typeof ctx === "string") return { ok: false, message: ctx };
+  const material = ctx.material!;
+  if (material.neededBy === parsed.data) return { ok: true };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("subproject_materials")
+    .update({ needed_by: parsed.data })
+    .eq("id", materialId)
+    .eq("organization_id", ctx.org.id);
+  if (error) return { ok: false, message: "Couldn't change the date. Try again." };
+
+  await logActivity(supabase, ctx.org, {
+    projectId,
+    subprojectId,
+    summary: `${material.description}: needed by ${formatDate(material.neededBy)} → ${formatDate(parsed.data)}`,
   });
   refresh();
   return { ok: true };

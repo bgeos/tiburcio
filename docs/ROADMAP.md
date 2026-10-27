@@ -124,6 +124,8 @@ subproject keeps its simple materials list from Phase 3.
 ## Between phases
 - [x] ORG-01 (2026-10-27): admins and production managers create organizations, e.g. one per
   festival, and switch between them (D-033).
+- [x] CAL-01 (2026-10-27): materials have a "needed by" day and my tasks a date; the calendar shows
+  tasks, materials, my tasks and milestones, told apart and switchable (D-034).
 
 ## Phases 6–9 ⬜
 See blueprint § 6. They are broken down into backlog items when the next one is chosen.

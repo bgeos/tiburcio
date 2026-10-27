@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listOrganizationMaterials } from "@/lib/dal/materials";
 import { requireMembership } from "@/lib/dal/organizations";
+import { todayIn } from "@/lib/dates";
 import { EXTERNAL_NO_PROJECTS, canViewProjects } from "@/lib/domain/projects";
 import { MaterialsTable } from "./materials-table";
 
@@ -50,5 +51,5 @@ async function MaterialsContent({ params }: { params: PageProps<"/[org]/material
       />
     );
   }
-  return <MaterialsTable rows={rows} orgSlug={org.slug} />;
+  return <MaterialsTable rows={rows} orgSlug={org.slug} today={todayIn(org.timezone)} />;
 }

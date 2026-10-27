@@ -32,7 +32,8 @@ export async function createMyTask(orgSlug: string, _previous: MyTaskFormState, 
   if (!org) return { status: "error", message: NOT_A_MEMBER, values };
 
   const supabase = await createClient();
-  const { error } = await supabase.from("personal_tasks").insert({ organization_id: org.id, ...parsed.data });
+  const { dueDate, ...rest } = parsed.data;
+  const { error } = await supabase.from("personal_tasks").insert({ organization_id: org.id, ...rest, due_date: dueDate });
   if (error) return { status: "error", message: "Couldn't add the task. Try again.", values };
   refresh();
   return { status: "saved", savedAt: Date.now() };
@@ -53,9 +54,10 @@ export async function updateMyTask(
   if (!org) return { status: "error", message: NOT_A_MEMBER, values };
 
   const supabase = await createClient();
+  const { dueDate, ...rest } = parsed.data;
   const { data, error } = await supabase
     .from("personal_tasks")
-    .update(parsed.data)
+    .update({ ...rest, due_date: dueDate })
     .eq("id", taskId)
     .eq("organization_id", org.id)
     .select("id");

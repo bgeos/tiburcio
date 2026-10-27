@@ -1,5 +1,6 @@
 /**
- * Calendar (P4-07): which tasks and milestones fall on which days, by month or week.
+ * Calendar (P4-07, D-034): which tasks, materials, my tasks and milestones fall on which days,
+ * by month or week.
  * Weeks start on Monday. Pure; the calendar page only draws what this returns.
  */
 import type { Milestone } from "./milestones";
@@ -75,4 +76,34 @@ export function itemsOn<T extends CalendarTask>(date: IsoDate, tasks: T[], miles
 /** "Day 2 of 4" for a task on a given day. */
 export function dayOf(range: DateRange, date: IsoDate): string {
   return `day ${daysBetween(range.start, date) + 1} of ${daysBetween(range.start, range.end) + 1}`;
+}
+
+/** What the calendar can show; each kind can be hidden (D-034). */
+export const CALENDAR_KINDS = ["tasks", "materials", "mine", "milestones"] as const;
+export type CalendarKind = (typeof CALENDAR_KINDS)[number];
+
+export const CALENDAR_KIND_LABELS: Record<CalendarKind, string> = {
+  tasks: "Tasks",
+  materials: "Materials",
+  mine: "My tasks",
+  milestones: "Milestones",
+};
+
+/** The `show` address parameter: "tasks,mine" → those kinds; missing → all; "none" → nothing. */
+export function parseKinds(value: unknown): CalendarKind[] {
+  if (typeof value !== "string") return [...CALENDAR_KINDS];
+  const wanted = value.split(",");
+  return CALENDAR_KINDS.filter((k) => wanted.includes(k));
+}
+
+/** The `show` value after switching `kind` on or off; null when everything is shown. */
+export function toggleKind(shown: CalendarKind[], kind: CalendarKind): string | null {
+  const next = CALENDAR_KINDS.filter((k) => (k === kind ? !shown.includes(k) : shown.includes(k)));
+  if (next.length === CALENDAR_KINDS.length) return null;
+  return next.length ? next.join(",") : "none";
+}
+
+/** Items with a single day (a material's needed-by day, a my task's date) that fall on `date`. */
+export function datedOn<T>(date: IsoDate, items: T[], dateOf: (item: T) => IsoDate | null): T[] {
+  return items.filter((item) => dateOf(item) === date);
 }

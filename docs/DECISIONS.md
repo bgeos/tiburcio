@@ -302,6 +302,23 @@ organization.
 - Not done: deleting or renaming an organization's address from the app; no limit on how many
   organizations one person creates.
 
+## D-034 · 2026-10-27 · Dates for materials and my tasks; one calendar for everything
+Product owner's request: "due date for materials, date for my tasks, add everything in the
+calendar, but so we can tell tasks, materials and my tasks apart".
+- Materials get an optional **needed by** day (`subproject_materials.needed_by`), set when adding
+  or changed in the list; changes go in the history. **Late** = the day has passed and it isn't
+  on site. Shown on the materials tab, the All materials page (sortable column) and the calendar.
+- My tasks get an optional **date** (`personal_tasks.due_date`). **Overdue** = passed and not done.
+  Open ones are sorted by date. Still private to their author (RLS unchanged).
+- The **calendar** shows four kinds, told apart by mark and words, never colour alone: tasks
+  (subproject dot), materials (box icon, dashed outline, "Material needed"), my tasks (bell or
+  checklist icon, italic, "My task") and milestones (flag). A "Show" row is both the legend and a
+  switch per kind, kept in the address (`show=`). The project filter applies to tasks and
+  materials; my tasks and milestones belong to no project and stay shown.
+- Late/overdue use the amber warning colour with an icon and "late"; red stays for overlaps.
+- Not done: dates on project tasks other than the cronograma's; external collaborators still see
+  no calendar (their own tasks could be added later).
+
 ---
 
 # Open questions (non-blocking)

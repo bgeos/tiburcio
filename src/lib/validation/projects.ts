@@ -17,6 +17,12 @@ const isoDate = z
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a date.")
   .refine((v) => !Number.isNaN(Date.parse(`${v}T00:00:00Z`)) && new Date(`${v}T00:00:00Z`).toISOString().startsWith(v), "Choose a valid date.");
 
+/** A date that may be left empty ("" → null). */
+export const optionalIsoDate = z
+  .union([z.literal(""), isoDate])
+  .optional()
+  .transform((v) => v || null);
+
 /** Subproject form (create and edit). The reason is saved in the history. */
 export const subprojectSchema = z.object({
   name: z.string().trim().min(1, "Enter a subproject name.").max(120, "Use at most 120 characters."),
@@ -58,6 +64,7 @@ export const progressSchema = z.coerce
 /** A subproject material: free text, e.g. "Steel cable, 8 mm" (no units yet, D-019). */
 export const materialSchema = z.object({
   description: z.string().trim().min(1, "Describe the material.").max(300, "Use at most 300 characters."),
+  neededBy: optionalIsoDate,
 });
 
 /** A crew member of a subproject (people on site, not app users; D-025). */

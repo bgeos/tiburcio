@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { PackageSearch } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { DueNote } from "@/components/due-note";
 import { EmptyState } from "@/components/empty-state";
 import { MaterialStatusBadge } from "@/components/material-status-badge";
 import { SubprojectDot } from "@/components/subproject-color";
@@ -11,12 +12,13 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { MaterialRow } from "@/lib/dal/materials";
-import { MATERIAL_STATUSES, MATERIAL_STATUS_LABELS } from "@/lib/domain/materials";
+import { MATERIAL_STATUSES, MATERIAL_STATUS_LABELS, isMaterialLate } from "@/lib/domain/materials";
+import type { IsoDate } from "@/lib/domain/schedule";
 
 const ALL = "all";
 
 /** Every material of every subproject, filterable by project, subproject and status. */
-export function MaterialsTable({ rows, orgSlug }: { rows: MaterialRow[]; orgSlug: string }) {
+export function MaterialsTable({ rows, orgSlug, today }: { rows: MaterialRow[]; orgSlug: string; today: IsoDate }) {
   const [projectId, setProjectId] = useState(ALL);
   const [subprojectId, setSubprojectId] = useState(ALL);
   const [status, setStatus] = useState(ALL);
@@ -66,6 +68,14 @@ export function MaterialsTable({ rows, orgSlug }: { rows: MaterialRow[]; orgSlug
       header: "Status",
       cell: (row) => <MaterialStatusBadge status={row.status} />,
       sortValue: (row) => MATERIAL_STATUSES.indexOf(row.status),
+    },
+    {
+      id: "neededBy",
+      header: "Needed by",
+      cell: (row) =>
+        row.neededBy ? <DueNote date={row.neededBy} late={isMaterialLate(row, today)} label="" className="text-sm" /> : "—",
+      // Undated materials sort last.
+      sortValue: (row) => row.neededBy ?? "9999-12-31",
     },
   ];
 

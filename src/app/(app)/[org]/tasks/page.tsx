@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ListTodo } from "lucide-react";
+import { DueNote } from "@/components/due-note";
 import { EmptyState } from "@/components/empty-state";
 import { OrgLink } from "@/components/org-link";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { todayIn } from "@/lib/dates";
 import { listMyTasks } from "@/lib/dal/my-tasks";
 import { requireMembership } from "@/lib/dal/organizations";
-import { MY_TASK_TAGS, type MyTask, type MyTaskTag } from "@/lib/domain/my-tasks";
+import { MY_TASK_TAGS, isMyTaskOverdue, type MyTask, type MyTaskTag } from "@/lib/domain/my-tasks";
+import type { IsoDate } from "@/lib/domain/schedule";
 import { DeleteMyTaskButton, EditMyTaskButton, MyTaskStatusSelect, MyTaskTagBadge, NewMyTaskButton } from "./my-task-controls";
 
 export const metadata: Metadata = { title: "My tasks" };
@@ -61,7 +64,7 @@ async function MyTasksContent({
       <EmptyState
         icon={ListTodo}
         title="No tasks yet"
-        description="Write down what you need to do or remember, e.g. “Call the bamboo supplier”. Tag it as a to do or a reminder."
+        description="Write down what you need to do or remember, e.g. “Call the bamboo supplier”. Tag it as a to do or a reminder, and give it a date to see it on the calendar."
         action={<NewMyTaskButton orgSlug={org.slug} />}
       />
     );
@@ -70,6 +73,7 @@ async function MyTasksContent({
   const shown = tag ? tasks.filter((t) => t.tag === tag) : tasks;
   const open = shown.filter((t) => t.status !== "done");
   const done = shown.filter((t) => t.status === "done");
+  const today = todayIn(org.timezone);
   const count = (filter: MyTaskTag | null) => tasks.filter((t) => t.status !== "done" && (!filter || t.tag === filter)).length;
 
   return (
@@ -91,7 +95,7 @@ async function MyTasksContent({
         {open.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nothing open here. Well done.</p>
         ) : (
-          <MyTaskList label="Open tasks" tasks={open} orgSlug={org.slug} />
+          <MyTaskList label="Open tasks" tasks={open} orgSlug={org.slug} today={today} />
         )}
       </section>
 
@@ -100,14 +104,14 @@ async function MyTasksContent({
           <h2 id="done-heading" className="text-lg font-semibold">
             Done ({done.length})
           </h2>
-          <MyTaskList label="Done tasks" tasks={done} orgSlug={org.slug} />
+          <MyTaskList label="Done tasks" tasks={done} orgSlug={org.slug} today={today} />
         </section>
       ) : null}
     </>
   );
 }
 
-function MyTaskList({ label, tasks, orgSlug }: { label: string; tasks: MyTask[]; orgSlug: string }) {
+function MyTaskList({ label, tasks, orgSlug, today }: { label: string; tasks: MyTask[]; orgSlug: string; today: IsoDate }) {
   return (
     <ul aria-label={label} className="divide-y rounded-xl border bg-card">
       {tasks.map((task) => (
@@ -116,6 +120,7 @@ function MyTaskList({ label, tasks, orgSlug }: { label: string; tasks: MyTask[];
             <div className="flex flex-wrap items-center gap-2">
               <h3 className={task.status === "done" ? "font-medium text-muted-foreground line-through" : "font-medium"}>{task.name}</h3>
               <MyTaskTagBadge tag={task.tag} />
+              <DueNote date={task.dueDate} late={isMyTaskOverdue(task, today)} />
             </div>
             {task.description ? <p className="text-sm whitespace-pre-line text-muted-foreground">{task.description}</p> : null}
           </div>

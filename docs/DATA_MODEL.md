@@ -137,8 +137,8 @@ are computed, not stored (start day counts as day 1, calendar days).
 
 ### `subproject_materials`
 `subproject_id`, `description` (free text, e.g. "Steel cable, 8 mm"),
-`status text check in ('to_request','requested','ready_at_warehouse','on_site')`, `sort_order`.
-Not linked to the Phase 5 catalogue/stock yet.
+`status text check in ('to_request','requested','ready_at_warehouse','on_site')`, `sort_order`,
+`needed_by date` (optional; D-034). No stock catalogue (Phase 5 dropped).
 
 ### `subproject_dependencies`
 `predecessor_id`, `successor_id` (subprojects of the **same project**; no self-links, no cycles).
@@ -154,7 +154,8 @@ links are deleted (the history keeps who removed what). Links to archived tasks 
 
 ### `personal_tasks` (P4-02, D-028)
 "My tasks": `organization_id`, `user_id` (default `auth.uid()`), `name`, `description`,
-`status` (`todo` / `in_progress` / `done`), `tag` (`todo` / `reminder`). Visible and editable
+`status` (`todo` / `in_progress` / `done`), `tag` (`todo` / `reminder`), `due_date` (optional;
+D-034, shown on the calendar). Visible and editable
 only by `user_id`, while a member of the organization (not even admins). Not linked to
 projects; deleted, not archived.
 

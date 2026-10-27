@@ -1,5 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { dayOf, isIsoDate, itemsOn, monthWeeks, periodLabel, shiftPeriod, weekDays, weekStart } from "./calendar";
+import {
+  CALENDAR_KINDS,
+  datedOn,
+  dayOf,
+  isIsoDate,
+  itemsOn,
+  monthWeeks,
+  parseKinds,
+  periodLabel,
+  shiftPeriod,
+  toggleKind,
+  weekDays,
+  weekStart,
+} from "./calendar";
 
 describe("calendar dates", () => {
   it("starts weeks on Monday", () => {
@@ -46,5 +59,27 @@ describe("itemsOn", () => {
 
   it("says which day of the task it is", () => {
     expect(dayOf(build.range, "2031-03-05")).toBe("day 2 of 4");
+  });
+});
+
+describe("what the calendar shows", () => {
+  it("shows everything unless told otherwise", () => {
+    expect(parseKinds(undefined)).toEqual([...CALENDAR_KINDS]);
+    expect(parseKinds("mine,tasks")).toEqual(["tasks", "mine"]);
+    expect(parseKinds("none")).toEqual([]);
+    expect(parseKinds("bogus")).toEqual([]);
+  });
+
+  it("switches one kind at a time", () => {
+    expect(toggleKind([...CALENDAR_KINDS], "materials")).toBe("tasks,mine,milestones");
+    expect(toggleKind(["tasks", "mine", "milestones"], "materials")).toBeNull();
+    expect(toggleKind(["mine"], "mine")).toBe("none");
+  });
+
+  it("finds single-day items on their day", () => {
+    const plywood = { id: "p", neededBy: "2031-03-05" };
+    const cable = { id: "c", neededBy: null };
+    expect(datedOn("2031-03-05", [plywood, cable], (m) => m.neededBy)).toEqual([plywood]);
+    expect(datedOn("2031-03-06", [plywood, cable], (m) => m.neededBy)).toEqual([]);
   });
 });

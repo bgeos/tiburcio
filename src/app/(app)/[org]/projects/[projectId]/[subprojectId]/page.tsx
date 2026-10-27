@@ -204,6 +204,7 @@ async function SubprojectContent({ params, searchParams }: { params: Props["para
             scope={{ orgSlug: org.slug, projectId: project.id, subprojectId: sub.id, subprojectName: sub.name }}
             materials={sub.materials}
             canEdit={canEdit}
+            today={todayIn(org.timezone)}
           />
         </TabsContent>
         <TabsContent value="crew">

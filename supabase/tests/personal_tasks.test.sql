@@ -5,7 +5,7 @@
 
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(12);
+select plan(14);
 
 create function pg_temp.sign_in(person text) returns void language plpgsql as $$
 begin
@@ -42,6 +42,7 @@ select throws_ok($$ insert into public.personal_tasks (organization_id, name) se
   '23514', null, 'a task needs a name');
 select lives_ok($$ update public.personal_tasks set status = 'done', description = 'Asked for 40 poles' $$,
   'the owner updates it');
+select lives_ok($$ update public.personal_tasks set due_date = '2027-03-05' $$, 'and gives it a due date');
 
 select pg_temp.sign_in('eve');
 select lives_ok($$ insert into public.personal_tasks (organization_id, name) select org_a, 'Bring the drill' from ids $$,
@@ -54,7 +55,8 @@ select is_empty($$ update public.personal_tasks set name = 'Hijacked' returning 
 select is_empty($$ delete from public.personal_tasks returning 1 $$, 'or deletes them');
 
 select pg_temp.sign_in('carol');
-select is((select name || ': ' || status from public.personal_tasks), 'Call the bamboo supplier: done', 'Carol''s task is untouched');
+select is((select name || ': ' || status || ' ' || due_date from public.personal_tasks), 'Call the bamboo supplier: done 2027-03-05', 'Carol''s task is untouched');
+select is_empty($$ select 1 from public.personal_tasks where due_date is null $$, 'Carol''s only task has its date');
 
 select * from finish();
 rollback;

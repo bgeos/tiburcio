@@ -68,7 +68,7 @@ test("one project at a time, and the week view lists each day", async ({ page })
   await page.getByRole("link", { name: "Next week" }).click();
   await expect(page.getByRole("heading", { level: 2, name: "3 – 9 Mar 2031" })).toBeVisible();
   const days = page.getByRole("list", { name: "Days" });
-  await expect(days.getByRole("listitem").filter({ hasText: /^Wednesday 5 Mar/ })).toContainText(`Structure task 1${STAGE} › Structure · day 2 of 3`);
+  await expect(days.getByRole("listitem").filter({ hasText: /^Wednesday 5 Mar/ })).toContainText(`Structure task 1Task · ${STAGE} › Structure · day 2 of 3`);
   await expect(days).not.toContainText("Dome task 1");
   await expectNoAxeViolations(page);
 });

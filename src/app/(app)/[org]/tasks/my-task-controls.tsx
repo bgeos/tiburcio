@@ -112,6 +112,14 @@ function MyTaskForm({ orgSlug, task, onSaved }: { orgSlug: string; task?: MyTask
           defaultValue={values.description ?? task?.description}
           errors={fieldErrors.description}
         />
+        <TextField
+          name="dueDate"
+          label="Date (optional)"
+          type="date"
+          defaultValue={values.dueDate ?? task?.dueDate ?? ""}
+          errors={fieldErrors.dueDate}
+          description="Puts it on the calendar."
+        />
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="grid gap-2">
             <Label htmlFor="my-task-tag">Tag</Label>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sortMyTasks, type MyTask } from "@/lib/domain/my-tasks";
+import { isMyTaskOverdue, sortMyTasks, type MyTask } from "@/lib/domain/my-tasks";
 import { myTaskSchema } from "./my-tasks";
 
 describe("myTaskSchema", () => {
@@ -9,7 +9,14 @@ describe("myTaskSchema", () => {
       description: "",
       status: "todo",
       tag: "reminder",
+      dueDate: null,
     });
+  });
+
+  it("takes an optional date", () => {
+    expect(myTaskSchema.parse({ name: "Call", status: "todo", tag: "todo", dueDate: "2027-03-05" }).dueDate).toBe("2027-03-05");
+    expect(myTaskSchema.parse({ name: "Call", status: "todo", tag: "todo", dueDate: "" }).dueDate).toBeNull();
+    expect(myTaskSchema.safeParse({ name: "Call", status: "todo", tag: "todo", dueDate: "2027-02-30" }).success).toBe(false);
   });
 
   it.each([
@@ -25,12 +32,13 @@ describe("myTaskSchema", () => {
 });
 
 describe("sortMyTasks", () => {
-  const task = (id: string, status: MyTask["status"], createdAt: string): MyTask => ({
+  const task = (id: string, status: MyTask["status"], createdAt: string, dueDate: string | null = null): MyTask => ({
     id,
     name: id,
     description: "",
     status,
     tag: "todo",
+    dueDate,
     createdAt,
   });
 
@@ -42,5 +50,23 @@ describe("sortMyTasks", () => {
       task("doing", "in_progress", "2026-09-01"),
     ]);
     expect(sorted.map((t) => t.id)).toEqual(["doing", "new todo", "old todo", "done"]);
+  });
+
+  it("puts the soonest date first among open tasks; undated ones after", () => {
+    const sorted = sortMyTasks([
+      task("undated", "todo", "2026-10-09"),
+      task("later", "todo", "2026-10-01", "2026-11-20"),
+      task("sooner", "todo", "2026-10-02", "2026-11-01"),
+    ]);
+    expect(sorted.map((t) => t.id)).toEqual(["sooner", "later", "undated"]);
+  });
+});
+
+describe("isMyTaskOverdue", () => {
+  it("is overdue when the day has passed and it isn't done", () => {
+    expect(isMyTaskOverdue({ status: "todo", dueDate: "2026-10-26" }, "2026-10-27")).toBe(true);
+    expect(isMyTaskOverdue({ status: "todo", dueDate: "2026-10-27" }, "2026-10-27")).toBe(false);
+    expect(isMyTaskOverdue({ status: "done", dueDate: "2026-10-01" }, "2026-10-27")).toBe(false);
+    expect(isMyTaskOverdue({ status: "todo", dueDate: null }, "2026-10-27")).toBe(false);
   });
 });

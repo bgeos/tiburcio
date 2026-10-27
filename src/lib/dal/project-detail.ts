@@ -41,7 +41,7 @@ export type SubprojectView = {
 
 export type CrewView = { id: string; name: string; role: string };
 
-export type MaterialView = { id: string; description: string; status: MaterialStatus };
+export type MaterialView = { id: string; description: string; status: MaterialStatus; neededBy: IsoDate | null };
 
 export type ProjectDetail = {
   id: string;
@@ -98,7 +98,7 @@ export async function getProjectDetail(org: Membership, projectId: string): Prom
       .order("created_at"),
     supabase
       .from("subproject_materials")
-      .select("id, subproject_id, description, status")
+      .select("id, subproject_id, description, status, needed_by")
       .in("subproject_id", ids)
       .is("archived_at", null)
       .order("sort_order")
@@ -140,7 +140,7 @@ export async function getProjectDetail(org: Membership, projectId: string): Prom
       })),
     materials: (materials.data ?? [])
       .filter((m) => m.subproject_id === s.id)
-      .map((m) => ({ id: m.id, description: m.description, status: m.status as MaterialStatus })),
+      .map((m) => ({ id: m.id, description: m.description, status: m.status as MaterialStatus, neededBy: m.needed_by as IsoDate | null })),
     crew: (crew.data ?? [])
       .filter((c) => c.subproject_id === s.id && !c.archived_at)
       .map((c) => ({ id: c.id, name: c.name, role: c.role })),

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { isMaterialLate } from "@/lib/domain/materials";
 import { canEditProjects, canViewProjects } from "@/lib/domain/projects";
-import { dependencySchema, progressSchema, projectSchema, subprojectSchema, taskSchema } from "./projects";
+import { dependencySchema, materialSchema, progressSchema, projectSchema, subprojectSchema, taskSchema } from "./projects";
 
 describe("projectSchema", () => {
   it("trims and accepts a valid project", () => {
@@ -103,5 +104,23 @@ describe("progressSchema", () => {
   it("accepts 0–100", () => {
     expect(progressSchema.parse("60")).toBe(60);
     expect(progressSchema.safeParse("101").success).toBe(false);
+  });
+});
+
+describe("materialSchema", () => {
+  it("takes an optional needed-by date", () => {
+    expect(materialSchema.parse({ description: " Plywood ", neededBy: "2027-01-05" })).toEqual({ description: "Plywood", neededBy: "2027-01-05" });
+    expect(materialSchema.parse({ description: "Plywood", neededBy: "" }).neededBy).toBeNull();
+    expect(materialSchema.parse({ description: "Plywood" }).neededBy).toBeNull();
+    expect(materialSchema.safeParse({ description: "Plywood", neededBy: "5 Jan" }).success).toBe(false);
+  });
+});
+
+describe("isMaterialLate", () => {
+  it("is late when the day has passed and it isn't on site", () => {
+    expect(isMaterialLate({ status: "requested", neededBy: "2026-10-26" }, "2026-10-27")).toBe(true);
+    expect(isMaterialLate({ status: "requested", neededBy: "2026-10-27" }, "2026-10-27")).toBe(false);
+    expect(isMaterialLate({ status: "on_site", neededBy: "2026-10-01" }, "2026-10-27")).toBe(false);
+    expect(isMaterialLate({ status: "to_request", neededBy: null }, "2026-10-27")).toBe(false);
   });
 });

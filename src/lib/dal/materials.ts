@@ -1,5 +1,6 @@
 import "server-only";
 import type { MaterialStatus } from "@/lib/domain/materials";
+import type { IsoDate } from "@/lib/domain/schedule";
 import { isSubprojectColor, type SubprojectColor } from "@/lib/domain/subproject-colors";
 import { createClient } from "@/lib/supabase/server";
 import type { Membership } from "./organizations";
@@ -9,6 +10,7 @@ export type MaterialRow = {
   id: string;
   description: string;
   status: MaterialStatus;
+  neededBy: IsoDate | null;
   projectId: string;
   project: string;
   subprojectId: string;
@@ -20,6 +22,7 @@ type Row = {
   id: string;
   description: string;
   status: MaterialStatus;
+  needed_by: IsoDate | null;
   subprojects: {
     id: string;
     name: string;
@@ -39,7 +42,7 @@ export async function listOrganizationMaterials(org: Membership): Promise<Materi
     .from("subproject_materials")
     .select(
       // Name the foreign keys: subprojects also relate to projects through the dependency links.
-      "id, description, status, subprojects!subproject_materials_organization_id_subproject_id_fkey(id, name, color, archived_at, projects!subprojects_organization_id_project_id_fkey(id, name, archived_at))",
+      "id, description, status, needed_by, subprojects!subproject_materials_organization_id_subproject_id_fkey(id, name, color, archived_at, projects!subprojects_organization_id_project_id_fkey(id, name, archived_at))",
     )
     .eq("organization_id", org.id)
     .is("archived_at", null)
@@ -56,6 +59,7 @@ export async function listOrganizationMaterials(org: Membership): Promise<Materi
           id: row.id,
           description: row.description,
           status: row.status,
+          neededBy: row.needed_by,
           projectId: project.id,
           project: project.name,
           subprojectId: sub.id,

@@ -6,7 +6,7 @@
 
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(32);
+select plan(35);
 
 create function pg_temp.sign_in(person text) returns void language plpgsql as $$
 begin
@@ -96,6 +96,8 @@ select throws_ok($$ update public.subproject_materials set status = 'lost' where
   '23514', null, 'material status is one of the four steps');
 select lives_ok($$ update public.subproject_materials set status = 'on_site' where description = 'Steel cable, 8 mm' $$,
   'admin can update a material''s status');
+select lives_ok($$ update public.subproject_materials set needed_by = '2027-01-05' where description = 'Steel cable, 8 mm' $$,
+  'admin can set the day a material is needed by');
 
 -- Dependencies ---------------------------------------------------------------------------
 select lives_ok($$ insert into public.subproject_dependencies (organization_id, project_id, predecessor_id, successor_id)
@@ -144,6 +146,9 @@ select pg_temp.sign_in('carol');
 select is((select count(*) from public.tasks), 2::bigint, 'member sees the organization''s tasks');
 select is_empty($$ update public.tasks set duration_days = 10 where name = 'Prepare bamboo' returning 1 $$,
   'member cannot change the cronograma');
+select is_empty($$ update public.subproject_materials set needed_by = '2027-02-01' returning 1 $$,
+  'member cannot change when a material is needed');
+select is((select needed_by from public.subproject_materials), '2027-01-05'::date, 'member sees the needed-by day');
 select throws_ok($$ insert into public.activity_log (organization_id, project_id, summary)
   values ((select org_a from ids), (select main_stage from ids), 'Member note') $$, '42501', null, 'member cannot write history');
 

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { CalendarClock, EyeOff, FolderPlus, ListChecks, TriangleAlert } from "lucide-react";
+import { CalendarClock, EyeOff, FolderPlus, Hourglass, ListChecks, TriangleAlert } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { OrgLink } from "@/components/org-link";
 import { PageHeader } from "@/components/page-header";
@@ -64,7 +64,11 @@ async function DashboardContent({ params }: { params: PageProps<"/[org]/dashboar
             value={noProjects ? null : summary.activeProjects}
             hint={noProjects ? "No projects yet" : `${summary.planningProjects} in planning`}
           />
-          <StatTile label="Open tasks" value={summary.openTasks} hint={summary.openTasks === null ? "No tasks yet" : "Not done yet"} />
+          <StatTile
+            label="Open tasks"
+            value={summary.openTasks}
+            hint={summary.openTasks === null ? "No tasks yet" : summary.blockedTasks ? `Not done yet · ${summary.blockedTasks} blocked` : "Not done yet"}
+          />
           <StatTile
             label="Overdue tasks"
             value={summary.overdueTasks}
@@ -184,6 +188,12 @@ function ProjectRow({ project }: { project: ProjectHealth }) {
           <span className="flex items-center gap-1 text-warning">
             <CalendarClock aria-hidden="true" className="size-3.5" />
             {project.overdueCount} overdue
+          </span>
+        ) : null}
+        {project.blockedCount ? (
+          <span className="flex items-center gap-1 text-warning">
+            <Hourglass aria-hidden="true" className="size-3.5" />
+            {project.blockedCount} blocked
           </span>
         ) : null}
       </p>

@@ -7,6 +7,7 @@ const end = (over: Partial<LinkedTask> & Pick<LinkedTask, "id" | "name" | "subpr
   projectId: "stage",
   projectName: "Main Stage",
   color: "blue",
+  status: "todo",
   range: null,
   ...over,
 });

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { ArrowLeft, ArrowRight, ClipboardCheck, Link2, ListChecks, OctagonAlert, Pencil, TriangleAlert } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarClock, ClipboardCheck, Hourglass, Link2, ListChecks, OctagonAlert, Pencil, TriangleAlert } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { HistoryList } from "@/components/history-list";
 import { OrgLink } from "@/components/org-link";
@@ -23,6 +23,7 @@ import { itemProgress, rollupProgress } from "@/lib/domain/progress";
 import { overlapMessage, overlapsFor, schedulesFor } from "@/lib/domain/project-plan";
 import { canEditProjects } from "@/lib/domain/projects";
 import { daysBetween } from "@/lib/domain/schedule";
+import { flagTask, isBlocked, type TaskFlags } from "@/lib/domain/task-flags";
 import {
   linksTouching,
   taskOverlapMessage,
@@ -266,6 +267,9 @@ function Cronograma({
   const schedule = schedulesFor([sub])[sub.id];
   const baseline = project.baseline?.ranges ?? {};
   const overlaps = taskOverlaps(links);
+  const flags = sub.tasks.map((task, i) => flagTask({ id: task.id, status: task.status, range: schedule.tasks[i] }, links, today));
+  const overdue = flags.filter((f) => f.overdueDays !== null).length;
+  const blocked = flags.filter(isBlocked).length;
   const asLinked = (i: number): LinkedTask => ({
     id: sub.tasks[i].id,
     name: sub.tasks[i].name,
@@ -274,6 +278,7 @@ function Cronograma({
     projectId: project.id,
     projectName: project.name,
     color: sub.color,
+    status: sub.tasks[i].status,
     range: schedule.tasks[i],
   });
 
@@ -297,6 +302,22 @@ function Cronograma({
         />
       ) : (
         <>
+          {overdue || blocked ? (
+            <p className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-warning/40 bg-warning-soft px-3 py-2 text-sm font-medium text-warning">
+              {overdue ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <CalendarClock aria-hidden="true" className="size-4 shrink-0" />
+                  {overdue} {overdue === 1 ? "task is" : "tasks are"} overdue
+                </span>
+              ) : null}
+              {blocked ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <Hourglass aria-hidden="true" className="size-4 shrink-0" />
+                  {blocked} {blocked === 1 ? "task is" : "tasks are"} blocked
+                </span>
+              ) : null}
+            </p>
+          ) : null}
           <div className="rounded-xl border bg-card">
             <Table scrollLabel={`${sub.name} cronograma`}>
               <TableHeader>
@@ -326,6 +347,7 @@ function Cronograma({
                         {task.delayDays > 0 ? (
                           <p className="text-xs text-muted-foreground">Waits {pluralDays(task.delayDays)} before starting</p>
                         ) : null}
+                        <TaskFlagNotes flags={flags[i]} projectId={project.id} />
                         <TaskLinkNotes taskId={task.id} links={links} overlaps={overlaps} projectId={project.id} />
                       </TableCell>
                       <TableCell className="whitespace-nowrap tabular-nums">{formatRange(planned)}</TableCell>
@@ -409,6 +431,28 @@ function Cronograma({
 }
 
 /** "Waits for …" / "Needed by …" under a task's name; red when the two overlap. */
+/** Overdue and waiting, in words (P4-04); "Blocked" shows in the status. Amber: needs attention; red stays for overlaps. */
+function TaskFlagNotes({ flags, projectId }: { flags: TaskFlags; projectId: string }) {
+  const notes = [
+    flags.overdueDays !== null && { icon: CalendarClock, text: `Overdue by ${pluralDays(flags.overdueDays)}` },
+    flags.waitingFor.length > 0 && {
+      icon: Hourglass,
+      text: `Can't start yet: ${flags.waitingFor.map((t) => taskPlace(t, projectId)).join(", ")} ${flags.waitingFor.length === 1 ? "isn't" : "aren't"} done`,
+    },
+  ].filter((n): n is { icon: typeof CalendarClock; text: string } => Boolean(n));
+  if (notes.length === 0) return null;
+  return (
+    <ul className="mt-0.5 space-y-0.5 text-xs font-medium text-warning">
+      {notes.map(({ icon: Icon, text }) => (
+        <li key={text} className="flex items-center gap-1">
+          <Icon aria-hidden="true" className="size-3 shrink-0" />
+          {text}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function TaskLinkNotes({
   taskId,
   links,

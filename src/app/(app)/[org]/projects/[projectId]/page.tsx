@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { ArrowLeft, Archive, CalendarRange, ClipboardCheck, OctagonAlert, Pencil, Plus } from "lucide-react";
+import { ArrowLeft, Archive, CalendarClock, CalendarRange, ClipboardCheck, Hourglass, OctagonAlert, Pencil, Plus } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { HistoryList } from "@/components/history-list";
 import { OrgLink } from "@/components/org-link";
@@ -21,6 +21,8 @@ import { overlapMessage, overlapWindows, overlapsFor, schedulesFor } from "@/lib
 import { PROJECT_STATUS_CATEGORY, PROJECT_STATUS_LABELS, canEditProjects } from "@/lib/domain/projects";
 import { taskOverlapMessage, taskOverlapWindows, taskOverlaps, taskPlace, type TaskOverlap } from "@/lib/domain/task-links";
 import { daysBetween, type Overlap } from "@/lib/domain/schedule";
+import { countFlags } from "@/lib/domain/task-flags";
+import { todayIn } from "@/lib/dates";
 import { formatDate, formatRange, pluralDays } from "@/lib/format";
 import { ProjectFormDialog } from "../project-form-dialog";
 import { ArchiveSubprojectButton } from "./archive-subproject-button";
@@ -69,8 +71,15 @@ async function ProjectContent({ params }: { params: Params }) {
     return baseline[s.id] && end && daysBetween(baseline[s.id].end, end) > 0;
   }).length;
   const name = (id: string) => plan.find((s) => s.id === id)?.name ?? "—";
-  // Calendar "today" for the timeline marker (request time; the page is dynamic).
-  const today = new Date().toISOString().slice(0, 10);
+  // "Today" in the organization's timezone (request time; the page is dynamic).
+  const today = todayIn(org.timezone);
+  const flagged = (subs: typeof plan) =>
+    countFlags(
+      subs.flatMap((s) => s.tasks.map((t, i) => ({ id: t.id, status: t.status, range: schedules[s.id].tasks[i] ?? null }))),
+      project.taskLinks,
+      today,
+    );
+  const attention = flagged(plan);
 
   return (
     <>
@@ -162,6 +171,7 @@ async function ProjectContent({ params }: { params: Params }) {
                     : `${delayed} of ${plan.length} subprojects end later than the original plan.`}
                 </p>
               ) : null}
+              <AttentionLine overdue={attention.overdue} blocked={attention.blocked} />
               {overlaps.length ? (
                 <p className="flex items-center gap-1.5 text-sm font-medium text-destructive">
                   <OctagonAlert aria-hidden="true" className="size-4 shrink-0" />
@@ -239,6 +249,7 @@ async function ProjectContent({ params }: { params: Params }) {
                     linkOverlaps={linkOverlaps}
                     orgSlug={org.slug}
                     canEdit={canEdit}
+                    attention={flagged([sub])}
                     startsAfter={project.dependencies.filter((d) => d.successorId === sub.id).map((d) => name(d.predecessorId))}
                   />
                 </li>
@@ -320,6 +331,7 @@ function SubprojectCard({
   linkOverlaps,
   orgSlug,
   canEdit,
+  attention,
   startsAfter,
 }: {
   sub: SubprojectView;
@@ -328,6 +340,7 @@ function SubprojectCard({
   linkOverlaps: TaskOverlap[];
   orgSlug: string;
   canEdit: boolean;
+  attention: { overdue: number; blocked: number };
   startsAfter: string[];
 }) {
   const schedule = schedulesFor([sub])[sub.id];
@@ -366,6 +379,7 @@ function SubprojectCard({
           </h3>
         </CardTitle>
         <p className="text-sm text-muted-foreground">Owner: {sub.ownerName ?? "—"}</p>
+        <AttentionLine overdue={attention.overdue} blocked={attention.blocked} />
         {notes.length ? (
           <ul className="space-y-0.5">
             {notes.map((note) => (
@@ -443,5 +457,26 @@ function ProjectSkeleton() {
       <Skeleton className="h-36 w-full" />
       <Skeleton className="h-48 w-full" />
     </div>
+  );
+}
+
+/** "2 overdue tasks · 1 blocked" in amber, or nothing (P4-04). Icon + words, never colour alone. */
+function AttentionLine({ overdue, blocked }: { overdue: number; blocked: number }) {
+  if (!overdue && !blocked) return null;
+  return (
+    <p className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm font-medium text-warning">
+      {overdue ? (
+        <span className="inline-flex items-center gap-1.5">
+          <CalendarClock aria-hidden="true" className="size-4 shrink-0" />
+          {overdue} overdue {overdue === 1 ? "task" : "tasks"}
+        </span>
+      ) : null}
+      {blocked ? (
+        <span className="inline-flex items-center gap-1.5">
+          <Hourglass aria-hidden="true" className="size-4 shrink-0" />
+          {blocked} blocked {blocked === 1 ? "task" : "tasks"}
+        </span>
+      ) : null}
+    </p>
   );
 }

@@ -2,6 +2,7 @@ import "server-only";
 import { scheduleSubproject } from "@/lib/domain/schedule";
 import { isSubprojectColor } from "@/lib/domain/subproject-colors";
 import type { LinkedTask, TaskLink } from "@/lib/domain/task-links";
+import type { TaskStatus } from "@/lib/domain/tasks";
 import { createClient } from "@/lib/supabase/server";
 import type { Membership } from "./organizations";
 
@@ -26,7 +27,7 @@ async function tasksOf(supabase: Client, subprojects: SubprojectRow[]): Promise<
   if (current.length === 0) return [];
   const { data, error } = await supabase
     .from("tasks")
-    .select("id, subproject_id, name, duration_days, delay_days")
+    .select("id, subproject_id, name, status, duration_days, delay_days")
     .in("subproject_id", current.map((s) => s.id))
     .is("archived_at", null)
     .order("sort_order")
@@ -47,6 +48,7 @@ async function tasksOf(supabase: Client, subprojects: SubprojectRow[]): Promise<
       projectId: sub.projects!.id,
       projectName: sub.projects!.name,
       color: isSubprojectColor(sub.color) ? sub.color : "blue",
+      status: t.status as TaskStatus,
       range: schedule.tasks[i] ? { start: schedule.tasks[i].start, end: schedule.tasks[i].end } : null,
     }));
   });

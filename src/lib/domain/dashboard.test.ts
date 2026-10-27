@@ -38,7 +38,7 @@ describe("summarizeDashboard", () => {
     expect(summary.materialsNotOnSite).toBe(2);
     expect(summary.materialsToRequest).toBe(1);
     expect(summary.projects).toEqual([
-      { id: "p1", name: "Main Stage", status: "active", progress: 37.5, taskCount: 4, overlapCount: 1, overdueCount: 0 },
+      { id: "p1", name: "Main Stage", status: "active", progress: 37.5, taskCount: 4, overlapCount: 1, overdueCount: 0, blockedCount: 1 },
     ]);
   });
 
@@ -48,6 +48,14 @@ describe("summarizeDashboard", () => {
     expect(summary.projects[0].overlapCount).toBe(2);
     // A link to a task outside the current projects (unknown dates) isn't counted.
     expect(summarizeDashboard([stage], "2027-01-01", [{ predecessorId: "elsewhere", successorId: "t4" }]).projects[0].overlapCount).toBe(1);
+  });
+
+  it("counts blocked tasks: marked Blocked, or due to start while what they wait for isn't done", () => {
+    // t4 (Shade Sail, 13–14 Jan) is marked Blocked. t3 (Structure, 11–13 Jan) waits for t4 (not done).
+    expect(summarizeDashboard([stage], "2027-01-01").blockedTasks).toBe(1);
+    const linked = (today: string) => summarizeDashboard([stage], today, [{ predecessorId: "t4", successorId: "t3" }]).blockedTasks;
+    expect(linked("2027-01-10")).toBe(1); // t3 starts tomorrow: that's just the plan
+    expect(linked("2027-01-11")).toBe(2); // t3 is due to start and still waits
   });
 
   it("marks unfinished tasks whose planned last day has passed as overdue", () => {

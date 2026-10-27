@@ -6,6 +6,7 @@
 import { formatDate, pluralDays } from "@/lib/format";
 import { daysBetween, type DateRange } from "./schedule";
 import type { SubprojectColor } from "./subproject-colors";
+import type { TaskStatus } from "./tasks";
 
 /** One end of a link: where the task is and its planned dates (null when unknown). */
 export type LinkedTask = {
@@ -16,6 +17,7 @@ export type LinkedTask = {
   projectId: string;
   projectName: string;
   color: SubprojectColor;
+  status: TaskStatus;
   range: DateRange | null;
 };
 

@@ -8,6 +8,7 @@ import { overlapsFor, schedulesFor, type PlanSubproject } from "./project-plan";
 import { rollupProgress } from "./progress";
 import type { ProjectStatus } from "./projects";
 import { daysBetween, type DateRange, type Dependency, type IsoDate } from "./schedule";
+import { isWaiting, overdueDays } from "./task-flags";
 import { TASK_STATUSES, type TaskStatus } from "./tasks";
 
 export type DashboardTask = PlanSubproject["tasks"][number] & { status: TaskStatus; progress: number | null };
@@ -30,6 +31,8 @@ export type ProjectHealth = {
   taskCount: number;
   overlapCount: number;
   overdueCount: number;
+  /** Marked Blocked, or due to start while a task it waits for isn't done (P4-04). */
+  blockedCount: number;
 };
 
 export type DashboardSummary = {
@@ -38,6 +41,7 @@ export type DashboardSummary = {
   /** Null when there are no tasks at all. */
   openTasks: number | null;
   overdueTasks: number | null;
+  blockedTasks: number | null;
   tasksByStatus: Record<TaskStatus, number>;
   /** Not on site yet; null when no materials are listed. */
   materialsNotOnSite: number | null;
@@ -58,11 +62,13 @@ export function summarizeDashboard(
   const tasksByStatus = Object.fromEntries(TASK_STATUSES.map((s) => [s, 0])) as Record<TaskStatus, number>;
   let taskCount = 0;
   let overdueTasks = 0;
+  let blockedTasks = 0;
   const materials = current.flatMap((p) => p.materialStatuses);
 
   // Planned dates and project of every task in a current project, for task-link overlaps.
   const taskRange = new Map<string, DateRange>();
   const taskProject = new Map<string, string>();
+  const taskStatus = new Map<string, TaskStatus>();
   for (const project of current) {
     const schedules = schedulesFor(project.subprojects);
     for (const sub of project.subprojects) {
@@ -70,8 +76,12 @@ export function summarizeDashboard(
         taskRange.set(t.id, t);
         taskProject.set(t.id, project.id);
       }
+      for (const t of sub.tasks) taskStatus.set(t.id, t.status);
     }
   }
+  // What each task waits for, with known statuses (links to finished projects don't block).
+  const waitsFor = (taskId: string) =>
+    taskLinks.flatMap((l) => (l.successorId === taskId && taskStatus.has(l.predecessorId) ? [{ status: taskStatus.get(l.predecessorId)! }] : []));
   const overlappingLinks = taskLinks.filter((l) => {
     const before = taskRange.get(l.predecessorId);
     const after = taskRange.get(l.successorId);
@@ -82,15 +92,19 @@ export function summarizeDashboard(
     const schedules = schedulesFor(project.subprojects);
     const tasks = project.subprojects.flatMap((s) => s.tasks);
     let overdueCount = 0;
+    let blockedCount = 0;
     for (const sub of project.subprojects) {
-      const ends = new Map(schedules[sub.id].tasks.map((t) => [t.id, t.end]));
+      const ranges = new Map(schedules[sub.id].tasks.map((t) => [t.id, t]));
       for (const task of sub.tasks) {
         tasksByStatus[task.status] += 1;
-        if (task.status !== "done" && (ends.get(task.id) ?? today) < today) overdueCount += 1;
+        const range = ranges.get(task.id);
+        if (overdueDays(task.status, range?.end, today) !== null) overdueCount += 1;
+        if (task.status === "blocked" || isWaiting(task.status, range?.start, today, waitsFor(task.id))) blockedCount += 1;
       }
     }
     taskCount += tasks.length;
     overdueTasks += overdueCount;
+    blockedTasks += blockedCount;
     return {
       id: project.id,
       name: project.name,
@@ -103,6 +117,7 @@ export function summarizeDashboard(
           (l) => taskProject.get(l.predecessorId) === project.id || taskProject.get(l.successorId) === project.id,
         ).length,
       overdueCount,
+      blockedCount,
     };
   });
 
@@ -111,6 +126,7 @@ export function summarizeDashboard(
     planningProjects: current.filter((p) => p.status === "planning").length,
     openTasks: taskCount ? taskCount - tasksByStatus.done : null,
     overdueTasks: taskCount ? overdueTasks : null,
+    blockedTasks: taskCount ? blockedTasks : null,
     tasksByStatus,
     materialsNotOnSite: materials.length ? materials.filter((m) => m !== "on_site").length : null,
     materialsToRequest: materials.filter((m) => m === "to_request").length,

@@ -146,6 +146,25 @@ export async function addE2eTasks(projectId: string, subprojectName: string, dur
   });
 }
 
+/** "successor waits for predecessor", by task name within one project, added directly. */
+export async function linkE2eTasks(projectId: string, predecessorName: string, successorName: string): Promise<void> {
+  const call = admin();
+  const subs = await call<{ id: string }[]>(`/rest/v1/subprojects?select=id&project_id=eq.${projectId}`);
+  const tasks = await call<{ id: string; name: string; organization_id: string }[]>(
+    `/rest/v1/tasks?select=id,name,organization_id&subproject_id=in.(${subs.map((s) => s.id).join(",")})`,
+  );
+  const find = (name: string) => tasks.find((t) => t.name === name) ?? raise(`No task ${name}`);
+  const before = find(predecessorName);
+  await call("/rest/v1/task_dependencies", {
+    method: "POST",
+    body: JSON.stringify({ organization_id: before.organization_id, predecessor_task_id: before.id, successor_task_id: find(successorName).id }),
+  });
+}
+
+function raise(message: string): never {
+  throw new Error(message);
+}
+
 /**
  * Remove the E2E organization's projects with exactly this name. Test files clean up only
  * what they created, because other files run at the same time.

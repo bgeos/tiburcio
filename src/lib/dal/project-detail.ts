@@ -155,6 +155,7 @@ export async function getProjectDetail(org: Membership, projectId: string): Prom
         projectId: project.id,
         projectName: project.name,
         color: sub.color,
+        status: t.status,
         range: { start: schedule.tasks[i].start, end: schedule.tasks[i].end },
       }),
     );

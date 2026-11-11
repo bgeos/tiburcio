@@ -1,0 +1,8 @@
+# env files (only .env.example is committed)
+.env*
+!.env.example
+
+node_modules/
+.next/
+supabase/.temp/
+supabase/.branches/

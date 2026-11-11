@@ -1,0 +1,1 @@
+-- Seed for local development. Phase 1 adds Bruno's user and the 6 personal projects.

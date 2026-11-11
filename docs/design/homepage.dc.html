@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tibúrcio · Command Center</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800&amp;family=Rajdhani:wght@500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#030d08}
+a{color:#7ff0b0}a:hover{color:#b6ffd4}
+button{font:inherit;cursor:pointer}
+.hud-btn:hover{background:rgba(74,222,128,0.14)!important;border-color:rgba(74,222,128,0.55)!important}
+.nav-btn:hover{background:rgba(74,222,128,0.10)!important}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; padding: 16px; display: flex; flex-direction: column; gap: 16px; background-color: #030d08; background-image: radial-gradient(circle at 50% 18%, rgba(34,197,94,0.10), rgba(3,13,8,0) 45%); color: #d7f5e3; font-family: Inter, system-ui, sans-serif; font-size: 14px">
+
+<!-- TOP BAR -->
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; justify-content: space-between">
+<div style="display: flex; align-items: center; gap: 12px; padding: 10px 18px; border: 1px solid rgba(74,222,128,0.28); border-radius: 12px; background: rgba(8,28,19,0.8)">
+<svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true"><circle cx="17" cy="17" r="15" stroke="{{accent}}" stroke-width="1.5" opacity="0.6"></circle><circle cx="17" cy="17" r="9" stroke="{{accent}}" stroke-width="1.5"></circle><circle cx="17" cy="17" r="3.5" fill="{{accent}}"></circle></svg>
+<div style="display: flex; flex-direction: column">
+<span style="font-family: Orbitron, sans-serif; font-weight: 800; font-size: 20px; letter-spacing: 0.22em; color: #eafff2">TIBÚRCIO</span>
+<span style="font-family: Rajdhani, sans-serif; font-weight: 600; font-size: 11px; letter-spacing: 0.32em; color: #86b39b">COMMAND CENTER</span>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 10px; padding: 8px 14px; border: 1px solid rgba(74,222,128,0.28); border-radius: 999px; font-family: Rajdhani, sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.14em">
+<span style="color: #d7f5e3">SYSTEM STATUS</span>
+<span style="width: 8px; height: 8px; border-radius: 50%; background: {{accent}}; box-shadow: 0 0 8px {{accent}}"></span>
+<span style="color: {{accent}}">ONLINE</span>
+</div>
+<div style="display: flex; flex-direction: column; align-items: center; flex-grow: 1">
+<span style="font-family: Rajdhani, sans-serif; font-weight: 600; font-size: 14px; color: #a9d6bd">{{dateLabel}}</span>
+<span style="font-family: Orbitron, sans-serif; font-weight: 700; font-size: 30px; letter-spacing: 0.06em; color: #eafff2">{{timeLabel}}</span>
+</div>
+<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+<label style="display: flex; align-items: center; gap: 8px; padding: 0 14px; height: 44px; min-width: 220px; border: 1px solid rgba(74,222,128,0.28); border-radius: 10px; background: rgba(8,28,19,0.8)">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#86b39b" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search</span>
+<input type="search" placeholder="Search projects, photos, notes…" style="background: transparent; border: 0; outline: none; color: #d7f5e3; font: inherit; width: 100%">
+</label>
+<button class="hud-btn" aria-label="Notifications" style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid rgba(74,222,128,0.28); background: rgba(8,28,19,0.8); display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a9d6bd" stroke-width="2" aria-hidden="true"><path d="M6 8a6 6 0 0112 0c0 7 3 8 3 8H3s3-1 3-8"></path><path d="M10 21h4"></path></svg></button>
+<button class="hud-btn" aria-label="Settings" style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid rgba(74,222,128,0.28); background: rgba(8,28,19,0.8); display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a9d6bd" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"></path></svg></button>
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 12px; height: 44px; border: 1px solid rgba(74,222,128,0.28); border-radius: 10px; background: rgba(8,28,19,0.8)">
+<div style="display: flex; flex-direction: column; align-items: flex-end"><span style="font-weight: 600; font-size: 13px; color: #eafff2">Bruno</span><span style="font-size: 11px; color: #86b39b">Commander</span></div>
+<span style="width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid {{accent}}; display: flex; align-items: center; justify-content: center; font-family: Orbitron, sans-serif; font-size: 12px; color: {{accent}}">B</span>
+</div>
+</div>
+</header>
+
+<!-- BODY: SIDEBAR + CONTENT -->
+<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+
+<!-- SIDEBAR -->
+<nav aria-label="Workspace" style="flex: 1 1 220px; max-width: 260px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 10px; border: 1px solid rgba(74,222,128,0.22); border-radius: 12px; background: rgba(8,28,19,0.72)">
+<sc-for list="{{nav}}" as="item" hint-placeholder-count="8">
+<button class="nav-btn" onClick="{{item.pick}}" style="{{item.style}}">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.icon}}"></path></svg>
+<span style="flex-grow: 1; text-align: left">{{item.label}}</span>
+<sc-if value="{{item.hasBadge}}" hint-placeholder-val="{{false}}"><span style="font-size: 11px; padding: 2px 8px; border-radius: 999px; background: rgba(74,222,128,0.16); color: #b6ffd4">{{item.badge}}</span></sc-if>
+</button>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 16px; border: 1px solid rgba(74,222,128,0.22); border-radius: 12px; background: rgba(8,28,19,0.72)">
+<span style="align-self: flex-start; font-family: Rajdhani, sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.16em; color: #7ff0b0">VOICE</span>
+<div style="display: flex; align-items: center; gap: 3px; height: 28px" aria-hidden="true">
+<sc-for list="{{wave}}" as="w" hint-placeholder-count="24"><span style="{{w.style}}"></span></sc-for>
+</div>
+<span style="font-size: 12px; color: #a9d6bd">{{voiceLabel}}</span>
+<button onClick="{{toggleVoice}}" aria-label="Tap to speak to Tibúrcio" style="width: 96px; height: 96px; border-radius: 50%; border: 2px solid {{accent}}; background: radial-gradient(circle, rgba(74,222,128,0.35), rgba(8,28,19,0.9) 70%); box-shadow: 0 0 0 10px rgba(74,222,128,0.06), 0 0 0 20px rgba(74,222,128,0.04), 0 0 28px rgba(74,222,128,0.35); display: flex; align-items: center; justify-content: center">
+<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#eafff2" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0014 0"></path><path d="M12 18v3"></path></svg>
+</button>
+<span style="font-size: 12px; color: #86b39b">Tap to speak</span>
+<button class="hud-btn" style="width: 100%; height: 44px; border-radius: 10px; border: 1px solid rgba(74,222,128,0.28); background: transparent; color: #d7f5e3; font-family: Rajdhani, sans-serif; font-weight: 600; font-size: 15px; letter-spacing: 0.06em">Focus mode</button>
+</div>
+</nav>
+
+<!-- CONTENT -->
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+
+<!-- ROW 1 -->
+<div style="display: flex; flex-wrap: wrap; gap: 16px">
+<!-- Core overview -->
+<section style="flex: 1 1 240px; display: flex; flex-direction: column; gap: 8px; padding: 16px; border: 1px solid rgba(74,222,128,0.22); border-radius: 12px; background: rgba(8,28,19,0.72)">
+<h2 style="margin: 0 0 4px; font-family: Rajdhani, sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.16em; color: #7ff0b0">CORE OVERVIEW</h2>
+<sc-for list="{{core}}" as="c" hint-placeholder-count="6">
+<div style="display: flex; align-items: center; gap: 12px; padding: 8px 10px; border: 1px solid rgba(74,222,128,0.14); border-radius: 8px; background: rgba(3,13,8,0.5)">
+<span style="width: 30px; height: 30px; border-radius: 8px; background: rgba(74,222,128,0.12); display: flex; align-items: center; justify-content: center; color: #7ff0b0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="{{c.icon}}"></path></svg></span>
+<div style="display: flex; flex-direction: column"><span style="font-weight: 600; font-size: 13px; color: #eafff2">{{c.label}}</span><span style="{{c.statusStyle}}">{{c.status}}</span></div>
+</div>
+</sc-for>
+</section>
+
+<!-- Core orb -->
+<section aria-label="Tibúrcio core" style="flex: 2 1 380px; min-height: 340px; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(74,222,128,0.22); border-radius: 12px; background: radial-gradient(circle at 50% 50%, rgba(34,197,94,0.16), rgba(8,28,19,0.72) 60%); overflow: hidden">
+<div style="position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 20px; padding: 20px">
+<div style="position: relative; width: 230px; height: 300px; display: flex; align-items: center; justify-content: center">
+<svg width="230" height="300" viewBox="0 0 230 300" fill="none" aria-hidden="true" style="position: absolute; left: 0; top: 0">
+<ellipse cx="115" cy="200" rx="110" ry="26" stroke="{{accent}}" stroke-width="1" opacity="0.35" transform="rotate(-10 115 200)"></ellipse>
+<ellipse cx="115" cy="150" rx="104" ry="20" stroke="{{accent}}" stroke-width="1" opacity="0.22" transform="rotate(8 115 150)"></ellipse>
+<circle cx="14" cy="186" r="3" fill="{{accent}}"></circle>
+<circle cx="218" cy="210" r="3" fill="{{accent}}"></circle>
+<circle cx="196" cy="128" r="2" fill="{{accent}}" opacity="0.8"></circle>
+<rect x="101" y="10" width="28" height="22" rx="4" fill="#b8864b" opacity="0.9"></rect>
+<path d="M103 32h24v64c0 16 30 30 30 62v118c0 10-8 16-18 16H91c-10 0-18-6-18-16V158c0-32 30-46 30-62z" fill="rgba(34,197,94,0.18)" stroke="{{accent}}" stroke-width="2"></path>
+<path d="M99 32h32v8H99z" fill="{{accent}}" opacity="0.7"></path>
+<path d="M82 176h66M80 230h70" stroke="{{accent}}" stroke-width="0.8" opacity="0.4"></path>
+<rect x="84" y="186" width="62" height="40" rx="4" fill="#06170f" stroke="{{accent}}" stroke-width="1.2"></rect>
+<text x="115" y="202" text-anchor="middle" fill="#eafff2" font-family="Orbitron, sans-serif" font-size="9" font-weight="700" letter-spacing="1.2">TIBÚRCIO</text>
+<text x="115" y="214" text-anchor="middle" fill="{{accent}}" font-family="Rajdhani, sans-serif" font-size="8" font-weight="600" letter-spacing="1">RESERVA DO CHEFE</text>
+<text x="115" y="222" text-anchor="middle" fill="#86b39b" font-family="Rajdhani, sans-serif" font-size="6.5" letter-spacing="0.8">COLHEITA 2026</text>
+<path d="M110 96c-6 14-10 30-10 60" stroke="#eafff2" stroke-width="3" stroke-linecap="round" opacity="0.18"></path>
+<path d="M176 222h30c0 18-6 30-15 30s-15-12-15-30z" fill="rgba(127,29,29,0.55)" stroke="{{accent}}" stroke-width="1.5"></path>
+<path d="M174 210h34c0 26-7 42-17 42s-17-16-17-42z" stroke="{{accent}}" stroke-width="1.5"></path>
+<path d="M191 252v26M180 280h22" stroke="{{accent}}" stroke-width="1.5" stroke-linecap="round"></path>
+</svg>
+</div>
+<div style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px; max-width: 300px">
+<span style="font-family: Orbitron, sans-serif; font-weight: 800; font-size: 38px; letter-spacing: 0.16em; color: #eafff2; text-shadow: 0 0 18px {{accent}}">TIBÚRCIO</span>
+<span style="font-family: Rajdhani, sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 0.3em; color: {{accent}}">AI CORE · EDIÇÃO VINHO VERDE</span>
+<div style="position: relative; margin-top: 8px; padding: 12px 14px; border: 1px solid {{accent}}; border-radius: 14px 14px 14px 4px; background: rgba(3,13,8,0.75); font-size: 15px; line-height: 1.45; color: #eafff2">“{{tagline}}”</div>
+<span style="font-family: Rajdhani, sans-serif; font-size: 12px; letter-spacing: 0.1em; color: #86b39b">v0.1 · feito à tuga · powered by Claude</span>
+</div>
+</div>
+</section>
+
+<!-- Live feed -->
+<section style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 8px; padding: 16px; border: 1px solid rgba(74,222,128,0.22); border-radius: 12px; background: rgba(8,28,19,0.72)">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px">
+<h2 style="margin: 0; font-family: Rajdhani, sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.16em; color: #7ff0b0">LIVE FEED</h2>
+<span style="font-family: Rajdhani, sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 0.1em; padding: 2px 8px; border-radius: 999px; background: rgba(74,222,128,0.16); color: #b6ffd4">LIVE</span>
+</div>
+<sc-for list="{{feed}}" as="f" hint-placeholder-count="5">
+<div style="display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid rgba(74,222,128,0.14); border-radius: 8px; background: rgba(3,13,8,0.5)">
+<span style="{{f.dotStyle}}"></span>
+<div style="display: flex; flex-direction: column; flex-grow: 1; gap: 2px"><span style="font-weight: 500; font-size: 13px; color: #eafff2">{{f.title}}</span><span style="font-size: 12px; color: #86b39b">{{f.sub}}</span></div>
+<span style="{{f.tagStyle}}">{{f.tag}}</span>
+</div>
+</sc-for>
+<a href="#feed" style="align-self: center; font-size: 13px; margin-top: 4px">View all activity ›</a>
+</section>
+</div>
+
+<!-- ROW 2 -->
+<div style="display: flex; flex-wrap: wrap; gap: 16px">
+<!-- Projects -->
+<section style="flex: 3 1 520px; display: flex; flex-direction: column; gap: 12px; padding: 16px; border: 1px solid rgba(74,222,128,0.22); border-radius: 12px; background: rgba(8,28,19,0.72)">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<h2 style="margin: 0; font-family: Rajdhani, sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.16em; color: #7ff0b0">PERSONAL PROJECTS</h2>
+<a href="#projects" style="font-size: 13px">View all ›</a>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{projects}}" as="p" hint-placeholder-count="6">
+<button class="hud-btn" style="display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 12px; min-height: 92px; text-align: left; border: 1px solid rgba(74,222,128,0.16); border-radius: 10px; background: rgba(3,13,8,0.5); color: inherit">
+<div style="display: flex; align-items: center; gap: 8px; width: 100%">
+<span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(74,222,128,0.12); display: flex; align-items: center; justify-content: center; color: #7ff0b0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{p.icon}}"></path></svg></span>
+<span style="font-weight: 600; font-size: 14px; color: #eafff2; flex-grow: 1">{{p.name}}</span>
+<span style="font-family: Rajdhani, sans-serif; font-weight: 700; font-size: 10px; letter-spacing: 0.1em; color: #86b39b">{{p.tag}}</span>
+</div>
+<span style="font-size: 12px; color: #a9d6bd; line-height: 1.4">{{p.sub}}</span>
+</button>
+</sc-for>
+</div>
+</section>
+
+<!-- jupigenio (separate app) -->
+<section style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px solid rgba(45,212,191,0.35); border-radius: 12px; background: rgba(6,24,24,0.72)">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<h2 style="margin: 0; font-family: Rajdhani, sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.16em; color: #5eead4">JUPIGENIO</h2>
+<span style="font-family: Rajdhani, sans-serif; font-weight: 700; font-size: 10px; letter-spacing: 0.1em; padding: 2px 8px; border-radius: 999px; border: 1px solid #5eead4; color: #5eead4">SEPARATE APP</span>
+</div>
+<span style="font-size: 13px; line-height: 1.45; color: #a9d6bd">Focused workspace for specific projects. Opens in its own tab, signed in through Tibúrcio.</span>
+<div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 14px 10px; border: 1px dashed rgba(45,212,191,0.35); border-radius: 10px; text-align: center; font-size: 12px; color: #8fbfb3">Your jupigenio projects will show here once the app is connected.</div>
+<button class="hud-btn" style="height: 44px; border-radius: 8px; border: 1px solid #5eead4; background: rgba(45,212,191,0.10); color: #eafff2; font-family: Rajdhani, sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.08em">OPEN JUPIGENIO ›</button>
+</section>
+
+<!-- Quick commands -->
+<section style="flex: 1 1 220px; display: flex; flex-direction: column; gap: 8px; padding: 16px; border: 1px solid rgba(74,222,128,0.22); border-radius: 12px; background: rgba(8,28,19,0.72)">
+<h2 style="margin: 0 0 4px; font-family: Rajdhani, sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.16em; color: #7ff0b0">QUICK COMMANDS</h2>
+<sc-for list="{{commands}}" as="q" hint-placeholder-count="5">
+<button class="hud-btn" style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 12px; border: 1px solid rgba(74,222,128,0.18); border-radius: 8px; background: rgba(3,13,8,0.5); color: #eafff2; font-size: 13px; font-weight: 500; text-align: left">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7ff0b0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{q.icon}}"></path></svg>
+<span>{{q.label}}</span>
+</button>
+</sc-for>
+</section>
+</div>
+
+<!-- ROW 3 -->
+<div style="display: flex; flex-wrap: wrap; gap: 16px">
+<!-- Today -->
+<section style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px solid rgba(74,222,128,0.22); border-radius: 12px; background: rgba(8,28,19,0.72)">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<h2 style="margin: 0; font-family: Rajdhani, sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.16em; color: #7ff0b0">TODAY</h2>
+<span style="font-size: 12px; color: #86b39b">Calendar</span>
+</div>
+<div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 18px 8px; border: 1px dashed rgba(74,222,128,0.25); border-radius: 10px; text-align: center">
+<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#7ff0b0" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
+<span style="font-size: 13px; color: #a9d6bd">Connect Google Calendar to see today’s schedule here.</span>
+<button class="hud-btn" style="height: 40px; padding: 0 16px; border-radius: 8px; border: 1px solid rgba(74,222,128,0.35); background: transparent; color: #eafff2; font-size: 13px">Connect calendar</button>
+</div>
+</section>
+
+<!-- Storage -->
+<section style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px solid rgba(74,222,128,0.22); border-radius: 12px; background: rgba(8,28,19,0.72)">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<h2 style="margin: 0; font-family: Rajdhani, sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.16em; color: #7ff0b0">PHOTOS &amp; STORAGE</h2>
+<span style="font-size: 12px; color: #86b39b">Drives</span>
+</div>
+<sc-for list="{{drives}}" as="d" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid rgba(74,222,128,0.14); border-radius: 8px; background: rgba(3,13,8,0.5)">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7ff0b0" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="{{d.icon}}"></path></svg>
+<div style="display: flex; flex-direction: column; flex-grow: 1"><span style="font-weight: 600; font-size: 13px; color: #eafff2">{{d.name}}</span><span style="font-size: 12px; color: #86b39b">{{d.sub}}</span></div>
+<span style="{{d.statusStyle}}">{{d.status}}</span>
+</div>
+</sc-for>
+<button class="hud-btn" style="height: 44px; border-radius: 8px; border: 1px solid {{accent}}; background: rgba(74,222,128,0.10); color: #eafff2; font-family: Rajdhani, sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.08em">IMPORT PHOTOS</button>
+</section>
+
+<!-- Integrations -->
+<section style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px solid rgba(74,222,128,0.22); border-radius: 12px; background: rgba(8,28,19,0.72)">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<h2 style="margin: 0; font-family: Rajdhani, sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.16em; color: #7ff0b0">INTEGRATIONS</h2>
+<span style="font-size: 12px; color: {{accent}}">{{linkedCount}} linked</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{integrations}}" as="i" hint-placeholder-count="6">
+<div style="display: flex; flex-direction: column; gap: 2px; padding: 10px; border: 1px solid rgba(74,222,128,0.14); border-radius: 8px; background: rgba(3,13,8,0.5)">
+<span style="font-weight: 600; font-size: 13px; color: #eafff2">{{i.name}}</span>
+<span style="{{i.statusStyle}}">{{i.status}}</span>
+</div>
+</sc-for>
+</div>
+<a href="#integrations" style="align-self: center; font-size: 13px">Manage integrations ›</a>
+</section>
+</div>
+</main>
+</div>
+
+<!-- BOTTOM BAR -->
+<footer style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 16px; border: 1px solid rgba(74,222,128,0.22); border-radius: 12px; background: rgba(8,28,19,0.8)">
+<div style="display: flex; gap: 10px; flex-wrap: wrap; flex: 1 1 300px">
+<div style="display: flex; flex-direction: column; padding: 6px 12px; border: 1px solid rgba(74,222,128,0.16); border-radius: 8px"><span style="font-size: 11px; color: #86b39b">This computer</span><span style="font-size: 13px; font-weight: 600; color: #eafff2">Online</span></div>
+<div style="display: flex; flex-direction: column; padding: 6px 12px; border: 1px solid rgba(74,222,128,0.16); border-radius: 8px"><span style="font-size: 11px; color: #86b39b">Android phone</span><span style="font-size: 13px; font-weight: 600; color: #fbbf24">Not paired</span></div>
+<div style="display: flex; flex-direction: column; padding: 6px 12px; border: 1px solid rgba(74,222,128,0.16); border-radius: 8px"><span style="font-size: 11px; color: #86b39b">jupigenio</span><span style="font-size: 13px; font-weight: 600; color: #eafff2">Tab ready</span></div>
+</div>
+<button onClick="{{toggleVoice}}" style="flex: 0 1 380px; height: 60px; border-radius: 999px; border: 2px solid {{accent}}; background: rgba(74,222,128,0.10); box-shadow: 0 0 24px rgba(74,222,128,0.30), inset 0 0 18px rgba(74,222,128,0.15); color: #eafff2; display: flex; flex-direction: column; align-items: center; justify-content: center">
+<span style="font-family: Orbitron, sans-serif; font-weight: 700; font-size: 17px; letter-spacing: 0.16em; color: {{accent}}">FALA COM O TIBÚRCIO</span>
+<span style="font-size: 12px; color: #a9d6bd">{{voiceLabel}}</span>
+</button>
+<div style="display: flex; justify-content: flex-end; flex: 1 1 200px">
+<button class="hud-btn" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid rgba(74,222,128,0.35); background: transparent; color: #eafff2; font-size: 13px; font-weight: 500">Daily briefing</button>
+</div>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#39FF8C","options":["#39FF8C","#22C55E","#A3E635","#2DD4BF"]},"$preview":{"width":1440,"height":1120}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { active: 'home', now: Date.now(), listening: false };
+  }
+  componentDidMount() {
+    this.timer = setInterval(() => this.setState({ now: Date.now() }), 1000);
+  }
+  componentWillUnmount() {
+    clearInterval(this.timer);
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#39FF8C';
+    const d = new Date(this.state.now);
+    const dateLabel = d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const timeLabel = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    const I = {
+      home: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',
+      chat: 'M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z',
+      projects: 'M3 7h6l2 2h10v10H3z',
+      app: 'M4 4h16v16H4zM4 9h16M9 9v11',
+      photos: 'M4 6h16v13H4zM8 14l3-3 3 3 2-2 4 4M9 9.5h.01',
+      calendar: 'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4',
+      plug: 'M9 3v5M15 3v5M6 8h12v3a6 6 0 01-12 0zM12 17v4',
+      settings: 'M12 9a3 3 0 100 6 3 3 0 000-6zM12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1',
+      mic: 'M12 3a3 3 0 013 3v5a3 3 0 01-6 0V6a3 3 0 013-3zM5 11a7 7 0 0014 0M12 18v3',
+      drive: 'M3 13h18v6H3zM5 13l2-8h10l2 8M7 16h.01',
+      laptop: 'M5 5h14v10H5zM2 19h20',
+      phone: 'M8 2h8v20H8zM11 18h2',
+      plus: 'M12 5v14M5 12h14',
+      stage: 'M3 20h18M5 20V9l7-5 7 5v11M9 20v-6h6v6',
+      bench: 'M3 10h18M3 10v10M21 10v10M3 15h18M7 6h10',
+      cube: 'M12 3l8 4.5v9L12 21l-8-4.5v-9zM12 12l8-4.5M12 12v9M12 12L4 7.5',
+      plane: 'M2 16l20-8-20-8 4 8zM6 8h8',
+      wrench: 'M14.7 6.3a4 4 0 01-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 005.4-5.4l-2.5 2.5-2.5-2.5z',
+      moto: 'M5 17a3 3 0 100-6 3 3 0 000 6zM19 17a3 3 0 100-6 3 3 0 000 6zM5 14l4-6h5l3 6M12 8l2-3h3',
+      brief: 'M4 6h16M4 12h16M4 18h10'
+    };
+
+    const navDefs = [
+      { id: 'home', label: 'Command Center', icon: I.home },
+      { id: 'chat', label: 'Chat', icon: I.chat },
+      { id: 'projects', label: 'Personal projects', icon: I.projects, badge: '6' },
+      { id: 'jupigenio', label: 'jupigenio', icon: I.app },
+      { id: 'photos', label: 'Photos & Storage', icon: I.photos },
+      { id: 'calendar', label: 'Calendar', icon: I.calendar },
+      { id: 'integrations', label: 'Integrations', icon: I.plug },
+      { id: 'settings', label: 'Settings', icon: I.settings }
+    ];
+    const nav = navDefs.map((n) => {
+      const on = this.state.active === n.id;
+      return {
+        ...n,
+        hasBadge: !!n.badge,
+        pick: () => this.setState({ active: n.id }),
+        style: 'display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 8px; font-size: 14px; font-weight: 500; background: ' +
+          (on ? 'rgba(74,222,128,0.14)' : 'transparent') + '; border: 1px solid ' + (on ? accent : 'transparent') +
+          '; color: ' + (on ? '#eafff2' : '#a9d6bd') + (on ? '; box-shadow: inset 3px 0 0 ' + accent : '')
+      };
+    });
+
+    const ok = 'font-size: 12px; color: #4ade80';
+    const warn = 'font-size: 12px; color: #fbbf24';
+    const off = 'font-size: 12px; color: #8aa597';
+    const core = [
+      { label: 'Chat', status: 'Ready', statusStyle: ok, icon: I.chat },
+      { label: 'Personal projects', status: '6 projects', statusStyle: ok, icon: I.projects },
+      { label: 'jupigenio', status: 'Project workspace · own tab', statusStyle: ok, icon: I.app },
+      { label: 'Photos & Storage', status: 'Planned', statusStyle: warn, icon: I.photos },
+      { label: 'Voice', status: 'Planned', statusStyle: warn, icon: I.mic },
+      { label: 'Integrations', status: '1 linked', statusStyle: ok, icon: I.plug }
+    ];
+
+    const tag = (c) => 'font-family: Rajdhani, sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 999px; color: ' + c + '; border: 1px solid ' + c;
+    const dot = (c) => 'width: 8px; height: 8px; margin-top: 6px; flex-shrink: 0; border-radius: 50%; background: ' + c + '; box-shadow: 0 0 6px ' + c;
+    const feed = [
+      { title: 'Tibúrcio is online', sub: 'Connect your apps to fill this feed', tag: 'INFO', c: '#4ade80' },
+      { title: 'jupigenio available as a tab', sub: 'Login handled by Tibúrcio', tag: 'APP', c: '#4ade80' },
+      { title: 'GitHub linked', sub: 'jupigenio repo not shared with Claude yet', tag: 'TIP', c: '#2dd4bf' },
+      { title: 'No photo drive connected', sub: 'Plug in a drive to import photos', tag: 'STORAGE', c: '#fbbf24' },
+      { title: 'Android phone not paired', sub: 'Pair it to import photos and use voice', tag: 'WARN', c: '#fbbf24' }
+    ].map((f) => ({ ...f, tagStyle: tag(f.c), dotStyle: dot(f.c) }));
+
+    const projects = [
+      { name: 'Main Stage', sub: 'Structure, shade sail and DJ booth', tag: 'BUILD', icon: I.stage },
+      { name: 'Banco em L', sub: 'Plywood storage modules with pine tops', tag: 'DIY', icon: I.bench },
+      { name: 'Sistino', sub: 'Small stackable piece from offcuts', tag: 'DIY', icon: I.cube },
+      { name: 'Remote job · Brasil', sub: 'Remote TIBCO work as a PJ contractor', tag: 'CAREER', icon: I.plane },
+      { name: 'Negócio do tio', sub: 'Digitalising the plumbing business', tag: 'FAMILY', icon: I.wrench },
+      { name: 'Mota', sub: 'The old motorbike, freshly repainted', tag: 'GARAGE', icon: I.moto }
+    ];
+
+    const commands = [
+      { label: 'Talk to Tibúrcio', icon: I.mic },
+      { label: 'New personal project', icon: I.plus },
+      { label: 'Open jupigenio', icon: I.app },
+      { label: 'Import photos', icon: I.photos },
+      { label: 'Daily briefing', icon: I.brief }
+    ];
+
+    const drives = [
+      { name: 'This computer · Inbox', sub: 'Temporary folder for new photos', status: 'Ready', statusStyle: ok, icon: I.laptop },
+      { name: 'Photo drive', sub: 'External drive for the archive', status: 'Not connected', statusStyle: off, icon: I.drive },
+      { name: 'Android phone', sub: 'Source of new photos', status: 'Not paired', statusStyle: warn, icon: I.phone }
+    ];
+
+    const integrations = [
+      { name: 'Claude', status: 'API key needed', statusStyle: warn },
+      { name: 'GitHub', status: 'Linked', statusStyle: ok },
+      { name: 'Gmail', status: 'Not linked', statusStyle: off },
+      { name: 'Google Calendar', status: 'Not linked', statusStyle: off },
+      { name: 'Google Drive', status: 'Not linked', statusStyle: off },
+      { name: 'Home Assistant', status: 'Later', statusStyle: off }
+    ];
+    const linkedCount = integrations.filter((i) => i.status === 'Linked').length;
+
+    const listening = this.state.listening;
+    const t = Math.floor(this.state.now / 1000);
+    const wave = Array.from({ length: 24 }, (_, k) => {
+      const h = listening ? 6 + Math.abs(Math.sin((k + t) * 0.9)) * 22 : 4 + Math.abs(Math.sin(k * 0.7)) * 8;
+      return { style: 'width: 3px; border-radius: 2px; height: ' + Math.round(h) + 'px; background: ' + accent + '; opacity: ' + (listening ? 0.9 : 0.45) };
+    });
+
+    return {
+      accent, dateLabel, timeLabel, nav, core, feed, projects, commands, drives, integrations, linkedCount, wave,
+      voiceLabel: listening ? 'À escuta, chefe…' : 'Em pausa · a beber um café',
+      tagline: [
+        'Olá chefe! Então, bora trabalhar?',
+        'Calma, isto resolve-se. Primeiro um café.',
+        'Tudo em ordem. Só falta o bacalhau.',
+        'Está-se bem. Que é que se faz hoje?',
+        'Projeto difícil? Abre-se uma garrafa e pensa-se.',
+        'Não é desenrascanço, é engenharia à portuguesa.'
+      ][Math.floor(this.state.now / 7000) % 6],
+      toggleVoice: () => this.setState({ listening: !this.state.listening })
+    };
+  }
+}
+</script>
+</body>
+</html>

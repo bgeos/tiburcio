@@ -11,7 +11,19 @@ Storage, so the Supabase equivalent is a separate project.
 - `supabase/config.toml` is copied from jupigenio (same auth defaults, public sign-up off),
   with local ports moved to 544xx so both stacks can run side by side, and without
   jupigenio's invitation email template.
-- Tibúrcio never touches jupigenio's database; it reads jupigenio data only through
-  jupigenio's own endpoint (DISCOVERY §4).
+- Tibúrcio never touches jupigenio's database.
 - Hosted auth settings don't travel with migrations: sign-up must be turned off in the
   dashboard by hand, as jupigenio does (its D-032).
+
+## D-002 · 2026-11-11 · Tibúrcio is independent; jupigenio is only a tab with a frame
+Bruno's decision: treat Tibúrcio as a new project that will grow big. This replaces plan §7.
+- jupigenio gets no changes (no proxy, HMAC auth mode, base path or summary endpoint).
+- The jupigenio tab shows `JUPIGENIO_URL` (default `https://jupigenio.vercel.app`) in a
+  full-height frame, lazy-loaded, with an "Open in new tab" button. Tibúrcio's CSP allows
+  `frame-src` for that origin only.
+- Signing in inside the frame works only when both apps are the same site (jupigenio's session
+  cookie is `SameSite=Lax`, and `*.vercel.app` is a public suffix), so they need subdomains of
+  one custom domain. Until then, the tab says so and points to the new-tab button.
+- Tibúrcio doesn't read jupigenio data; the Home jupigenio panel is a shortcut to the tab.
+- Because the project will be big, the repo is an npm workspaces monorepo (`apps/web` first),
+  and `apps/web` is split by module (DISCOVERY §3).

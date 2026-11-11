@@ -1,5 +1,7 @@
 # Tibúrcio — Build Plan for Claude Code
 
+> **Where this plan and `docs/DECISIONS.md` disagree, DECISIONS wins.** Read `docs/DISCOVERY.md` §3 for the stack actually in use.
+
 > **How to use this file**
 > 1. Create a new, **private** GitHub repo called `tiburcio`.
 > 2. Put this file in it as `docs/PLAN.md` and the homepage design as `docs/design/homepage.dc.html`.
@@ -35,7 +37,7 @@ Owner / only user for now: **Bruno**. Design for one user, but keep a `users` ta
 1. **Discover before building.** Phase 0 is mandatory: read jupigenio and write `docs/DISCOVERY.md` before writing app code.
 2. **Mirror jupigenio's stack.** Same language, framework, ORM/migration tool, DB engine, package manager, lint/format config, server/hosting and deploy method. Don't introduce a new framework or database unless this plan says so, and explain why in `docs/DECISIONS.md`.
 3. **Same DB server, separate database.** Reuse jupigenio's DB server/instance and connection style, but use a **separate database (or schema, if that is how jupigenio is set up) named `tiburcio`**, with its **own DB user** that has no rights on jupigenio's data. If jupigenio uses SQLite, use a separate `tiburcio.db` file with the same driver/ORM. Never read or write jupigenio's tables directly. Talk to jupigenio only through its API (section 7).
-4. **jupigenio changes are minimal and isolated.** Do them on a branch `feat/tiburcio-integration` in the jupigenio repo, behind a config flag, so jupigenio still works on its own. Open a PR; never push to its main branch.
+4. **Don't change jupigenio.** It is only shown in a tab (D-002). Read it as a reference, never edit it.
 5. **Secrets** live in `.env` (git-ignored). Commit only `.env.example` with placeholder values. Never log secrets or tokens.
 6. **Ask before destructive actions:** dropping or resetting databases, rewriting migrations that already ran, force-pushing, deleting files outside the repo.
 7. **Small, reviewable steps.** One phase = one or more PRs with a short summary, a checklist of acceptance criteria and how to test it.
@@ -168,9 +170,8 @@ DATABASE_URL=            # e.g. postgres://tiburcio:***@<jupigenio-db-host>:5432
 APP_URL=                 # public URL of Tibúrcio
 SESSION_SECRET=
 APP_ENCRYPTION_KEY=      # 32-byte key for encrypting tokens at rest
-# jupigenio
-JUPIGENIO_INTERNAL_URL=  # e.g. http://127.0.0.1:3001
-TIBURCIO_SHARED_SECRET=  # same value set in jupigenio
+# jupigenio (shown in a frame, D-002)
+JUPIGENIO_URL=           # e.g. https://jupigenio.vercel.app
 # Claude
 ANTHROPIC_API_KEY=
 ANTHROPIC_MODEL=
@@ -181,34 +182,10 @@ Match the variable naming style jupigenio already uses if it differs.
 
 ## 7. jupigenio integration
 
-### 7.1 Goal
-jupigenio opens in a **"jupigenio" tab inside Tibúrcio**, at `https://<tiburcio-domain>/jupigenio/…`, with **no second login**. jupigenio stays usable on its own when the flag is off.
-
-### 7.2 How it works
-1. Tibúrcio's backend **reverse-proxies** `/jupigenio/*` to jupigenio's internal address (`JUPIGENIO_INTERNAL_URL`, e.g. `http://127.0.0.1:<port>`).
-2. Before proxying, Tibúrcio checks the session and adds:
-   - `X-Tiburcio-User-Email: <email>`
-   - `X-Tiburcio-Signature: <HMAC-SHA256(email + timestamp, TIBURCIO_SHARED_SECRET)>`
-   - `X-Tiburcio-Timestamp: <unix seconds>`
-   and **strips** any incoming `X-Tiburcio-*` headers from the client.
-3. The jupigenio tab in Tibúrcio renders jupigenio in a full-height frame pointing at `/jupigenio/` (same origin, so no cookie or CORS problems). Later, screens can be ported natively if wanted.
-
-### 7.3 Changes in jupigenio (branch `feat/tiburcio-integration`)
-- `AUTH_MODE=standalone | tiburcio` env flag (default `standalone`, so nothing changes until enabled).
-- In `tiburcio` mode:
-  - skip jupigenio's login and signup screens;
-  - an auth middleware verifies the HMAC signature (reject if invalid or older than 60 s), then finds the jupigenio user by email or creates it;
-  - only accept connections from Tibúrcio: bind to localhost or a private network, and/or allow-list the proxy's IP. **This network restriction is the main protection.** The HMAC check is a second layer and doesn't replace it.
-  - In `standalone` mode, `X-Tiburcio-*` headers are **ignored completely**.
-- **Base path support:** `BASE_PATH=/jupigenio`, covering routes, static assets and API calls. If the framework makes a base path impractical, fall back to a subdomain (`jupigenio.<domain>`) behind the same proxy, and record that in `DECISIONS.md`.
-- **Integration endpoint** for the Home panel: `GET /api/integration/summary` returning
-  `{ projects: [{ id, name, status, updatedAt, url }], counts: {...} }`, authenticated with the same HMAC headers.
-- Allow framing only by same origin (`frame-ancestors 'self'`).
-- Tests for the middleware: valid signature, bad signature, expired timestamp, missing headers, standalone mode unaffected.
-
-### 7.4 In Tibúrcio
-- The `JUPIGENIO` panel on Home calls `/api/jupigenio/summary`, which the Tibúrcio backend fetches from jupigenio and **caches for 60 s**. While jupigenio is unreachable, the panel shows "jupigenio offline" without breaking Home.
-- `feed_events` gets entries such as "jupigenio: project X updated" (polled every 5 min by a job, or pushed by a webhook later).
+> **Replaced by D-002 (docs/DECISIONS.md).** Tibúrcio is an independent project. jupigenio gets
+> no changes; Tibúrcio only has a jupigenio tab that shows the app in a full-height frame, with
+> an "Open in new tab" button. Ignore the proxy, HMAC, base path and summary-endpoint design
+> that used to be here; it's in git history if ever needed.
 
 ---
 
@@ -219,7 +196,6 @@ jupigenio opens in a **"jupigenio" tab inside Tibúrcio**, at `https://<tiburcio
 - **Context:** the system prompt holds the persona and the user profile. When a thread belongs to a personal project, the project's data (tasks, notes, materials) is added as context.
 - **Tools (v1):**
   - `projects.list / get / create / update`, `tasks.add / complete`, `notes.add`, `materials.add / update`
-  - `jupigenio.summary` (read-only)
   - `feed.post`
   - Later: `calendar.*`, `gmail.*` (draft only, no sending without confirmation), `github.*`, `photos.*`
 - **Persona:**
@@ -267,7 +243,7 @@ The source of truth is **`docs/design/homepage.dc.html`**. It's an HTML design f
   - **Live feed:** from `feed_events`
 - **Row 2:**
   - **Personal projects:** 3-column grid of cards (icon, name, category tag, description) → opens the project
-  - **jupigenio:** teal panel with a "Separate app" tag, its project summary, and an "Open jupigenio ›" button
+  - **jupigenio:** teal panel with a "Separate app" tag and an "Open jupigenio ›" button (no project data, D-002)
   - **Quick commands:** Talk to Tibúrcio, New personal project, Open jupigenio, Import photos, Daily briefing
 - **Row 3:**
   - **Today:** calendar, with a "Connect calendar" empty state
@@ -337,11 +313,10 @@ The source of truth is **`docs/design/homepage.dc.html`**. It's an HTML design f
 - List, create, edit and archive projects.
 - Project page tabs: Overview, Tasks, Notes and decisions, Materials (with totals in EUR), Files.
 
-**Phase 4 · jupigenio integration**
-- The jupigenio PR (7.3) is merged behind `AUTH_MODE=tiburcio`.
-- The jupigenio tab works under `/jupigenio` with no second login. Direct access to jupigenio from outside is refused.
-- The Home jupigenio panel shows real projects, with the offline state handled.
-- Standalone jupigenio still works with the flag off (tested).
+**Phase 4 · jupigenio tab** (D-002)
+- The jupigenio tab shows the app in a full-height, lazy-loaded frame with an "Open in new tab" button.
+- CSP `frame-src` allows only `JUPIGENIO_URL`.
+- If the two apps aren't on one custom domain yet, the tab explains that sign-in only works in the new tab.
 
 **Phase 5 · Chat with Tibúrcio**
 - Threads, both general and per project.
@@ -373,7 +348,6 @@ The source of truth is **`docs/design/homepage.dc.html`**. It's an HTML design f
 - [ ] Migrations are reversible and run on a fresh DB.
 - [ ] UI checked at 390px and 1440px widths; keyboard navigation works; contrast passes.
 - [ ] Performance budget checked (Lighthouse mobile score in the PR).
-- [ ] jupigenio standalone mode still works (Phase 4 onward).
 - [ ] `docs/DECISIONS.md` updated for any deviation from this plan.
 
 ---

@@ -30,18 +30,21 @@ Status: **waiting for Bruno's review.** Nothing below is built yet.
 
 ## 2. Where the plan doesn't fit jupigenio
 
-**A. The jupigenio integration (plan §7) assumes a self-hosted server.**
-The plan reverse-proxies `/jupigenio/*` through Tibúrcio, keeps jupigenio reachable only from
-localhost or a private network, and signs requests with an HMAC header. On Vercel:
-- jupigenio is public on `jupigenio.vercel.app`; there is no private network to hide it in, so
-  the HMAC check would become the *only* protection, which the plan itself rules out;
-- "trust a header and log the user in" doesn't work with Supabase Auth + RLS: jupigenio would
-  have to mint a Supabase session for that email with its secret key on every visit;
-- jupigenio has no base path support, and Next's `basePath` is fixed at build time, so
-  standalone and embedded jupigenio would need two different builds.
+**A. The jupigenio integration (plan §7) is dropped (Bruno, 2026-11-11, D-002).**
+Tibúrcio is a new, independent project. jupigenio gets **no changes**: no proxy, no HMAC
+auth mode, no base path, no summary endpoint. Tibúrcio only has a **jupigenio tab** that
+shows the jupigenio app in a full-height frame. (The plan's proxy design also didn't fit
+Vercel: jupigenio is public there, and Supabase Auth can't trust a header login.)
 
-An iframe of `jupigenio.vercel.app` inside Tibúrcio on another domain won't keep the session
-either: the cookie would be cross-site, and browsers block those.
+What the frame can and can't do, checked on 2026-11-11:
+- `jupigenio.vercel.app` sends no `X-Frame-Options` or `frame-ancestors`, so it loads in a frame.
+- Its Supabase session cookie is `SameSite=Lax`. `*.vercel.app` is a public suffix, so
+  `tiburcio.vercel.app` and `jupigenio.vercel.app` are **different sites**, and browsers won't
+  keep the jupigenio login inside the frame.
+- **Fix without touching jupigenio's code:** give both apps subdomains of one custom domain
+  (e.g. `tiburcio.<domain>`, `jupigenio.<domain>`, added in Vercel). They become the same site,
+  and the login works in the frame.
+- Until then the tab shows the frame plus an "Open in new tab" button, and says why.
 
 **B. The separate agent worker (plan §4, §8) has nowhere to run.** Vercel has no long-running
 processes. The chat has to stream from a Route Handler (Vercel functions can stream for
@@ -88,53 +91,36 @@ panel never blocks the others. No client-side fetch waterfall, and less JS shipp
   token usage stored as they happen; the confirmation flow and `agent_actions` log as planned.
   The `jobs` table stays for retries and scheduled work (feed polling), run by Vercel Cron or
   `pg_cron`.
-- **jupigenio, v1:** a **link out**. The "jupigenio" nav item and "Open jupigenio" button open
-  `jupigenio.vercel.app` in its own tab; Bruno signs in there once and the session is
-  remembered. The **Home panel** shows real jupigenio projects through one small read-only
-  endpoint (section 4).
-- **jupigenio, later (optional):** embed it in a frame once both apps share a custom domain
-  (e.g. `tiburcio.<domain>` and `jupigenio.<domain>`), so cookies are same-site. Real single
-  sign-on can be designed then if still wanted.
+- **jupigenio:** one tab with the app in a frame (`JUPIGENIO_URL`, default
+  `https://jupigenio.vercel.app`), lazy-loaded so it costs nothing until opened, with an
+  "Open in new tab" button. The Home jupigenio panel becomes a shortcut to that tab with no
+  project data, because Tibúrcio doesn't read jupigenio's data. Tibúrcio's CSP allows
+  `frame-src` for that URL only.
+- **Structure for a big project:** an **npm workspaces monorepo** from day one, so later
+  pieces have a home without a restructure:
+  - `apps/web`: the Next.js app (all modules, deployed to Vercel);
+  - later `apps/photo-helper` (Phase 8, the local helper for drives and USB) and possibly a
+    native Android wrapper (Phase 7);
+  - `packages/*` only when a second app needs to share code (no empty packages up front).
+  - Inside `apps/web`, code is split **by module** (`home`, `chat`, `projects`, `photos`,
+    `calendar`, `integrations`, `settings`), each with its own routes, DAL, actions,
+    components and tests, so modules stay independent and lazy-loadable.
 
 ## 4. jupigenio changes needed
 
-All on branch `feat/tiburcio-integration`, as a PR, never pushed to `main`. Off unless
-configured, so standalone jupigenio is unchanged.
-
-1. **Env flag:** `TIBURCIO_INTEGRATION_SECRET` (server only). When it's unset, the endpoint
-   below returns 404.
-2. **Endpoint:** `GET /api/integration/summary?email=<email>`, with header
-   `Authorization: Bearer <secret>`, compared in constant time. Returns
-   `{ projects: [{ id, name, status, updatedAt, url }], counts: { planning, active, finished } }`
-   for the non-archived projects of every organization that email belongs to. `url` is the
-   jupigenio address (`/<org>/projects/<id>`). Rate-limited, and the response is not cached by
-   the CDN.
-3. **SQL function** `public.integration_project_summary(p_email text)`, `security definer`, empty
-   `search_path`, **executable only by `service_role`**, in a new migration, so the endpoint
-   reads only what it returns instead of using the admin client freely. This becomes the
-   admin client's second use, which needs a jupigenio DECISIONS entry.
-4. **Tests:** pgTAP (`anon` and `authenticated` can't call the function; it returns only that
-   person's organizations), and Vitest for the handler (no secret → 404, wrong secret → 401,
-   missing email → 400, happy path).
-5. Later, only if we embed: `Content-Security-Policy: frame-ancestors` allowing the Tibúrcio
-   domain.
-
-Tibúrcio's side: the Home panel fetches this server-side, caches it for 60 s per user, and
-shows "jupigenio offline" on timeout (1.5 s) or error.
+**None** (D-002). jupigenio stays exactly as it is.
 
 ## 5. Open questions for Bruno
 
-1. **jupigenio integration:** OK with a link out + real summary on Home for now (section 3),
-   embedding later once there's a custom domain?
-2. **Domain:** is there a domain to buy or use for Tibúrcio (and later jupigenio), or is
-   `tiburcio.vercel.app` fine for now?
+1. ~~jupigenio integration~~ **Answered:** new independent project; jupigenio is only a tab
+   with the app in a frame (D-002).
+2. **Domain:** is there a domain to use for both apps? Without one, the jupigenio tab can't
+   keep you signed in (section 2.A).
 3. **Chat engine:** OK to use the Anthropic SDK directly instead of the Agent SDK (section 2.C)?
 4. **Clock and date:** English (`en-GB`) or Portuguese (`pt-PT`)?
 5. **Claude model:** cheaper model by default with a "stronger model" switch per thread, or
    always the strongest? And a monthly spend limit (e.g. stop or warn at €X)?
-6. **jupigenio account:** which email do you use in jupigenio? The summary matches on it. And
-   are there other jupigenio users (from Bruno's plan question 4)? The endpoint above only
-   reads, so it doesn't affect them.
+6. ~~jupigenio account~~ No longer needed: Tibúrcio doesn't read jupigenio data.
 7. **After GitHub:** Calendar or Gmail first?
 8. **Free plans:** the Supabase free project pauses after about a week without use, and Vercel
    Hobby limits function time. Fine for now?

@@ -12,9 +12,6 @@ export const RESERVED_ORG_SLUGS: readonly string[] = [
   "settings", "dashboard", "projects", "tasks", "materials", "reports", "team",
 ];
 
-/** Roles that may start a new organization (D-033). */
-export const CAN_CREATE_ORGANIZATION = ["admin", "production_manager"] as const;
-
 /** "Jupi Produções 2027" → "jupi-producoes-2027": a suggested address for a name. */
 export function slugFromName(name: string): string {
   return name

@@ -1,9 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Browser, type Page } from "@playwright/test";
-import { E2E_MEMBER, E2E_ORG, E2E_OTHER_ORG, deleteE2eOrganizations, orgPath } from "./support/users";
+import { expect, test, type Page } from "@playwright/test";
+import { E2E_ORG, E2E_OTHER_ORG, deleteE2eOrganizations, orgPath } from "./support/users";
 
-// D-033: admins and production managers start a new organization (e.g. a second festival)
-// and switch between them. The database rules are in supabase/tests/create_my_organization.
+// D-033, D-004: Bruno starts a new workspace (e.g. a festival) and switches between them. The database rules are in supabase/tests/create_my_organization.
 test.describe.configure({ mode: "serial" });
 test.skip(({ isMobile }) => isMobile, "organization journeys run once, on desktop");
 
@@ -24,12 +23,12 @@ async function expectNoAxeViolations(page: Page) {
 
 const sidebar = (page: Page) => page.locator('[data-slot="sidebar"]').first();
 
-test("an admin starts a new organization from the sidebar and lands in it", async ({ page }) => {
+test("a new workspace starts from the sidebar and opens", async ({ page }) => {
   await page.goto(orgPath("/dashboard"));
-  await sidebar(page).getByRole("button", { name: /switch organization/ }).click();
-  await page.getByRole("menuitem", { name: "New organization" }).click();
+  await sidebar(page).getByRole("button", { name: /switch workspace/ }).click();
+  await page.getByRole("menuitem", { name: "New workspace" }).click();
 
-  const dialog = page.getByRole("dialog", { name: "New organization" });
+  const dialog = page.getByRole("dialog", { name: "New workspace" });
   await dialog.getByLabel("Name").fill(NAME);
   // The address follows the name.
   await expect(dialog.getByLabel("Address")).toHaveValue(SLUG);
@@ -37,57 +36,35 @@ test("an admin starts a new organization from the sidebar and lands in it", asyn
 
   // A taken address is refused, and the form keeps what was typed.
   await dialog.getByLabel("Address").fill(E2E_OTHER_ORG.slug);
-  await dialog.getByRole("button", { name: "Create organization" }).click();
+  await dialog.getByRole("button", { name: "Create workspace" }).click();
   await expect(dialog.getByText("This address is taken. Choose another.")).toBeVisible();
   await expect(dialog.getByLabel("Name")).toHaveValue(NAME);
 
   await dialog.getByLabel("Address").fill(SLUG);
-  await dialog.getByRole("button", { name: "Create organization" }).click();
-  await expect(page).toHaveURL(new RegExp(`/${SLUG}/dashboard$`));
+  await dialog.getByRole("button", { name: "Create workspace" }).click();
+  await expect(page).toHaveURL(new RegExp(`/jupigenio/${SLUG}/dashboard$`));
   await expect(sidebar(page).getByText(NAME)).toBeVisible();
-  await expect(sidebar(page).getByText("Admin", { exact: true })).toBeVisible();
 
-  // It starts empty: the E2E organization's projects aren't here.
-  await page.goto(`/${SLUG}/projects`);
+  // It starts empty: the E2E workspace's projects aren't here.
+  await page.goto(orgPath("/projects", SLUG));
   await expect(page.getByRole("main").getByRole("link", { name: /^E2E / })).toHaveCount(0);
 });
 
-test("the sidebar menu switches between the organizations", async ({ page }) => {
-  await page.goto(`/${SLUG}/dashboard`);
-  await sidebar(page).getByRole("button", { name: /switch organization/ }).click();
+test("the sidebar menu switches between workspaces", async ({ page }) => {
+  await page.goto(orgPath("/dashboard", SLUG));
+  await sidebar(page).getByRole("button", { name: /switch workspace/ }).click();
   await page.getByRole("menuitem", { name: new RegExp(E2E_ORG.name) }).click();
-  await expect(page).toHaveURL(new RegExp(`/${E2E_ORG.slug}/dashboard$`));
+  await expect(page).toHaveURL(new RegExp(`/jupigenio/${E2E_ORG.slug}/dashboard$`));
   await expect(sidebar(page).getByText(E2E_ORG.name)).toBeVisible();
 });
 
-test("the profile lists every organization, with a way to open each", async ({ page }) => {
+test("the profile lists every workspace, with a way to open each", async ({ page }) => {
   await page.goto(orgPath("/profile"));
-  const section = page.getByRole("region", { name: "Your organizations" });
+  const section = page.getByRole("region", { name: "Your workspaces" });
   await expect(section.getByRole("listitem").filter({ hasText: E2E_ORG.name })).toContainText("Current");
   await section.getByRole("link", { name: `Open ${NAME}` }).click();
-  await expect(page).toHaveURL(new RegExp(`/${SLUG}/dashboard$`));
+  await expect(page).toHaveURL(new RegExp(`/jupigenio/${SLUG}/dashboard$`));
   await page.goto(orgPath("/profile"));
-  await expect(page.getByRole("region", { name: "Your organizations" }).getByRole("button", { name: "New organization" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Your workspaces" }).getByRole("button", { name: "New workspace" })).toBeVisible();
   await expectNoAxeViolations(page);
-});
-
-async function signInAs(browser: Browser, user: { email: string; password: string }): Promise<Page> {
-  const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
-  const page = await context.newPage();
-  await page.goto("/login");
-  await page.getByLabel("Email").fill(user.email);
-  await page.getByLabel("Password").fill(user.password);
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/dashboard$/);
-  return page;
-}
-
-test("a member can't start an organization", async ({ browser }) => {
-  const page = await signInAs(browser, E2E_MEMBER);
-  // Only one organization and no way to create one: the name is a plain link, not a menu.
-  await expect(sidebar(page).getByRole("button", { name: /switch organization/ })).toHaveCount(0);
-  await page.goto(orgPath("/profile"));
-  await expect(page.getByRole("region", { name: "Your organizations" })).toContainText(E2E_ORG.name);
-  await expect(page.getByRole("button", { name: "New organization" })).toHaveCount(0);
-  await page.context().close();
 });

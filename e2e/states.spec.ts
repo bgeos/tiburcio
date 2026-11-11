@@ -4,7 +4,7 @@ test("unknown URL shows the 404 screen", async ({ page }) => {
   const response = await page.goto("/does-not-exist");
   expect(response?.status()).toBe(404);
   await expect(page.getByRole("heading", { level: 1, name: "Page not found" })).toBeVisible();
-  await page.getByRole("link", { name: "Go to overview" }).click();
+  await page.getByRole("link", { name: "Go to Home" }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
 });
 
@@ -32,7 +32,7 @@ test("a render error shows the error boundary and recovers", async ({ page }) =>
   await page.getByRole("button", { name: "Throw a render error" }).click();
   const alert = page.getByRole("alert").filter({ hasText: "Something went wrong" });
   await expect(alert).toBeVisible();
-  await alert.getByRole("link", { name: "Go to overview" }).click();
+  await alert.getByRole("link", { name: "Go to Home" }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
 });
 

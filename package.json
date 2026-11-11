@@ -1,5 +1,5 @@
 {
-  "name": "jupigenio",
+  "name": "tiburcio",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -18,7 +18,8 @@
     "db:reset": "supabase db reset",
     "db:env": "node scripts/write-local-env.mjs",
     "test:db": "supabase test db",
-    "org:create": "node scripts/create-organization.mjs"
+    "org:create": "node scripts/create-organization.mjs",
+    "user:create": "node scripts/create-user.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

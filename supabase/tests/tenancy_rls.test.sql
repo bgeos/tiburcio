@@ -7,7 +7,7 @@
 
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(38);
+select plan(29);
 
 -- Helpers -------------------------------------------------------------------
 -- Sign in as one of the cast: sets the JWT claims, then switches to the API role.
@@ -86,24 +86,12 @@ select is_empty($$ update public.organizations set name = 'Hacked' where id = (s
   'admin cannot rename another organization');
 select is_empty($$ delete from public.organization_members where organization_id = (select org_b from ids) returning 1 $$,
   'admin cannot remove another organization''s members');
-select throws_ok(
-  $$ insert into public.invitations (organization_id, email, role, token_hash)
-     values ((select org_b from ids), 'x@example.test', 'member', repeat('a', 64)) $$,
-  '42501', null, 'admin cannot invite into another organization');
-select throws_ok(
-  $$ insert into public.invitations (organization_id, email, role, token_hash, invited_by)
-     values ((select org_a from ids), 'x@example.test', 'member', repeat('a', 64), (select bob from ids)) $$,
-  '42501', null, 'nobody can set invited_by to someone else');
-select lives_ok(
-  $$ insert into public.invitations (organization_id, email, role, token_hash)
-     values ((select org_a from ids), 'new.admin@example.test', 'admin', repeat('b', 64)) $$,
-  'admin can invite any role into her organization');
 select throws_ok($$ update public.organizations set slug = 'renamed' where id = (select org_a from ids) $$,
   '42501', null, 'the organization address (slug) cannot be changed by users');
 select lives_ok($$ update public.organizations set name = 'Org A Renamed' where id = (select org_a from ids) $$,
   'admin can rename her organization');
 select throws_ok($$ select public.create_organization('Mine', 'mine', (select alice from ids)) $$,
-  '42501', null, 'signed-in users cannot create organizations (invitation-only)');
+  '42501', null, 'signed-in users cannot use the operator function create_organization');
 select throws_ok($$ delete from public.organization_members where user_id = (select alice from ids) $$,
   'P0001', 'An organization must keep at least one admin.', 'the last admin cannot leave');
 select throws_ok(
@@ -125,31 +113,14 @@ insert into public.organization_members (organization_id, user_id, role) select 
 update public.organization_members set role = 'production_manager' where user_id = (select dan from ids);
 
 select pg_temp.sign_in('dan');
-select throws_ok(
-  $$ insert into public.invitations (organization_id, email, role, token_hash)
-     values ((select org_a from ids), 'boss@example.test', 'admin', repeat('c', 64)) $$,
-  '42501', null, 'production manager cannot invite an admin');
-select lives_ok(
-  $$ insert into public.invitations (organization_id, email, role, token_hash)
-     values ((select org_a from ids), 'helper@example.test', 'external', repeat('d', 64)) $$,
-  'production manager can invite an external collaborator');
 select is_empty($$ update public.organization_members set role = 'member' where user_id = (select eve from ids) returning 1 $$,
   'production manager cannot change roles');
-select lives_ok($$ update public.invitations set revoked_at = now() where email = 'helper@example.test' $$,
-  'production manager can revoke an invitation they may send');
-select throws_ok($$ update public.invitations set revoked_at = null where email = 'helper@example.test' $$,
-  '42501', null, 'a revoked invitation cannot be reopened');
 
 -- Carol: member of A ------------------------------------------------------------
 select pg_temp.sign_in('carol');
 select is((select count(*) from public.organization_members), 4::bigint, 'member sees the members of her organization');
-select is((select count(*) from public.invitations), 0::bigint, 'member cannot see invitations');
 select is_empty($$ update public.organization_members set role = 'admin' where user_id = (select carol from ids) returning 1 $$,
   'member cannot promote herself');
-select throws_ok(
-  $$ insert into public.invitations (organization_id, email, role, token_hash)
-     values ((select org_a from ids), 'friend@example.test', 'member', repeat('e', 64)) $$,
-  '42501', null, 'member cannot invite');
 select is_empty($$ update public.profiles set full_name = 'Not me' where id = (select dan from ids) returning 1 $$,
   'nobody can edit someone else''s profile');
 select lives_ok($$ update public.profiles set full_name = 'Carol Example' where id = (select carol from ids) $$,

@@ -1,97 +1,85 @@
-# JupiGenio
+# Tibúrcio
 
-Production and project management for festivals, events, construction,
-scenic design, decoration and workshops: nested projects, tasks, schedules,
-materials/stock, budgets and dashboards, all operated from the web UI.
+Bruno's single-user command center: personal projects, chat with Claude, photos,
+calendar and integrations, with **jupigenio** (production projects for festivals and
+builds: subprojects, cronograma, dependencies, Gantt, materials) as one of its modules.
 
-> **Status:** Phase 1 complete. The app shell, navigation, design system and
-> page states are built. There is no sign-in or data yet (Phase 2). See
-> [`docs/ROADMAP.md`](docs/ROADMAP.md). The internal component reference is at
-> `/design`.
+> **Status:** Phase 1 (base from jupigenio, single user). See [`docs/PLAN.md`](docs/PLAN.md)
+> § 11 for the phases and [`docs/DECISIONS.md`](docs/DECISIONS.md) for what changed from the plan.
 
 ## Documentation
 
 | File | Purpose |
 | --- | --- |
-| [`PROJECT_BLUEPRINT.md`](PROJECT_BLUEPRINT.md) | Product brief and phased plan (source of truth) |
+| [`docs/PLAN.md`](docs/PLAN.md) | Build plan and phases |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Decisions; they win over the plan |
+| [`docs/DISCOVERY.md`](docs/DISCOVERY.md) | Phase 0: what jupigenio was made of, and the stack chosen |
+| [`docs/design/homepage.dc.html`](docs/design/homepage.dc.html) | Home (Command Center) design |
+| [`docs/jupigenio/`](docs/jupigenio/) | jupigenio's own blueprint, architecture, data model and decisions |
 | [`CLAUDE.md`](CLAUDE.md) / [`AGENTS.md`](AGENTS.md) | Instructions for coding agents |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System architecture, security model, code layout |
-| [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) | Database schema and calculation rules |
-| [`docs/ROADMAP.md`](docs/ROADMAP.md) | Phases, acceptance criteria, progress |
-| [`docs/BACKLOG.md`](docs/BACKLOG.md) | Small implementation tasks with acceptance criteria |
-| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Architecture/product decisions and open questions |
 
 ## Requirements
 
-- Node.js 20.9+ (developed on Node 24) and npm. **Use npm only**; don't mix in pnpm or yarn.
-- Git.
-- Docker Desktop, running, for the local Supabase stack. The Supabase CLI is a
-  dev dependency (`npx supabase …` or the `npm run db:*` scripts).
+- Node.js 20.9+ (CI uses Node 24) and npm. **Use npm only**.
+- Docker Desktop, running, for the local Supabase stack (database and browser tests).
+  The Supabase CLI is a dev dependency (`npx supabase …` or the `npm run db:*` scripts).
 
 ## Setup
 
 ```bash
-git clone <repo-url> jupigenio
-cd jupigenio
 npm install
 cp .env.example .env.local   # Windows PowerShell: Copy-Item .env.example .env.local
-npm run dev
+npm run dev                  # http://localhost:3000
 ```
 
-Open http://localhost:3000.
+`.env.local` points either at the hosted project or at a local stack. Never commit it.
 
-`.env.local` is not needed until Phase 2 (Supabase). Never commit it.
+### Hosted database
 
-### Local database (Supabase)
+The Supabase project is `tiburcio` (ref `quincosoqtgzgjucsidg`, eu-north-1, D-001); the repo
+is linked to it. New migrations: `npx supabase db push --dry-run`, then `npx supabase db push`.
+Auth settings live in the dashboard (they don't travel with migrations): public sign-up off,
+Site URL and redirect URLs set to the app's address.
+
+Create the one account (asks for the password, adds the six personal projects):
+
+```bash
+npm run user:create -- --email you@example.com --name "Bruno" --yes
+```
+
+### Local database
 
 ```bash
 npm run db:start    # first run downloads the Docker images (several minutes)
-npm run db:status   # prints the local URL and keys
+npm run db:env      # writes .env.local from the running stack
 ```
-
-Run `npm run db:env` to create `.env.local` from the running stack, or copy the **API URL** and the **publishable key** from `db:status` into `.env.local`
-(`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`), and the **secret key**
-into `SUPABASE_SECRET_KEY`. The local keys only work against your own machine.
 
 | URL | What |
 | --- | --- |
-| http://127.0.0.1:54321 | Supabase API |
-| http://127.0.0.1:54323 | Studio (database browser) |
-| http://127.0.0.1:54324 | Mailpit: catches all auth emails sent locally (invitations land here, not in real inboxes) |
+| http://127.0.0.1:54421 | Supabase API |
+| http://127.0.0.1:54423 | Studio (database browser) |
+| http://127.0.0.1:54424 | Mailpit: catches auth emails sent locally |
 
-`npm run db:reset` rebuilds the database from `supabase/migrations/` and
-`supabase/seed.sql`. `npm run db:stop` stops the containers (data is kept).
+Ports are 544xx so this stack can run next to an old jupigenio one (543xx).
+`npm run db:reset` rebuilds the database from `supabase/migrations/` and `supabase/seed.sql`.
 
 ## Scripts
 
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | Start the dev server |
-| `npm run build` | Production build |
-| `npm start` | Serve the production build |
+| `npm run build` / `npm start` | Production build / serve it |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | Regenerate route types, then TypeScript check |
-| `npm test` | Unit tests (Vitest, single run) |
-| `npm run test:watch` | Unit tests in watch mode |
-| `npm run test:e2e` | Browser + accessibility tests (Playwright). Builds the app and serves it on port 3100. Needs `db:start`: it signs in a fictional local user |
+| `npm test` | Unit tests (Vitest) |
 | `npm run check` | Lint + typecheck + unit tests |
-| `npm run db:start` / `db:stop` / `db:status` | Start, stop, or show the local Supabase stack |
-| `npm run db:reset` | Recreate the local database from migrations + seed |
-| `npm run db:env` | Write `.env.local` from the running local stack (never overwrites; `-- --force` to replace) |
-| `npm run test:db` | Database security tests (pgTAP): org isolation and role limits. Needs `db:start` |
-| `npm run org:create -- --name "…" --slug … --admin email` | Operator: create an organization with an existing user as its first admin (D-021). Admins and production managers can also create one in the app (D-033). Refuses non-local targets without `--yes` |
+| `npm run test:e2e` | Browser + accessibility tests (Playwright) on port 3100. Needs `db:start` |
+| `npm run test:db` | Database security tests (pgTAP). Needs `db:start` |
+| `npm run db:start` / `db:stop` / `db:status` / `db:reset` / `db:env` | Local Supabase stack |
+| `npm run user:create -- --email … [--name …] [--yes]` | Create the one account and its personal projects. Refuses non-local targets without `--yes` |
+| `npm run org:create -- --name … --slug … --admin email [--yes]` | Create a jupigenio workspace for an existing user (also possible in the app) |
 
 First time only, install the test browser: `npx playwright install chromium`.
-
-## Stack
-
-Next.js 16 (App Router, Cache Components) · React 19 · TypeScript ·
-Tailwind CSS 4 · shadcn/ui (Radix) · next-themes · Zod · Vitest · Playwright + axe.
-Planned: Supabase (Postgres, Auth, Storage, RLS) in Phase 2, Recharts in Phase 6.
-See [`docs/DECISIONS.md`](docs/DECISIONS.md).
-
-Reference spreadsheets and screenshots from the team go in `example files/` and
-`examples web ui/`. Both are git-ignored because they contain real names and budgets.
 
 ## Continuous integration
 
@@ -99,16 +87,3 @@ Reference spreadsheets and screenshots from the team go in `example files/` and
 unit tests, production build and a scan of the browser bundle for secrets; then a throwaway local
 Supabase inside the runner for the database (pgTAP) and browser (Playwright) tests.
 No hosted project or secret is needed.
-
-## Environments
-
-- **Local:** `npm run dev` plus local Supabase (`npx supabase start`) with seed data.
-- **Preview/staging:** Vercel preview deployments plus a separate Supabase project. No real data.
-  Live since 2026-10-27 (D-032): https://jupigenio.vercel.app, Supabase project `vuhifzervwszejqdpbnb`.
-  Every push to `main` redeploys the app. New migrations: `npx supabase db push --dry-run`, then
-  `npx supabase db push` (the repo is linked to staging). First users: Supabase → Authentication →
-  Users → Add user (auto confirm), then `npm run org:create … --yes` with the staging URL and
-  secret key in the environment.
-- **Production:** Vercel plus its own Supabase project. Secrets are set in the hosting dashboards only.
-
-Details: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#environments-and-deployment).

@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { workspacePath } from "@/lib/navigation";
 
-/** Prefix a path inside an organization with its slug: "/projects" → "/jupi/projects". */
+/** Prefix a path inside a workspace: "/projects" → "/jupigenio/jupi/projects". */
 export function useOrgPath(path: `/${string}`): string {
   const { org } = useParams<{ org?: string }>();
-  return org ? `/${org}${path}` : path;
+  return org ? workspacePath(org, path) : path;
 }
 
 /** A `Link` to a path inside the current organization (D-016). */

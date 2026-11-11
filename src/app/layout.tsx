@@ -16,10 +16,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "JupiGenio",
-    template: "%s · JupiGenio",
+    default: "Tibúrcio",
+    template: "%s · Tibúrcio",
   },
-  description: "Production and project management for events and builds",
+  description: "Bruno's command center: personal projects, jupigenio, chat and more",
 };
 
 export const viewport: Viewport = {

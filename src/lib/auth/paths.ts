@@ -1,4 +1,4 @@
-/** Where signed-in people land by default: `/` picks their organization (app/route.ts). */
+/** Where signed-in people land by default: Tibúrcio's Home. */
 export const DEFAULT_SIGNED_IN_PATH = "/";
 
 export const LOGIN_PATH = "/login";

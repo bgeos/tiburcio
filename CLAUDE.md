@@ -1,17 +1,20 @@
 @AGENTS.md
 
-# JupiGenio — instructions for Claude Code
+# Tibúrcio — instructions for Claude Code
 
-JupiGenio is a production/project management platform for festivals, events,
-construction, scenic design and workshops. The product brief and phased plan
-live in `PROJECT_BLUEPRINT.md`; it is the source of truth for scope.
+Tibúrcio is Bruno's single-user command center: personal projects, chat with
+Claude, photos, calendar and more. **jupigenio** (production projects for
+festivals and builds) is one module of it, under `/jupigenio/<workspace>/…`
+(D-003, D-004). The plan is `docs/PLAN.md`; where it and `docs/DECISIONS.md`
+disagree, DECISIONS wins.
 
 ## Start of every session
 
-1. Read `PROJECT_BLUEPRINT.md`, this file, and `docs/ROADMAP.md`.
+1. Read `docs/PLAN.md` (phases in § 11), `docs/DECISIONS.md`, and this file.
 2. Run `git status` and `git log --oneline -10`.
-3. Identify the current phase and its acceptance criteria in `docs/ROADMAP.md`.
-4. Pick the next item(s) from `docs/BACKLOG.md`; plan only the current task.
+3. Identify the current phase and its acceptance criteria in `docs/PLAN.md` § 11.
+4. `docs/jupigenio/` holds jupigenio's own history (blueprint, roadmap, data model,
+   decisions D-001…D-034). Read it before changing the jupigenio module.
 5. Read the relevant code, and the matching guide in
    `node_modules/next/dist/docs/` before using any Next.js API (this is
    Next.js 16 — see AGENTS.md above).
@@ -23,8 +26,7 @@ live in `PROJECT_BLUEPRINT.md`; it is the source of truth for scope.
    migrations or policies changed (needs `npm run db:start`).
 2. Fix failures caused by your changes. Never claim a check passed unless it
    was actually run in this session.
-3. Update `docs/ROADMAP.md` / `docs/BACKLOG.md` status, and
-   `docs/DECISIONS.md` for any architectural or product decision.
+3. Update `docs/DECISIONS.md` for any architectural or product decision.
 4. Report: what changed, which checks passed, what remains, exact commands.
 
 ## Stack (see docs/DECISIONS.md for rationale)
@@ -34,8 +36,13 @@ live in `PROJECT_BLUEPRINT.md`; it is the source of truth for scope.
   must sit behind `<Suspense>`; never read cookies inside plain `"use cache"`.
   Every data page needs its own `loading.tsx`/`<Suspense>` (D-017).
 - Middleware is called **Proxy** in Next 16: `src/proxy.ts`.
-- App pages live under `src/app/(app)/[org]/` (URL `/<org>/<section>`, D-016). Link
-  inside an org with `OrgLink`/`useOrgPath`; URL hooks in shared layouts go in `<Suspense>`.
+- Tibúrcio's own pages live in `src/app/(app)/` (Home is `/`). jupigenio pages live under
+  `src/app/(app)/jupigenio/[org]/` (URL `/jupigenio/<workspace>/<section>`). Link inside a
+  workspace with `OrgLink`/`useOrgPath`, or `workspacePath()`; never hand-build `/${org}/…`.
+  URL hooks in shared layouts go in `<Suspense>`.
+- Single user (D-003): no invitations, team page or sign-up. The account comes from
+  `npm run user:create`. jupigenio's roles still exist in the database (Bruno is admin of
+  every workspace); don't build UI around them.
 - `error.tsx` props are `{ error: unknown, retry }` (not `reset`).
   `unauthorized()`/`forbidden()` are enabled (`authInterrupts`).
 - Tailwind CSS 4 + shadcn/ui (Radix, `npx shadcn@4.22.1 add <component>`).
@@ -52,8 +59,9 @@ live in `PROJECT_BLUEPRINT.md`; it is the source of truth for scope.
 
 ## Non-negotiable rules
 
-- **Security:** every org-owned table has `organization_id` and RLS enabled
-  with policies in the same migration that creates the table. Authorize on the
+- **Security:** every table has RLS enabled with policies in the same migration
+  that creates it: workspace tables check `organization_id` membership, personal
+  tables check `user_id = auth.uid()`. Authorize on the
   server in every Server Action / Route Handler; hiding UI is not security.
 - **Secrets:** never commit `.env*` (except `.env.example`). Never use the
   Supabase service-role key in client code or a `NEXT_PUBLIC_` variable;
@@ -81,6 +89,7 @@ npm run build      # production build
 npm run test:e2e   # Playwright + axe (builds, serves on :3100)
 npm run db:start   # local Supabase (Docker)
 npm run test:db    # pgTAP RLS tests against local Supabase
+npm run user:create -- --email you@example.com --name "Bruno" [--yes]   # the one account + personal projects
 ```
 
 ## Windows gotchas

@@ -20,7 +20,7 @@ export default function LoginPage() {
           <h1 className="text-xl font-semibold">Sign in</h1>
         </CardTitle>
         <CardDescription>
-          JupiGenio is invitation-only. Use the email address your organization invited.
+          Tibúrcio has one account. Sign in with yours.
         </CardDescription>
       </CardHeader>
       <CardContent>

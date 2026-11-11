@@ -1,8 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { DEFAULT_SIGNED_IN_PATH, LOGIN_PATH, safeNextPath } from "@/lib/auth/paths";
-import { homePath, membershipsOf } from "@/lib/dal/organizations";
+import { LOGIN_PATH, safeNextPath } from "@/lib/auth/paths";
 import { createClient } from "@/lib/supabase/server";
 import { loginSchema, type LoginInput } from "@/lib/validation/auth";
 import { parseForm, type FormState } from "@/lib/validation/form";
@@ -18,7 +17,7 @@ export async function signIn(
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signInWithPassword(result.data);
+  const { error } = await supabase.auth.signInWithPassword(result.data);
   if (error) {
     // One message for unknown email and wrong password, so the form doesn't reveal who has an account.
     const message =
@@ -30,10 +29,8 @@ export async function signIn(
     return { status: "error", message, values: { email: result.data.email } };
   }
 
-  const next = safeNextPath(formData.get("next"));
-  if (next !== DEFAULT_SIGNED_IN_PATH) redirect(next);
-  // Straight to their organization, without an extra hop through `/`.
-  redirect(homePath(await membershipsOf(supabase, data.user.id)));
+  // `next` falls back to Tibúrcio's Home (`/`).
+  redirect(safeNextPath(formData.get("next")));
 }
 
 export async function signOut(): Promise<void> {

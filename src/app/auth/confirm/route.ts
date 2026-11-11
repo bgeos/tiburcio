@@ -4,12 +4,12 @@ import type { NextRequest } from "next/server";
 import { LOGIN_PATH, safeNextPath } from "@/lib/auth/paths";
 import { createClient } from "@/lib/supabase/server";
 
-/** Email links we accept: invitations (P2-08), password recovery, email change. */
-const ACCEPTED_TYPES: EmailOtpType[] = ["invite", "recovery", "email_change", "email"];
+/** Email links we accept: password recovery, email change. */
+const ACCEPTED_TYPES: EmailOtpType[] = ["recovery", "email_change", "email"];
 
 /**
  * Landing point for links in auth emails:
- * /auth/confirm?token_hash=…&type=invite&next=/somewhere
+ * /auth/confirm?token_hash=…&type=recovery&next=/somewhere
  * Verifies the one-time token, which sets the session cookie, then redirects.
  */
 export async function GET(request: NextRequest) {

@@ -24,9 +24,9 @@ export const E2E_OTHER_ORG = { slug: "e2e-other-org", name: "E2E Other Org" };
 
 export const STORAGE_STATE = "playwright/.auth/user.json";
 
-/** A path inside the E2E organization: orgPath("/projects") → "/e2e-org/projects". */
-export function orgPath(path: `/${string}`): string {
-  return `/${E2E_ORG.slug}${path}`;
+/** A path inside a workspace: orgPath("/projects") → "/jupigenio/e2e-org/projects". */
+export function orgPath(path: `/${string}`, slug: string = E2E_ORG.slug): string {
+  return `/jupigenio/${slug}${path}`;
 }
 
 function env(name: string): string {

@@ -1,4 +1,4 @@
--- D-033 · Admins and production managers start new organizations and become their admin.
+-- D-033, D-004 · Anyone signed in starts a workspace (organization) and becomes its admin.
 -- One rolled-back transaction; fictional people only.
 --
 -- Cast: org A = Alice (admin), Paula (production manager), Carol (member), Eve (external);
@@ -6,7 +6,7 @@
 
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(13);
+select plan(14);
 
 create function pg_temp.sign_in(person text) returns void language plpgsql as $$
 begin
@@ -14,6 +14,13 @@ begin
   perform set_config('request.jwt.claims',
     json_build_object('sub', (select id from auth.users where email = person || '@example.test'), 'role', 'authenticated')::text, true);
   perform set_config('role', 'authenticated', true);
+end;
+$$;
+
+create function pg_temp.sign_out() returns void language plpgsql as $$
+begin
+  perform set_config('role', 'postgres', true);
+  perform set_config('request.jwt.claims', '', true);
 end;
 $$;
 
@@ -51,16 +58,20 @@ select is_empty($$ select 1 from public.organizations where slug = 'summer-fest'
   'Alice does not see Paula''s new organization');
 
 select pg_temp.sign_in('carol');
-select throws_ok($$ select public.create_my_organization('Mine', 'carol-fest') $$,
-  '42501', null, 'a member cannot create organizations');
+select lives_ok($$ select public.create_my_organization('Mine', 'carol-fest') $$,
+  'a member can create a workspace too (single-user app, D-004)');
 
 select pg_temp.sign_in('eve');
-select throws_ok($$ select public.create_my_organization('Mine', 'eve-fest') $$,
-  '42501', null, 'an external collaborator cannot');
+select lives_ok($$ select public.create_my_organization('Mine', 'eve-fest') $$,
+  'so can any other role');
 
 select pg_temp.sign_in('nina');
-select throws_ok($$ select public.create_my_organization('Mine', 'nina-fest') $$,
-  '42501', null, 'someone in no organization cannot');
+select lives_ok($$ select public.create_my_organization('Mine', 'nina-fest') $$,
+  'and someone in no workspace yet, e.g. on first use');
+
+select pg_temp.sign_out();
+select throws_ok($$ select public.create_my_organization('Anon', 'anon-fest') $$,
+  '42501', null, 'signed out, nobody can');
 
 select * from finish();
 rollback;

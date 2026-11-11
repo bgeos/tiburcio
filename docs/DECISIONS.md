@@ -53,3 +53,17 @@ in that job's own workspace, separate from the personal side.
 - Their data never mixes with personal projects; Home only shows a summary.
 - Membership-based RLS stays as it is (with one member it means "only Bruno"); only the
   multi-user parts go (D-003).
+
+## D-005 · 2026-11-11 · How Phase 1 made jupigenio single-user
+- jupigenio was merged in with its history; its docs moved to `docs/jupigenio/`.
+- Its pages moved from `/<org>/…` to `/jupigenio/<workspace>/…` (`JUPIGENIO_PATH`,
+  `workspacePath()` in `lib/navigation.ts`). `/` is Tibúrcio's Home; `/jupigenio` opens the
+  first workspace or offers to create one. Signing in lands on Home.
+- Removed: invitations (table, functions, pages, actions, tests), the Team page, the
+  no-organization and accept-invite pages, and the role check on creating a workspace
+  (migration `20261111100000_single_user.sql`).
+- **Kept for now:** jupigenio's roles and role-based policies. With one member who is always
+  admin they change nothing, and removing them touches most jupigenio pages and tests. Taking
+  them out is a later cleanup, not a Phase 1 goal.
+- `personal_projects` arrives now (owner-only RLS) so `npm run user:create` can add the six
+  projects; its tasks, notes, materials and files follow in Phase 3.

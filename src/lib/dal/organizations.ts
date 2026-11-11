@@ -48,9 +48,9 @@ export async function membershipsOf(supabase: SupabaseClient, userId: string): P
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/** Where someone lands: their first organization (by name), or the "ask for an invitation" page. */
-export function homePath(memberships: Membership[], section?: unknown): string {
-  if (memberships.length === 0) return "/no-organization";
+/** Where /jupigenio sends someone: their first workspace (by name), or null when they have none yet. */
+export function homePath(memberships: Membership[], section?: unknown): string | null {
+  if (memberships.length === 0) return null;
   return orgHref(memberships[0].slug, isSection(section) ? section : DEFAULT_SECTION);
 }
 

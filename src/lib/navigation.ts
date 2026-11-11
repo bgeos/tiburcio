@@ -5,21 +5,23 @@ import {
   ListChecks,
   Package,
   Settings,
-  Users,
   type LucideIcon,
 } from "lucide-react";
 
+/** The jupigenio module lives under this path: /jupigenio/<workspace>/<section> (D-003, D-004). */
+export const JUPIGENIO_PATH = "/jupigenio";
+
 export type NavItem = {
   title: string;
-  /** First path segment after the organization: /<org>/<section>. */
+  /** First path segment after the workspace: /jupigenio/<org>/<section>. */
   section: string;
   icon: LucideIcon;
   description: string;
 };
 
 /**
- * Primary navigation (blueprint § 7 "Global navigation"). Every section lives
- * under the organization: /<org>/<section> (D-016).
+ * jupigenio navigation (blueprint § 7 "Global navigation"). Every section lives
+ * under the workspace: /jupigenio/<org>/<section> (D-016, D-004).
  */
 export const PRIMARY_NAV: NavItem[] = [
   {
@@ -52,12 +54,6 @@ export const PRIMARY_NAV: NavItem[] = [
     icon: Package,
     description: "Catalogue, stock, reservations and consumption.",
   },
-  {
-    title: "Team",
-    section: "team",
-    icon: Users,
-    description: "Members, roles and external collaborators.",
-  },
 ];
 
 export const SECONDARY_NAV: NavItem[] = [
@@ -77,17 +73,23 @@ export function isSection(value: unknown): value is string {
   return typeof value === "string" && ALL_NAV.some((item) => item.section === value);
 }
 
-/**
- * Link to a section of an organization. Without an organization (e.g. on /design)
- * the link goes to `/`, which picks the person's organization (see app/route.ts).
- */
-export function orgHref(org: string | undefined, section: string): string {
-  return org ? `/${org}/${section}` : `/?section=${encodeURIComponent(section)}`;
+/** A path inside a workspace: ("jupi", "/projects") → "/jupigenio/jupi/projects". */
+export function workspacePath(org: string, path: `/${string}`): string {
+  return `${JUPIGENIO_PATH}/${org}${path}`;
 }
 
-/** "/jupi/projects/main-stage" → "projects". Undefined outside an organization. */
+/**
+ * Link to a section of a workspace. Without a workspace (e.g. on /design) the link
+ * goes to /jupigenio, which picks the first workspace (see app/(app)/jupigenio/page.tsx).
+ */
+export function orgHref(org: string | undefined, section: string): string {
+  return org ? workspacePath(org, `/${section}`) : `${JUPIGENIO_PATH}?section=${encodeURIComponent(section)}`;
+}
+
+/** "/jupigenio/jupi/projects/main-stage" → "projects". Undefined outside a workspace. */
 export function sectionFromPath(pathname: string): string | undefined {
-  return pathname.split("/").filter(Boolean)[1];
+  const [module, , section] = pathname.split("/").filter(Boolean);
+  return `/${module}` === JUPIGENIO_PATH ? section : undefined;
 }
 
 /** True when `pathname` is inside the nav item's section. */

@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
-import { Palette } from "lucide-react";
+import { House, Palette } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -70,7 +70,7 @@ function NavLinks({ links }: { links: SidebarLink[] }) {
   );
 }
 
-/** Links before the URL is known (prerendered shell): no active state, org picked by `/`. */
+/** Links before the URL is known (prerendered shell): no active state, workspace picked by /jupigenio. */
 function staticLinks(items: NavItem[]): SidebarLink[] {
   return items.map((item) => ({
     title: item.title,
@@ -84,6 +84,14 @@ const DESIGN_TITLE = "Design system";
 
 function PrimaryLinks() {
   return <NavLinks links={useNavLinks(PRIMARY_NAV)} />;
+}
+
+/** Tibúrcio's own modules, outside any workspace. More arrive phase by phase (docs/PLAN.md § 11). */
+const TIBURCIO_NAV = [{ title: "Home", icon: House, href: "/" }];
+
+function TiburcioLinks() {
+  const pathname = usePathname();
+  return <NavLinks links={TIBURCIO_NAV.map((item) => ({ ...item, active: pathname === item.href }))} />;
 }
 
 function FooterLinks() {
@@ -108,7 +116,15 @@ export function AppSidebar({ orgSwitcher }: { orgSwitcher: React.ReactNode }) {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Workspace</SidebarGroupLabel>
+          <SidebarGroupLabel>Tibúrcio</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <Suspense fallback={<NavLinks links={TIBURCIO_NAV.map((item) => ({ ...item, active: false }))} />}>
+              <TiburcioLinks />
+            </Suspense>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>jupigenio</SidebarGroupLabel>
           <SidebarGroupContent>
             <Suspense fallback={<NavLinks links={staticLinks(PRIMARY_NAV)} />}>
               <PrimaryLinks />

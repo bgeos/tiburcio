@@ -1,9 +1,9 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ALL_NAV, findNavItem, isNavItemActive, isSection, orgHref, sectionFromPath } from "./navigation";
+import { ALL_NAV, findNavItem, isNavItemActive, isSection, orgHref, sectionFromPath, workspacePath } from "./navigation";
 
-const ORG_DIR = join(process.cwd(), "src", "app", "(app)", "[org]");
+const ORG_DIR = join(process.cwd(), "src", "app", "(app)", "jupigenio", "[org]");
 
 describe("navigation config", () => {
   it("has unique sections and titles", () => {
@@ -13,38 +13,41 @@ describe("navigation config", () => {
     expect(new Set(titles).size).toBe(titles.length);
   });
 
-  it.each(ALL_NAV.map((item) => [item.section]))("%s has a page in src/app/(app)/[org]", (section) => {
+  it.each(ALL_NAV.map((item) => [item.section]))("%s has a page in src/app/(app)/jupigenio/[org]", (section) => {
     expect(existsSync(join(ORG_DIR, section, "page.tsx"))).toBe(true);
   });
 });
 
 describe("orgHref", () => {
-  it("prefixes the organization", () => {
-    expect(orgHref("jupi", "projects")).toBe("/jupi/projects");
+  it("prefixes the jupigenio module and the workspace", () => {
+    expect(orgHref("jupi", "projects")).toBe("/jupigenio/jupi/projects");
+    expect(workspacePath("jupi", "/projects/1")).toBe("/jupigenio/jupi/projects/1");
   });
 
-  it("falls back to the organization picker at / without an organization", () => {
-    expect(orgHref(undefined, "projects")).toBe("/?section=projects");
+  it("falls back to the workspace picker at /jupigenio without a workspace", () => {
+    expect(orgHref(undefined, "projects")).toBe("/jupigenio?section=projects");
   });
 });
 
 describe("sections", () => {
-  it("reads the section after the organization", () => {
-    expect(sectionFromPath("/jupi/projects/main-stage")).toBe("projects");
-    expect(sectionFromPath("/jupi")).toBeUndefined();
+  it("reads the section after the workspace", () => {
+    expect(sectionFromPath("/jupigenio/jupi/projects/main-stage")).toBe("projects");
+    expect(sectionFromPath("/jupigenio/jupi")).toBeUndefined();
+    expect(sectionFromPath("/jupigenio")).toBeUndefined();
     expect(sectionFromPath("/")).toBeUndefined();
   });
 
   it("matches the section and its children only", () => {
-    expect(isNavItemActive("projects", "/jupi/projects")).toBe(true);
-    expect(isNavItemActive("projects", "/jupi/projects/main-stage")).toBe(true);
-    expect(isNavItemActive("projects", "/jupi/projects-archive")).toBe(false);
+    expect(isNavItemActive("projects", "/jupigenio/jupi/projects")).toBe(true);
+    expect(isNavItemActive("projects", "/jupigenio/jupi/projects/main-stage")).toBe(true);
+    expect(isNavItemActive("projects", "/jupigenio/jupi/projects-archive")).toBe(false);
+    expect(isNavItemActive("projects", "/jupi/projects")).toBe(false);
     expect(isNavItemActive("projects", "/projects")).toBe(false);
   });
 
   it("finds the section for nested routes", () => {
-    expect(findNavItem("/jupi/materials/plywood")?.title).toBe("Materials");
-    expect(findNavItem("/jupi/unknown")).toBeUndefined();
+    expect(findNavItem("/jupigenio/jupi/materials/plywood")?.title).toBe("Materials");
+    expect(findNavItem("/jupigenio/jupi/unknown")).toBeUndefined();
   });
 
   it("only accepts known sections", () => {

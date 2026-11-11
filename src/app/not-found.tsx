@@ -15,7 +15,7 @@ export default function NotFound() {
       description="This page doesn't exist, or it was moved or archived."
       actions={
         <Button asChild>
-          <Link href="/">Go to overview</Link>
+          <Link href="/">Go to Home</Link>
         </Button>
       }
     />

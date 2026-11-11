@@ -7,13 +7,17 @@ const ROUTES = [
   { path: orgPath("/calendar"), heading: "Calendar" },
   { path: orgPath("/tasks"), heading: "My tasks" },
   { path: orgPath("/materials"), heading: "Materials" },
-  { path: orgPath("/team"), heading: "Team" },
   { path: orgPath("/settings"), heading: "Settings" },
 ];
 
-test("root redirects to the organization's overview", async ({ page }) => {
+test("root is Tibúrcio's Home", async ({ page }) => {
   await page.goto("/");
-  await expect(page).toHaveURL(/\/e2e-org\/dashboard$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Tibúrcio" })).toBeVisible();
+});
+
+test("/jupigenio opens the first workspace's overview", async ({ page }) => {
+  await page.goto("/jupigenio");
+  await expect(page).toHaveURL(/\/jupigenio\/e2e-org\/dashboard$/);
   await expect(page.getByRole("heading", { level: 1, name: "Overview" })).toBeVisible();
 });
 
@@ -21,7 +25,7 @@ for (const route of ROUTES) {
   test(`${route.path} renders its heading and an honest empty state`, async ({ page }) => {
     await page.goto(route.path);
     await expect(page.getByRole("heading", { level: 1, name: route.heading })).toBeVisible();
-    await expect(page).toHaveTitle(new RegExp(`${route.heading} · JupiGenio`));
+    await expect(page).toHaveTitle(new RegExp(`${route.heading} · Tibúrcio`));
   });
 }
 
@@ -31,7 +35,7 @@ test("the removed Reports section is not found", async ({ page }) => {
   await expect(page.getByRole("link", { name: "Reports", exact: true })).toHaveCount(0);
 });
 
-test("an organization without projects sees dashes on the Overview, never fake zeros", async ({ browser }) => {
+test("a workspace without projects shows dashes on the Overview, never fake zeros", async ({ browser }) => {
   // The other organization has no projects (the E2E organization's change as tests run).
   const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
   const page = await context.newPage();
@@ -39,7 +43,9 @@ test("an organization without projects sees dashes on the Overview, never fake z
   await page.getByLabel("Email").fill(E2E_OUTSIDER.email);
   await page.getByLabel("Password").fill(E2E_OUTSIDER.password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(new RegExp(`/${E2E_OTHER_ORG.slug}/dashboard$`));
+  await expect(page).toHaveURL(/localhost:3100\/$/);
+  await page.goto("/jupigenio");
+  await expect(page).toHaveURL(new RegExp(`/jupigenio/${E2E_OTHER_ORG.slug}/dashboard$`));
 
   const tiles = page.getByRole("region", { name: "Key figures" });
   await expect(tiles.getByText("—")).toHaveCount(4);
@@ -90,7 +96,7 @@ test.describe("mobile navigation", () => {
   });
 
   test("has no horizontal scroll", async ({ page }) => {
-    for (const path of [orgPath("/dashboard"), orgPath("/projects"), orgPath("/materials"), "/design", "/no-organization"]) {
+    for (const path of [orgPath("/dashboard"), orgPath("/projects"), orgPath("/materials"), "/", "/design"]) {
       await page.goto(path);
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth,

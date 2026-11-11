@@ -17,7 +17,7 @@ import { FieldGroup } from "@/components/ui/field";
 import { slugFromName } from "@/lib/domain/organizations";
 import { createOrganization, type OrganizationFormState } from "@/lib/organizations/actions";
 
-/** Start a new organization (D-033). On success the action opens it, so there's no "saved" state. */
+/** Start a new workspace (D-033, D-004). On success the action opens it, so there's no "saved" state. */
 export function NewOrganizationDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   // A fresh form (and form state) every time the dialog opens.
   const [formKey, setFormKey] = useState(0);
@@ -31,10 +31,10 @@ export function NewOrganizationDialog({ open, onOpenChange }: { open: boolean; o
     >
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>New organization</DialogTitle>
+          <DialogTitle>New workspace</DialogTitle>
           <DialogDescription>
-            For a separate festival or client, with its own projects, team and calendar. You&apos;ll be its admin;
-            invite others from its Team page.
+            For a job such as a festival or a client, with its own projects and calendar, kept apart from
+            your personal projects.
           </DialogDescription>
         </DialogHeader>
         <NewOrganizationForm key={formKey} />
@@ -97,7 +97,7 @@ function NewOrganizationForm() {
           </Button>
         </DialogClose>
         <Button type="submit" disabled={pending}>
-          {pending ? "Creating…" : "Create organization"}
+          {pending ? "Creating…" : "Create workspace"}
         </Button>
       </DialogFooter>
     </form>

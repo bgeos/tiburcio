@@ -13,7 +13,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         >
           J
         </span>
-        JupiGenio
+        Tibúrcio
       </Link>
       <main id="main" className="w-full max-w-sm">
         {children}

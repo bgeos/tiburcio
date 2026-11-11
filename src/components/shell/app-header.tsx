@@ -14,7 +14,7 @@ function SectionTitle() {
   const section = pathname.startsWith("/design")
     ? "Design system"
     : findNavItem(pathname)?.title; // reads the section after /<org>/
-  return <>{section ?? "JupiGenio"}</>;
+  return <>{section ?? "Tibúrcio"}</>;
 }
 
 export function AppHeader({ account }: { account: React.ReactNode }) {
@@ -24,7 +24,7 @@ export function AppHeader({ account }: { account: React.ReactNode }) {
       <SidebarTrigger className="-ml-1" aria-label="Toggle navigation" />
       <Separator orientation="vertical" className="mr-1 data-vertical:h-5 data-vertical:self-center" />
       <p className="truncate text-sm font-medium text-muted-foreground">
-        <Suspense fallback="JupiGenio">
+        <Suspense fallback="Tibúrcio">
           <SectionTitle />
         </Suspense>
       </p>

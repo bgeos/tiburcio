@@ -10,7 +10,7 @@ export default function Unauthorized() {
       icon={LockKeyhole}
       code="401"
       title="Sign in to continue"
-      description="This page contains private production data. Sign in with the account your organization invited."
+      description="This page is private. Sign in to continue."
       tone="warning"
       actions={
         <Button asChild>

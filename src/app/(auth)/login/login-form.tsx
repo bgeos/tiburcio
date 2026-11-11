@@ -47,7 +47,7 @@ export function LoginForm() {
           className="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning-soft p-3 text-sm text-warning"
         >
           <CircleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-          That link is invalid or has expired. Ask the person who invited you for a new one.
+          That link is invalid or has expired. Request a new one.
         </p>
       ) : null}
 

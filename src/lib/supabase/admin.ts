@@ -5,7 +5,7 @@ import { getSupabasePublicEnv } from "./env";
 /**
  * Supabase client with the SECRET key: bypasses RLS. Use it only for things
  * a user can't do as themselves, and only after authorizing them in code.
- * Today that is one thing: sending invitation emails (P2-08).
+ * Not used by the app today (invitations were removed, D-003); scripts create their own.
  */
 export function createAdminClient() {
   const secret = process.env.SUPABASE_SECRET_KEY;

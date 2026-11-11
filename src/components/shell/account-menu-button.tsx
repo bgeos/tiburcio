@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { workspacePath } from "@/lib/navigation";
 import Link from "next/link";
 import { LogOut, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -45,7 +46,7 @@ export function AccountMenuButton({ name, email }: { name: string; email: string
         <DropdownMenuSeparator />
         {org ? (
           <DropdownMenuItem asChild>
-            <Link href={`/${org}/profile`}>
+            <Link href={workspacePath(org, "/profile")}>
               <UserRound aria-hidden="true" />
               Your profile
             </Link>

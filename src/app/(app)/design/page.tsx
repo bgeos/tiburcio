@@ -24,7 +24,7 @@ export default function DesignPage() {
     <>
       <PageHeader
         title="Design system"
-        description="Internal reference for JupiGenio's components and page states."
+        description="Internal reference for Tibúrcio's components and page states."
       />
       <section aria-labelledby="states" className="space-y-3">
         <h2 id="states" className="text-lg font-semibold">

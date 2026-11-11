@@ -23,12 +23,12 @@
 - see everything at a glance on a **Home** dashboard (HUD style, green, with a tuga sense of humour);
 - **chat and talk with Claude** ("Fala com o Tibúrcio");
 - manage **personal projects** (DIY, life, family, career);
-- open **jupigenio** in its own tab — jupigenio stays a **separate app** for focused work on specific projects;
+- plan production projects in the **jupigenio** module (festivals, builds: subprojects, cronograma, Gantt, materials). jupigenio was a separate app; it is now part of Tibúrcio (D-003);
 - later: **import photos** from his Android phone to external drives, connect Gmail/Calendar/Drive, voice on Android.
 
-**Personal projects (Tibúrcio) ≠ jupigenio projects.** Tibúrcio's "Personal projects" module is its own data. jupigenio keeps its own projects and is only *embedded and summarised* in Tibúrcio.
+**Personal projects ≠ jupigenio projects.** Two modules with their own tables: personal projects are light (tasks, notes, materials, files); jupigenio projects are the heavy planning tool.
 
-Owner / only user for now: **Bruno**. Design for one user, but keep a `users` table so more users are possible later.
+Owner and only user: **Bruno**. Single-user application (D-003).
 
 ---
 
@@ -37,7 +37,7 @@ Owner / only user for now: **Bruno**. Design for one user, but keep a `users` ta
 1. **Discover before building.** Phase 0 is mandatory: read jupigenio and write `docs/DISCOVERY.md` before writing app code.
 2. **Mirror jupigenio's stack.** Same language, framework, ORM/migration tool, DB engine, package manager, lint/format config, server/hosting and deploy method. Don't introduce a new framework or database unless this plan says so, and explain why in `docs/DECISIONS.md`.
 3. **Same DB server, separate database.** Reuse jupigenio's DB server/instance and connection style, but use a **separate database (or schema, if that is how jupigenio is set up) named `tiburcio`**, with its **own DB user** that has no rights on jupigenio's data. If jupigenio uses SQLite, use a separate `tiburcio.db` file with the same driver/ORM. Never read or write jupigenio's tables directly. Talk to jupigenio only through its API (section 7).
-4. **Don't change jupigenio.** It is only shown in a tab (D-002). Read it as a reference, never edit it.
+4. **jupigenio's code moves into Tibúrcio** (D-003). Don't edit the old `jupigenio` repo; it will be archived.
 5. **Secrets** live in `.env` (git-ignored). Commit only `.env.example` with placeholder values. Never log secrets or tokens.
 6. **Ask before destructive actions:** dropping or resetting databases, rewriting migrations that already ran, force-pushing, deleting files outside the repo.
 7. **Small, reviewable steps.** One phase = one or more PRs with a short summary, a checklist of acceptance criteria and how to test it.
@@ -170,8 +170,6 @@ DATABASE_URL=            # e.g. postgres://tiburcio:***@<jupigenio-db-host>:5432
 APP_URL=                 # public URL of Tibúrcio
 SESSION_SECRET=
 APP_ENCRYPTION_KEY=      # 32-byte key for encrypting tokens at rest
-# jupigenio (shown in a frame, D-002)
-JUPIGENIO_URL=           # e.g. https://jupigenio.vercel.app
 # Claude
 ANTHROPIC_API_KEY=
 ANTHROPIC_MODEL=
@@ -180,12 +178,12 @@ Match the variable naming style jupigenio already uses if it differs.
 
 ---
 
-## 7. jupigenio integration
+## 7. jupigenio module
 
-> **Replaced by D-002 (docs/DECISIONS.md).** Tibúrcio is an independent project. jupigenio gets
-> no changes; Tibúrcio only has a jupigenio tab that shows the app in a full-height frame, with
-> an "Open in new tab" button. Ignore the proxy, HMAC, base path and summary-endpoint design
-> that used to be here; it's in git history if ever needed.
+> **Replaced by D-003.** jupigenio is a module of Tibúrcio at `/jupigenio/…`, built from
+> jupigenio's code: production projects, subprojects, cronograma and tasks, dependencies,
+> Gantt, materials, milestones, calendar. Single-user: no invitations, roles or team page.
+> The agent gets tools for these too (Phase 5).
 
 ---
 
@@ -243,7 +241,7 @@ The source of truth is **`docs/design/homepage.dc.html`**. It's an HTML design f
   - **Live feed:** from `feed_events`
 - **Row 2:**
   - **Personal projects:** 3-column grid of cards (icon, name, category tag, description) → opens the project
-  - **jupigenio:** teal panel with a "Separate app" tag and an "Open jupigenio ›" button (no project data, D-002)
+  - **jupigenio:** teal panel with its active production projects and an "Open jupigenio ›" button
   - **Quick commands:** Talk to Tibúrcio, New personal project, Open jupigenio, Import photos, Daily briefing
 - **Row 3:**
   - **Today:** calendar, with a "Connect calendar" empty state
@@ -285,7 +283,7 @@ The source of truth is **`docs/design/homepage.dc.html`**. It's an HTML design f
 ## 10. Performance budget (Bruno's main concern)
 
 - Home **first contentful paint < 1.5 s** and **interactive < 2.5 s** on a mid-range Android over 4G (Lighthouse mobile).
-- Initial JS **< 200 KB gzipped**. Each module (Chat, Projects, jupigenio frame, Photos) is **lazy-loaded** with code splitting.
+- Initial JS **< 200 KB gzipped**. Each module (Chat, Projects, jupigenio, Photos) is **lazy-loaded** with code splitting.
 - One **`GET /api/home`** call returns all Home panel data. The server assembles it and caches external parts: jupigenio 60 s, integrations 5 min. A slow or failing source never blocks the others: per-source timeout of 1.5 s, and that panel shows an offline state.
 - The agent never runs inside the request cycle. It always goes through the worker and SSE.
 - DB: indexes on all foreign keys and on `feed_events(user_id, created_at)` and `jobs(status, run_after)`. Lists are paginated.
@@ -298,11 +296,13 @@ The source of truth is **`docs/design/homepage.dc.html`**. It's an HTML design f
 
 **Phase 0 · Discovery.** `docs/DISCOVERY.md` is approved by Bruno.
 
-**Phase 1 · Skeleton and auth**
-- New repo scaffolded on the same stack, with lint, typecheck, tests and CI like jupigenio.
-- The `tiburcio` database is created on the same DB server, migrations run, and the seed creates Bruno's user and the 6 personal projects.
-- Login and logout work, signup is disabled, sessions are secure.
-- `CLAUDE.md` lists the commands (dev, test, migrate, seed, create-user).
+**Phase 1 · Base from jupigenio, single user** (D-003)
+- jupigenio's code is imported into this repo with its git history.
+- Multi-user parts removed (invitations, roles, team, accept-invite, no-organization); RLS is owner-only.
+- jupigenio's migrations run on the `tiburcio` Supabase project; the seed creates Bruno's user and the 6 personal projects.
+- Login and logout work, sign-up is disabled; `npm run user:create` creates Bruno's account.
+- jupigenio's pages work under `/jupigenio/…`, and its unit, database and browser tests pass.
+- `CLAUDE.md` lists the commands (dev, test, migrate, seed, user:create).
 
 **Phase 2 · Home dashboard**
 - Home matches `homepage.dc.html` on desktop and mobile, using the tokens in 9.1.
@@ -313,10 +313,10 @@ The source of truth is **`docs/design/homepage.dc.html`**. It's an HTML design f
 - List, create, edit and archive projects.
 - Project page tabs: Overview, Tasks, Notes and decisions, Materials (with totals in EUR), Files.
 
-**Phase 4 · jupigenio tab** (D-002)
-- The jupigenio tab shows the app in a full-height, lazy-loaded frame with an "Open in new tab" button.
-- CSP `frame-src` allows only `JUPIGENIO_URL`.
-- If the two apps aren't on one custom domain yet, the tab explains that sign-in only works in the new tab.
+**Phase 4 · jupigenio module in the HUD**
+- jupigenio pages restyled with the Tibúrcio tokens and shell.
+- The Home jupigenio panel shows real production projects.
+- The old jupigenio Vercel app is switched off or redirected; the old repo is archived.
 
 **Phase 5 · Chat with Tibúrcio**
 - Threads, both general and per project.

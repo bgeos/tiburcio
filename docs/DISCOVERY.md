@@ -28,23 +28,26 @@ Status: **waiting for Bruno's review.** Nothing below is built yet.
 | Tests and quality | `npm run check` = ESLint 9 + `next typegen && tsc --noEmit` + Vitest. `npm run test:db` = pgTAP on local Supabase. `npm run test:e2e` = Playwright against `next build && next start` on port 3100, desktop 1440×900 and Pixel 7, with axe WCAG 2.1 AA checks. GitHub Actions runs all of it on PRs; it also greps the client bundle for secret-looking strings. |
 | Dev machine note | D-032: the laptop can't run Docker, the dev server and browser tests at the same time, so day-to-day testing uses hosted staging. |
 
-## 2. Where the plan doesn't fit jupigenio
+## 2. Where the plan changes
 
-**A. The jupigenio integration (plan §7) is dropped (Bruno, 2026-11-11, D-002).**
-Tibúrcio is a new, independent project. jupigenio gets **no changes**: no proxy, no HMAC
-auth mode, no base path, no summary endpoint. Tibúrcio only has a **jupigenio tab** that
-shows the jupigenio app in a full-height frame. (The plan's proxy design also didn't fit
-Vercel: jupigenio is public there, and Supabase Auth can't trust a header login.)
+**A. jupigenio becomes a module of Tibúrcio (Bruno, 2026-11-11, D-003).**
+Tibúrcio is one single-user application. jupigenio was the first project; its features
+(production projects, subprojects, cronograma/tasks, dependencies, Gantt, materials,
+milestones, calendar) move **into** Tibúrcio as the `jupigenio` module under `/jupigenio/…`.
+The plan's proxy, HMAC header login, base path and iframe are all dropped: they solved
+problems that only exist with two apps. Because both are the same stack (Next.js 16,
+Supabase, shadcn/ui), the code moves over with little rewriting.
 
-What the frame can and can't do, checked on 2026-11-11:
-- `jupigenio.vercel.app` sends no `X-Frame-Options` or `frame-ancestors`, so it loads in a frame.
-- Its Supabase session cookie is `SameSite=Lax`. `*.vercel.app` is a public suffix, so
-  `tiburcio.vercel.app` and `jupigenio.vercel.app` are **different sites**, and browsers won't
-  keep the jupigenio login inside the frame.
-- **Fix without touching jupigenio's code:** give both apps subdomains of one custom domain
-  (e.g. `tiburcio.<domain>`, `jupigenio.<domain>`, added in Vercel). They become the same site,
-  and the login works in the frame.
-- Until then the tab shows the frame plus an "Open in new tab" button, and says why.
+What has to change in that code:
+- **Single user.** Invitations, roles (admin / production manager / member / external),
+  the team page and `no-organization` / `accept-invite` flows are removed.
+- **Organizations.** jupigenio scopes everything by `organization_id` and `/<org>/` URLs.
+  For one person this is either kept as "workspaces" (e.g. one per festival, D-033) or
+  flattened. See open question 2. Either way, RLS becomes "the owner is `auth.uid()`".
+- **Look.** jupigenio's light/dark oklch theme is replaced by Tibúrcio's HUD tokens; the
+  shared components (StatTile, StatusBadge, DataTable, …) are restyled once and reused.
+- **Data.** jupigenio's hosted project holds test data only (its D-032), so nothing real is
+  migrated. Its migrations are re-applied to the `tiburcio` Supabase project.
 
 **B. The separate agent worker (plan §4, §8) has nowhere to run.** Vercel has no long-running
 processes. The chat has to stream from a Route Handler (Vercel functions can stream for
@@ -54,12 +57,12 @@ Cron or Supabase `pg_cron`.
 **C. The Claude Agent SDK is the wrong tool here.** It drives the Claude Code runtime
 (a CLI subprocess with file and shell tools), which is heavy and awkward on serverless.
 Tibúrcio's tools are database calls (`projects.list`, `tasks.add`, …). The Anthropic
-TypeScript SDK (Messages API with tool use and streaming) does this directly.
+TypeScript SDK (Messages API with tool use and streaming) does this directly. With jupigenio
+inside, the agent can also read and update production projects and tasks.
 
-**D. "Same DB server, separate database, own DB user" (plan rule 2.3).** On Supabase one
-project is one database with its own Auth. Tibúrcio already has its **own Supabase project**
-(`tiburcio`, ref `quincosoqtgzgjucsidg`, eu-north-1, same org). That gives the isolation the
-rule wanted. See DECISIONS D-001.
+**D. "Same DB server, separate database, own DB user" (plan rule 2.3).** No longer relevant:
+there is one app and one Supabase project, `tiburcio` (ref `quincosoqtgzgjucsidg`,
+eu-north-1). See D-001.
 
 **E. Tables the plan lists that Supabase already provides.** `users` and `sessions` become
 Supabase Auth (`auth.users`) + a `profiles` table, as in jupigenio. `project_files` points at a
@@ -72,11 +75,15 @@ panel never blocks the others. No client-side fetch waterfall, and less JS shipp
 
 ## 3. Tibúrcio will use
 
+**jupigenio's codebase as the starting point.** It already has what plan Phase 1 asks for
+(Next.js 16 shell, Supabase login, RLS, tests, CI), so Tibúrcio starts from it instead of an
+empty scaffold, with jupigenio's git history kept.
+
 **Same as jupigenio:**
 - Next.js 16 (same version), React 19, TypeScript strict, `src/` layout, npm, Node 24.
-- Supabase: Postgres + Auth + Storage, RLS on every table (`user_id = auth.uid()`), SQL
-  migrations with policies, pgTAP tests, CLI pinned at 2.120.0, the `@supabase/ssr` +
-  `proxy.ts` + DAL + Server Actions + Zod pattern.
+- Supabase: Postgres + Auth + Storage, RLS on every table, SQL migrations with policies,
+  pgTAP tests, CLI pinned at 2.120.0, the `@supabase/ssr` + `proxy.ts` + DAL + Server Actions
+  + Zod pattern.
 - Tailwind 4 + shadcn/ui + lucide icons, rethemed into the dark green HUD tokens from
   `docs/design/homepage.dc.html`. Orbitron, Rajdhani and Inter through `next/font` (self-hosted,
   subset, which helps the performance budget).
@@ -84,43 +91,42 @@ panel never blocks the others. No client-side fetch waterfall, and less JS shipp
   Actions CI, including the secret-in-bundle check.
 - Vercel, a new project `tiburcio`, deployed the same way.
 
-**Different from the plan:**
-- **Login:** Supabase Auth, sign-up off; Bruno's account is created by `npm run user:create`
-  (secret key, like jupigenio's `org:create`).
+**Different from jupigenio and the plan:**
+- **Login:** Supabase Auth, sign-up off, one account (Bruno), created by
+  `npm run user:create`. No invitations.
+- **Modules:** code is split by module under `src/modules/<name>` (routes stay in `src/app`):
+  `home`, `chat`, `projects` (personal projects), `jupigenio` (production projects), `photos`,
+  `calendar`, `integrations`, `settings`. Each has its own DAL, actions, components and tests,
+  and is code-split so it loads only when opened.
+- **Personal projects vs jupigenio projects** stay two modules with their own tables: personal
+  projects are light (tasks, notes, materials, files); jupigenio projects are the heavy
+  planning tool (subprojects, cronograma, dependencies, Gantt). A personal project can be
+  "promoted" to jupigenio later if that turns out useful.
 - **Chat:** Anthropic TypeScript SDK, streaming from a Route Handler; messages, tool calls and
   token usage stored as they happen; the confirmation flow and `agent_actions` log as planned.
-  The `jobs` table stays for retries and scheduled work (feed polling), run by Vercel Cron or
-  `pg_cron`.
-- **jupigenio:** one tab with the app in a frame (`JUPIGENIO_URL`, default
-  `https://jupigenio.vercel.app`), lazy-loaded so it costs nothing until opened, with an
-  "Open in new tab" button. The Home jupigenio panel becomes a shortcut to that tab with no
-  project data, because Tibúrcio doesn't read jupigenio's data. Tibúrcio's CSP allows
-  `frame-src` for that URL only.
-- **Structure for a big project:** an **npm workspaces monorepo** from day one, so later
-  pieces have a home without a restructure:
-  - `apps/web`: the Next.js app (all modules, deployed to Vercel);
-  - later `apps/photo-helper` (Phase 8, the local helper for drives and USB) and possibly a
-    native Android wrapper (Phase 7);
-  - `packages/*` only when a second app needs to share code (no empty packages up front).
-  - Inside `apps/web`, code is split **by module** (`home`, `chat`, `projects`, `photos`,
-    `calendar`, `integrations`, `settings`), each with its own routes, DAL, actions,
-    components and tests, so modules stay independent and lazy-loadable.
+  The `jobs` table stays for retries and scheduled work, run by Vercel Cron or `pg_cron`.
+- **Repo:** one Next.js app at the repo root, like jupigenio. When a second app arrives
+  (the Phase 8 photo helper), the repo becomes npm workspaces then.
 
-## 4. jupigenio changes needed
+## 4. What happens to the jupigenio repo
 
-**None** (D-002). jupigenio stays exactly as it is.
+- Its code is imported into `tiburcio` with history; the `jupigenio` repo is then archived
+  (read-only) on GitHub, not deleted.
+- `jupigenio.vercel.app` is switched off, or redirected to Tibúrcio, once the module works.
+- Its staging Supabase project (`vuhifzervwszejqdpbnb`) is paused, then deleted only after
+  Bruno confirms.
 
 ## 5. Open questions for Bruno
 
-1. ~~jupigenio integration~~ **Answered:** new independent project; jupigenio is only a tab
-   with the app in a frame (D-002).
-2. **Domain:** is there a domain to use for both apps? Without one, the jupigenio tab can't
-   keep you signed in (section 2.A).
+1. ~~jupigenio integration~~ **Answered:** jupigenio becomes a module of a single-user
+   Tibúrcio (D-003).
+2. **Workspaces:** jupigenio groups projects by organization (e.g. one per festival). Keep
+   that as "workspaces" you can switch between, or one flat list of production projects?
 3. **Chat engine:** OK to use the Anthropic SDK directly instead of the Agent SDK (section 2.C)?
 4. **Clock and date:** English (`en-GB`) or Portuguese (`pt-PT`)?
 5. **Claude model:** cheaper model by default with a "stronger model" switch per thread, or
    always the strongest? And a monthly spend limit (e.g. stop or warn at €X)?
-6. ~~jupigenio account~~ No longer needed: Tibúrcio doesn't read jupigenio data.
-7. **After GitHub:** Calendar or Gmail first?
-8. **Free plans:** the Supabase free project pauses after about a week without use, and Vercel
+6. **After GitHub:** Calendar or Gmail first?
+7. **Free plans:** the Supabase free project pauses after about a week without use, and Vercel
    Hobby limits function time. Fine for now?
+8. **Domain:** not needed anymore for the app to work. Want one anyway (e.g. `tiburcio.pt`)?

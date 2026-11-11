@@ -11,11 +11,12 @@ Storage, so the Supabase equivalent is a separate project.
 - `supabase/config.toml` is copied from jupigenio (same auth defaults, public sign-up off),
   with local ports moved to 544xx so both stacks can run side by side, and without
   jupigenio's invitation email template.
-- Tibúrcio never touches jupigenio's database.
+- It is the only database: jupigenio's tables move into it as a module (D-003).
 - Hosted auth settings don't travel with migrations: sign-up must be turned off in the
   dashboard by hand, as jupigenio does (its D-032).
 
 ## D-002 · 2026-11-11 · Tibúrcio is independent; jupigenio is only a tab with a frame
+**Superseded by D-003 the same day.**
 Bruno's decision: treat Tibúrcio as a new project that will grow big. This replaces plan §7.
 - jupigenio gets no changes (no proxy, HMAC auth mode, base path or summary endpoint).
 - The jupigenio tab shows `JUPIGENIO_URL` (default `https://jupigenio.vercel.app`) in a
@@ -27,3 +28,18 @@ Bruno's decision: treat Tibúrcio as a new project that will grow big. This repl
 - Tibúrcio doesn't read jupigenio data; the Home jupigenio panel is a shortcut to the tab.
 - Because the project will be big, the repo is an npm workspaces monorepo (`apps/web` first),
   and `apps/web` is split by module (DISCOVERY §3).
+
+## D-003 · 2026-11-11 · One single-user app; jupigenio becomes a Tibúrcio module
+Bruno's decision: Tibúrcio is a bigger, single-person application, and jupigenio (the first
+project) is just one part of it. Replaces plan §7 and D-002.
+- Tibúrcio starts from jupigenio's codebase (imported with git history), since it already has
+  the Next.js 16 shell, Supabase login, RLS, tests and CI that plan Phase 1 asks for.
+- jupigenio's features live under `/jupigenio/…` as the `jupigenio` module. Multi-user parts
+  are removed: invitations, roles, team page, accept-invite and no-organization flows.
+- One account (Bruno), sign-up off, created by `npm run user:create`.
+- One Supabase project, `tiburcio`; jupigenio's migrations are re-applied there. Its staging
+  data is test data only, so nothing is migrated.
+- Code is split by module under `src/modules/<name>`; one Next.js app at the repo root until a
+  second app (photo helper) needs npm workspaces.
+- Afterwards the `jupigenio` repo is archived (not deleted), its Vercel app switched off or
+  redirected, and its Supabase project deleted only after Bruno confirms.

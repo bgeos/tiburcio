@@ -43,3 +43,13 @@ project) is just one part of it. Replaces plan §7 and D-002.
   second app (photo helper) needs npm workspaces.
 - Afterwards the `jupigenio` repo is archived (not deleted), its Vercel app switched off or
   redirected, and its Supabase project deleted only after Bruno confirms.
+
+## D-004 · 2026-11-11 · jupigenio keeps workspaces, one per job
+Bruno's decision (answers DISCOVERY Q2). Inside Tibúrcio are the personal things (projects,
+chat, photos…). When a job comes in, e.g. a festival, Bruno opens the jupigenio tab and works
+in that job's own workspace, separate from the personal side.
+- jupigenio's organizations stay, shown as **workspaces** under `/jupigenio/<workspace>/…`.
+  Bruno creates them and is the only member.
+- Their data never mixes with personal projects; Home only shows a summary.
+- Membership-based RLS stays as it is (with one member it means "only Bruno"); only the
+  multi-user parts go (D-003).

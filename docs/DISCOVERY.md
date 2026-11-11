@@ -120,8 +120,7 @@ empty scaffold, with jupigenio's git history kept.
 
 1. ~~jupigenio integration~~ **Answered:** jupigenio becomes a module of a single-user
    Tibúrcio (D-003).
-2. **Workspaces:** jupigenio groups projects by organization (e.g. one per festival). Keep
-   that as "workspaces" you can switch between, or one flat list of production projects?
+2. ~~Workspaces~~ **Answered:** keep them, one per job (D-004).
 3. **Chat engine:** OK to use the Anthropic SDK directly instead of the Agent SDK (section 2.C)?
 4. **Clock and date:** English (`en-GB`) or Portuguese (`pt-PT`)?
 5. **Claude model:** cheaper model by default with a "stronger model" switch per thread, or

@@ -1,0 +1,224 @@
+import { Flag } from "lucide-react";
+import type { Milestone } from "@/lib/domain/milestones";
+import { addDays, daysBetween, type DateRange, type IsoDate } from "@/lib/domain/schedule";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { formatDate, formatRange } from "@/lib/format";
+import type { SubprojectColor } from "@/lib/domain/subproject-colors";
+import { SUBPROJECT_BG, SubprojectDot } from "./subproject-color";
+
+export type TimelineRow = {
+  id: string;
+  label: string;
+  sublabel?: string;
+  range: DateRange | null;
+  /** The subproject's colour: bar colour plus a dot by the label (rows that are subprojects). */
+  color?: SubprojectColor;
+  /** Original (locked) plan, drawn as a dashed line under the bar. */
+  baseline?: DateRange | null;
+  /** Overlap text for screen readers; `overlaps` are the days drawn in red. */
+  warning?: string | null;
+  overlaps?: DateRange[];
+  done?: boolean;
+  /** Link the row label (server or client callers)… */
+  href?: string;
+  /** …or make it a button (client callers only). */
+  onSelect?: () => void;
+};
+
+/**
+ * The days to draw: the plan's own dates. Today stretches the scale only when it falls
+ * inside the plan; a plan months away would otherwise be squeezed against one edge.
+ */
+function span(rows: TimelineRow[], today: IsoDate, milestones: Milestone[]) {
+  const dates: IsoDate[] = milestones.map((m) => m.date);
+  for (const row of rows) {
+    for (const r of [row.range, row.baseline]) if (r) dates.push(r.start, r.end);
+  }
+  dates.sort();
+  const first = dates[0] ?? today;
+  const last = dates[dates.length - 1] ?? today;
+  const todayInside = today >= first && today <= last;
+  return { first, last, todayInside, todayBefore: today < first };
+}
+
+/**
+ * Simple Gantt-style timeline (calendar days). Bars are decorative; each row
+ * also states its dates and warnings as text for screen readers.
+ */
+export function Timeline({
+  rows,
+  today,
+  label,
+  showOverlapKey = false,
+  color,
+  milestones = [],
+}: {
+  rows: TimelineRow[];
+  today: IsoDate;
+  label: string;
+  /** Show the red "Overlap" legend entry (only where overlaps can occur). */
+  showOverlapKey?: boolean;
+  /** One colour for every bar (a subproject's tasks take their subproject's colour). */
+  color?: SubprojectColor;
+  /** Drawn as a flag line on their day; the scale stretches to include them (D-030). */
+  milestones?: Milestone[];
+}) {
+  const barColor = (row: TimelineRow) => row.color ?? color;
+  const legendColor = rows.map(barColor).find(Boolean);
+  const { first, last, todayInside, todayBefore } = span(rows, today, milestones);
+  const total = daysBetween(first, last) + 1;
+  const pos = (date: IsoDate) => (daysBetween(first, date) / total) * 100;
+  const width = (r: DateRange) => ((daysBetween(r.start, r.end) + 1) / total) * 100;
+  const step = Math.max(1, Math.ceil(total / 8));
+  const ticks = Array.from({ length: Math.ceil(total / step) }, (_, i) => addDays(first, i * step));
+
+  return (
+    <div className="space-y-3">
+      {/* Scrolls sideways on narrow screens: focusable so keyboard users can scroll it too. */}
+      <div
+        className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-ring"
+        tabIndex={0}
+        role="region"
+        aria-label={`${label} (scrolls sideways on small screens)`}
+      >
+        <div className="min-w-[560px]">
+          <div className="flex text-xs text-muted-foreground" aria-hidden="true">
+            <div className="w-40 shrink-0" />
+            <div className="relative h-5 flex-1">
+              {ticks.map((t) => (
+                <span key={t} className="absolute top-0 whitespace-nowrap" style={{ left: `${pos(t)}%` }}>
+                  {formatDate(t)}
+                </span>
+              ))}
+            </div>
+          </div>
+          {milestones.length ? (
+            <div className="flex text-xs font-medium text-foreground" aria-hidden="true">
+              <div className="w-40 shrink-0" />
+              <div className="relative h-5 flex-1">
+                {milestones.map((m) => (
+                  <span
+                    key={m.id}
+                    // Labels near the right end grow leftwards, so they stay on screen.
+                    className={cn(
+                      "absolute top-0 inline-flex items-center gap-0.5 whitespace-nowrap",
+                      pos(m.date) > 60 && "-translate-x-full flex-row-reverse",
+                    )}
+                    style={{ left: `${pos(m.date)}%` }}
+                    title={`${m.name} · ${formatDate(m.date)}`}
+                  >
+                    <Flag className="size-3" />
+                    <span className="max-w-28 truncate">{m.name}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          <ul aria-label={label} className="divide-y">
+            {rows.map((row) => (
+              <li key={row.id} className="flex items-center py-2">
+                <div className="w-40 shrink-0 pr-3">
+                  <div className="flex items-center gap-1.5">
+                    {row.color ? <SubprojectDot color={row.color} /> : null}
+                    {row.href ? (
+                      <Link
+                        href={row.href}
+                        className="text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
+                      >
+                        {row.label}
+                      </Link>
+                    ) : row.onSelect ? (
+                      <button
+                        type="button"
+                        onClick={row.onSelect}
+                        className="text-left text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
+                      >
+                        {row.label}
+                      </button>
+                    ) : (
+                      <p className="text-sm font-medium">{row.label}</p>
+                    )}
+                  </div>
+                  {row.sublabel ? <p className="text-xs text-muted-foreground">{row.sublabel}</p> : null}
+                  <span className="sr-only">
+                    {`Planned ${formatRange(row.range)}.`}
+                    {row.baseline ? ` Original plan ${formatRange(row.baseline)}.` : ""}
+                    {row.warning ? ` Warning: ${row.warning}` : ""}
+                  </span>
+                </div>
+                <div className="relative h-8 flex-1" aria-hidden="true">
+                  {milestones.map((m) => (
+                    <div
+                      key={m.id}
+                      className="absolute inset-y-0 border-l-2 border-dotted border-foreground/50"
+                      style={{ left: `${pos(m.date)}%` }}
+                    />
+                  ))}
+                  {todayInside ? (
+                    <div
+                      className="absolute inset-y-0 w-px bg-destructive/60"
+                      style={{ left: `${pos(today)}%` }}
+                    />
+                  ) : null}
+                  {row.range ? (
+                    <div
+                      className={cn(
+                        "absolute top-1 flex h-4 items-center rounded-sm",
+                        barColor(row) ? SUBPROJECT_BG[barColor(row)!] : row.done ? "bg-status-done" : "bg-primary",
+                        // Finished work fades in its colour (status itself is shown as text elsewhere).
+                        barColor(row) && row.done && "opacity-45",
+                      )}
+                      style={{ left: `${pos(row.range.start)}%`, width: `${width(row.range)}%` }}
+                    />
+                  ) : null}
+                  {row.overlaps?.map((o, i) => (
+                    <div
+                      key={`${o.start}-${i}`}
+                      className="absolute top-0.5 h-5 rounded-sm bg-destructive"
+                      style={{ left: `${pos(o.start)}%`, width: `${width(o)}%` }}
+                    />
+                  ))}
+                  {row.baseline ? (
+                    <div
+                      className="absolute bottom-1 h-1.5 rounded-sm border border-dashed border-muted-foreground"
+                      style={{ left: `${pos(row.baseline.start)}%`, width: `${width(row.baseline)}%` }}
+                    />
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground" aria-hidden="true">
+        <span className="inline-flex items-center gap-1.5">
+          <span className={cn("h-2.5 w-5 rounded-sm", legendColor ? SUBPROJECT_BG[legendColor] : "bg-primary")} />
+          {legendColor && !color ? "Current plan, in each subproject's colour" : "Current plan"}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-1.5 w-5 rounded-sm border border-dashed border-muted-foreground" /> Original plan
+        </span>
+        {milestones.length ? (
+          <span className="inline-flex items-center gap-1.5">
+            <Flag className="size-3" /> Milestone (work must be done before its day)
+          </span>
+        ) : null}
+        {showOverlapKey ? (
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-5 rounded-sm bg-destructive" /> Overlapping days
+          </span>
+        ) : null}
+        {todayInside ? (
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-3 w-px bg-destructive/60" /> Today ({formatDate(today)})
+          </span>
+        ) : (
+          <span>
+            Today: {formatDate(today)}, {todayBefore ? "before" : "after"} this plan
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}

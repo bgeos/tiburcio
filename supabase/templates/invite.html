@@ -1,0 +1,9 @@
+<!-- Invitation email (P2-08). {{ .RedirectTo }} is the app's /auth/confirm URL with a
+     `next` pointing at /accept-invite?token=…; Supabase adds the one-time token hash. -->
+<h2>You're invited to JupiGenio</h2>
+<p>
+  {{ if .Data.organization_name }}{{ .Data.organization_name }} invited you{{ else }}You've been invited{{ end }}
+  to join their workspace on JupiGenio.
+</p>
+<p><a href="{{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=invite">Accept the invitation</a></p>
+<p>You'll choose a password when you accept. If you weren't expecting this email, you can ignore it.</p>

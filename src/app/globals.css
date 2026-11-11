@@ -1,0 +1,235 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Dark mode is a `.dark` class on <html>, set by next-themes (system default). */
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-geist-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-6: var(--chart-6);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-canvas: var(--canvas);
+
+  /* Status categories (see docs/DATA_MODEL.md § status_definitions).
+     Always paired with an icon + text label; colour is never the only signal. */
+  --color-status-todo: var(--status-todo);
+  --color-status-todo-soft: var(--status-todo-soft);
+  --color-status-in-progress: var(--status-in-progress);
+  --color-status-in-progress-soft: var(--status-in-progress-soft);
+  --color-status-blocked: var(--status-blocked);
+  --color-status-blocked-soft: var(--status-blocked-soft);
+  --color-status-done: var(--status-done);
+  --color-status-done-soft: var(--status-done-soft);
+  --color-status-cancelled: var(--status-cancelled);
+  --color-status-cancelled-soft: var(--status-cancelled-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-sub-blue: var(--sub-blue);
+  --color-sub-aqua: var(--sub-aqua);
+  --color-sub-yellow: var(--sub-yellow);
+  --color-sub-magenta: var(--sub-magenta);
+  --color-sub-green: var(--sub-green);
+  --color-sub-violet: var(--sub-violet);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --radius: 0.75rem;
+
+  /* Theme colour (D-027): brand-tinted tokens use this hue; [data-accent] on <html> changes it. */
+  --brand-h: 162;
+  --brand-c: 1;
+
+  /* Surfaces: tinted canvas behind white cards */
+  --canvas: oklch(0.972 calc(0.008 * var(--brand-c)) var(--brand-h));
+  --background: oklch(0.972 calc(0.008 * var(--brand-c)) var(--brand-h));
+  --foreground: oklch(0.22 0.025 255);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.025 255);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.025 255);
+
+  /* Brand: deep green (white text ≥ 4.5:1) */
+  --primary: oklch(0.5 calc(0.12 * var(--brand-c)) var(--brand-h));
+  /* Hover moves away from the text colour, so contrast goes up, never down (WCAG 1.4.3). */
+  --primary-hover: oklch(0.44 calc(0.12 * var(--brand-c)) var(--brand-h));
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.95 calc(0.02 * var(--brand-c)) var(--brand-h));
+  --secondary-foreground: oklch(0.3 calc(0.06 * var(--brand-c)) var(--brand-h));
+  --muted: oklch(0.955 0.006 200);
+  --muted-foreground: oklch(0.47 0.02 255);
+  --accent: oklch(0.95 calc(0.025 * var(--brand-c)) var(--brand-h));
+  --accent-foreground: oklch(0.3 calc(0.07 * var(--brand-c)) var(--brand-h));
+  --destructive: oklch(0.5 0.2 27);
+  --border: oklch(0.91 0.01 230);
+  --input: oklch(0.88 0.012 230);
+  --ring: oklch(0.6 calc(0.12 * var(--brand-c)) var(--brand-h));
+
+  /* Categorical chart palette (Phase 6) */
+  --chart-1: oklch(0.72 0.15 155);
+  --chart-2: oklch(0.72 0.12 230);
+  --chart-3: oklch(0.82 0.14 85);
+  --chart-4: oklch(0.7 0.13 300);
+  --chart-5: oklch(0.75 0.13 200);
+  --chart-6: oklch(0.72 0.14 15);
+
+  --status-todo: oklch(0.45 0.03 255);
+  --status-todo-soft: oklch(0.94 0.008 255);
+  --status-in-progress: oklch(0.47 0.13 235);
+  --status-in-progress-soft: oklch(0.94 0.035 230);
+  --status-blocked: oklch(0.5 0.19 25);
+  --status-blocked-soft: oklch(0.94 0.035 25);
+  --status-done: oklch(0.46 0.12 155);
+  --status-done-soft: oklch(0.94 0.045 155);
+  --status-cancelled: oklch(0.5 0.01 255);
+  --status-cancelled-soft: oklch(0.95 0.003 255);
+  --warning: oklch(0.5 0.12 65);
+
+  /* Subproject colours (D-027): validated colour-blind-safe set, light steps. */
+  --sub-blue: #2a78d6;
+  --sub-aqua: #1baf7a;
+  --sub-yellow: #eda100;
+  --sub-magenta: #e87ba4;
+  --sub-green: #008300;
+  --sub-violet: #6250d6;
+  --warning-soft: oklch(0.95 0.06 85);
+
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.3 0.025 255);
+  --sidebar-primary: oklch(0.5 calc(0.12 * var(--brand-c)) var(--brand-h));
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.95 calc(0.03 * var(--brand-c)) var(--brand-h));
+  --sidebar-accent-foreground: oklch(0.3 calc(0.08 * var(--brand-c)) var(--brand-h));
+  --sidebar-border: oklch(0.92 0.01 230);
+  --sidebar-ring: oklch(0.6 calc(0.12 * var(--brand-c)) var(--brand-h));
+}
+
+/* Each rule sets both values so swatches (any element with data-accent) show their own colour. */
+[data-accent="green"] { --brand-h: 162; --brand-c: 1; }
+[data-accent="teal"] { --brand-h: 195; --brand-c: 1; }
+[data-accent="blue"] { --brand-h: 250; --brand-c: 1; }
+[data-accent="violet"] { --brand-h: 300; --brand-c: 1; }
+[data-accent="pink"] { --brand-h: 345; --brand-c: 1; }
+/* Slate: the same lightness steps with little colour. */
+[data-accent="slate"] { --brand-h: 255; --brand-c: 0.3; }
+
+/* A theme colour sample: the same step as --primary, in its own data-accent hue. */
+.accent-swatch { background-color: oklch(0.5 calc(0.12 * var(--brand-c)) var(--brand-h)); }
+.dark .accent-swatch { background-color: oklch(0.72 calc(0.14 * var(--brand-c)) var(--brand-h)); }
+
+.dark {
+  --canvas: oklch(0.17 0.012 230);
+  --background: oklch(0.17 0.012 230);
+  --foreground: oklch(0.95 0.005 230);
+  --card: oklch(0.215 0.014 230);
+  --card-foreground: oklch(0.95 0.005 230);
+  --popover: oklch(0.235 0.014 230);
+  --popover-foreground: oklch(0.95 0.005 230);
+
+  --primary: oklch(0.72 calc(0.14 * var(--brand-c)) var(--brand-h));
+  --primary-hover: oklch(0.78 calc(0.14 * var(--brand-c)) var(--brand-h));
+  --primary-foreground: oklch(0.18 calc(0.03 * var(--brand-c)) var(--brand-h));
+  --secondary: oklch(0.28 calc(0.025 * var(--brand-c)) var(--brand-h));
+  --secondary-foreground: oklch(0.92 calc(0.03 * var(--brand-c)) var(--brand-h));
+  --muted: oklch(0.26 0.012 230);
+  --muted-foreground: oklch(0.72 0.015 230);
+  --accent: oklch(0.29 calc(0.03 * var(--brand-c)) var(--brand-h));
+  --accent-foreground: oklch(0.93 calc(0.03 * var(--brand-c)) var(--brand-h));
+  --destructive: oklch(0.7 0.18 25);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.65 calc(0.12 * var(--brand-c)) var(--brand-h));
+
+  --chart-1: oklch(0.72 0.15 155);
+  --chart-2: oklch(0.72 0.12 230);
+  --chart-3: oklch(0.82 0.14 85);
+  --chart-4: oklch(0.72 0.13 300);
+  --chart-5: oklch(0.76 0.12 200);
+  --chart-6: oklch(0.72 0.15 15);
+
+  --status-todo: oklch(0.82 0.02 255);
+  --status-todo-soft: oklch(0.3 0.015 255);
+  --status-in-progress: oklch(0.8 0.1 230);
+  --status-in-progress-soft: oklch(0.3 0.05 235);
+  --status-blocked: oklch(0.78 0.13 25);
+  --status-blocked-soft: oklch(0.31 0.06 25);
+  --status-done: oklch(0.8 0.12 155);
+  --status-done-soft: oklch(0.3 0.05 155);
+  --status-cancelled: oklch(0.7 0.01 255);
+  --status-cancelled-soft: oklch(0.28 0.005 255);
+  --warning: oklch(0.85 0.12 85);
+
+  --sub-blue: #3987e5;
+  --sub-aqua: #199e70;
+  --sub-yellow: #c98500;
+  --sub-magenta: #d55181;
+  --sub-green: #008300;
+  --sub-violet: #9085e9;
+  --warning-soft: oklch(0.32 0.05 75);
+
+  --sidebar: oklch(0.2 0.013 230);
+  --sidebar-foreground: oklch(0.9 0.008 230);
+  --sidebar-primary: oklch(0.72 calc(0.14 * var(--brand-c)) var(--brand-h));
+  --sidebar-primary-foreground: oklch(0.18 calc(0.03 * var(--brand-c)) var(--brand-h));
+  --sidebar-accent: oklch(0.28 calc(0.03 * var(--brand-c)) var(--brand-h));
+  --sidebar-accent-foreground: oklch(0.94 calc(0.03 * var(--brand-c)) var(--brand-h));
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.65 calc(0.12 * var(--brand-c)) var(--brand-h));
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  html {
+    @apply font-sans;
+  }
+}
